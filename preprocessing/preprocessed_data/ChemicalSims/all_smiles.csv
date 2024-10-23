@@ -1,0 +1,4596 @@
+smiles
+CC#CCC(C)[C@H](O)\C=C\[C@H]1[C@H](O)C[C@@H]2C\C(C[C@H]12)=C/CCCC(O)=O
+O=C1O[C@@]23C[C@@H](C=CC2=C1)N1CCCC[C@H]31
+CCCCC[C@H](O)CC[C@H]1[C@H](O)C[C@@H]2Cc3c(C[C@H]12)cccc3OCC(O)=O
+C[C@H](CCCC(C)(C)O)[C@H]1CC[C@@H]2[C@]1(C)CCC\C2=C/C=C1/C[C@@H](O)C[C@H](O)C1=C
+CC(/C=C/C1=C(C)CCCC1(C)C)=C\C=C\C(C)=C\C(O)=O
+CC\C(c1ccccc1)=C(/c1ccccc1)c1ccc(OCCN(C)C)cc1
+CCCCCCCCCCCCCC(=O)O[C@@H]1[C@@H](C)[C@]2(O)[C@@H]3C=C(C)C(=O)[C@@]3(O)CC(CO)=C[C@H]2[C@@H]2C(C)(C)[C@]12OC(C)=O
+CCCC(CCC)C(O)=O
+CCc1cc(C(C)=O)c(O)cc1OCCCCCC(C)(C)c1nnn[nH]1
+OC(CNCCNC(=O)Nc1ccccc1)COc1ccccc1C#N
+Oc1cc2C(CNCCc2c(Cl)c1O)c1ccccc1
+Clc1ccc(cn1)C1=CCCC2CCC1N2
+CC(C)OC(=O)c1cc2c(OCC(O)CNC(C)(C)C)cccc2[nH]1
+NC(CC(=O)Nc1ccc(Oc2cc(F)c(F)cc2Br)cc1)C(=O)O
+CC#CCOC(=O)c1c(C)nc2sc3CC(O)CCc3c2c1N
+Oc1ccc(CCNCC2CCc3ccccc3C2=O)cc1
+CC(C)C1[C@H]2[C@@H](CCN2C(=O)/C=C/CN3CCCCC3)N(C1=O)S(=O)(=O)C
+CCCCCCCCC=CCCCCCCCC(=O)NC(CO)Cc1ccc(O)cc1
+CCCCC(=O)O[C@H]1CCC2C3CCc4cc(O)ccc4C3CC[C@]12C
+CC1(C)CC(=O)C(C2c3ccccc3OC3=C2C(=O)CC(C)(C)C3)C(=O)C1
+Cc1ccccc1N1CCN(CC1)S(=O)(=O)CC12CCC(C[C@@H]1NC(=O)[C@@H](N)CCS(C)(=O)=O)C2(C)C
+CC(C)CC(NC(=O)OCC1c2ccccc2-c3ccccc13)C(=O)O
+C[N+]1([O-])[C@H]2C[C@@H](C[C@@H]1[C@H]1O[C@@H]21)OC(=O)[C@H](CO)c1ccccc1
+CN(C(Cc1ccc(cc1)c2ccccc2)C(=O)NC(Cc3c[nH]c4ccccc34)C(=O)O)C(=O)c5cc(C)cc(C)c5
+COc1ccc(C2CC(=NCCS2)c2c(O)cc(C)oc2=O)c(OC)c1
+COc1cc2CCN(C)C(CCc3ccc(Cl)cc3)c2cc1O
+CN(C)c1ccc(Cn2cnc3CN(C(Cc32)C(=O)O)C(=O)C(c4ccccc4)c5ccccc5)cc1C
+Oc1cc2CCN(CC=C)CC(c3ccccc3)c2cc1O
+CCCCCC(O)c1cccc(OCc2ccc3ccccc3n2)c1
+CC(C)C(NS(=O)(=O)c1ccc(cc1)c2ccc(Br)cc2)C(=O)O
+CC(C)CC(NC(=O)N1CCCCCC1)C(=O)NC(Cc2cn(C)c3ccccc23)C(=O)NC(Cc4ccccn4)C(=O)O
+CN(C(Cc1ccc(OS(=O)(=O)c2cccc3cnccc23)cc1)C(=O)N4CCN(CC4)c5ccccc5)S(=O)(=O)c6cccc7cnccc67
+CN(Cc1ccccc1)C(=O)C(Cc2ccc3ccccc3c2)NC(=O)C4CCCN4C(=O)Nc5ccccc5[N+](=O)[O-]
+[O-][N+](=O)c1ccccc1S(=O)(=O)NCC2CCC(CNCC3CCc4ccccc4C3)CC2
+FC(F)(F)c1cccc(Nc2ncccc2C(=O)OC2OC(=O)c3ccccc23)c1
+Cc1cc2nc3c(nc(=O)[nH]c3=O)n(C)c2cc1C=O
+CC[C@H](NC(=O)c1c(C)c(nc2ccccc12)-c1ccccc1)c1ccccc1
+CCCCCS(=O)(=O)CCCCCCCCCCn1c(c(C)c2cc(O)ccc12)-c1ccc(O)cc1
+Clc1cccc(N2CCN(CCCCNC(=O)c3ccc-4c(Cc5ccccc-45)c3)CC2)c1Cl
+COc1cc(SC)ccc1C(=O)N1CCC(Cc2ccccc2)CC1
+Cc1nc2c(s1)C(=O)C=C(Nc1ccc(C)cc1)C2=O
+COCC(=O)O[C@]1(CCN(C)CCCc2nc3ccccc3[nH]2)CCc2cc(F)ccc2[C@@H]1C(C)C
+Cc1cc(C)c(c(C)c1)S(=O)(=O)Nc1cccc(c1)C(F)(F)F
+COc1cc(OC)c(/C=C\2/C(=O)Nc3ccccc23)c(OC)c1
+CC[C@@H]1CN2C(=N1)c1[nH]c(nc1N(C)C2=O)-c1ccccc1
+CCc1cc2N(Cc3ccc(cc3)-c3ccccc3-c3nnn[nH]3)C(=O)CCc2c(CC)n1
+Fc1ccc(cc1)C(OCCN2CCN(CC=Cc3ccccc3)CC2)c4ccc(F)cc4
+COc1ccc(NC(=O)c2ccc(cc2)-c2ccc(cc2C)-c2noc(C)n2)cc1N1CCN(C)CC1
+Cc1ccc2c(c1C)n(CCCN)c1ccccc1c2=O
+NC(=N)c1ccc(cc1)N1CCN(CC1)C1CCN(CC(O)=O)CC1
+N\C(Sc1ccc(N)cc1)=C(\C#N)c1ccccc1C(F)(F)F
+O=C(N1CCC(CC1)N1CCCC1)c1ccc(Nc2nccc(n2)-c2cc3ccccc3s2)cc1
+CN1CCN(CC1)C(=O)c1nc2ccc(Cl)cc2[nH]1
+FC(F)(F)c1cc(CO[C@H]2CCCN[C@H]2c2ccccc2)cc(c1)C(F)(F)F
+CCC(=O)N(C1CCN(CCc2ccc(cc2)N=C=S)CC1)c1ccccc1
+CC1CCN(CC[C@H]2CCCN2S(=O)(=O)c2cccc(O)c2)CC1
+CC1(C)Oc2ccc(cc2[C@H]([C@@H]1O)N1CCCC1=O)C#N
+O=c1onc2cnc3ccccc3n12
+CCCCC[C@H](O)\C=C\[C@H]1[C@H](O)CC(=O)[C@@H]1C\C=C/CCCC(O)=O
+Brc1ccc(\C=C\CNCCNS(=O)(=O)c2cccc3cnccc23)cc1
+CC(=O)OCC(=O)[C@@]1(O)CC[C@H]2[C@@H]3CCC4=CC(=O)C=C[C@]4(C)[C@@]3(F)[C@@H](O)C[C@]12C
+CCOC(=O)[C@H](CCc1ccccc1)N[C@@H](C)C(=O)N1Cc2cc(OC)c(OC)cc2C[C@H]1C(O)=O
+COc1cc2ncnc(Nc3ccc(O)c(Br)c3)c2cc1OC
+OC(=O)c1n(Cc2ccc(Cl)cc2)c2ccc(Cl)cc2c1Sc1ccccc1
+CN(C1CCCCC1)C(=O)c1sc2nc3ccc(N)cc3n2c1C
+NC(=O)C(=C\c1ccc(O)c(O)c1)\C#N
+CC(C)c1ccc2c(CC[C@H]3[C@](C)(CN)CCC[C@]23C)c1
+CCC(=O)O[C@@]1([C@H](C)C[C@H]2[C@@H]3C[C@H](F)C4=CC(=O)C=C[C@]4(C)[C@@]3(F)[C@@H](O)C[C@]12C)C(=O)SCF
+CCCCCOc1c(OC)ccc2cc(C(=O)NCc3ccc4OCOc4c3)c(=O)[nH]c12
+O[C@@H](CNCCOc1ccc(CC(O)=O)cc1)c1ccccc1
+COC1CCC(CC1)C(=O)c2ccc3nc4OCCCc4cc3c2
+NC(=O)CCCCn1ccc(N=C(N)NCC(F)(F)F)n1
+CC(=O)NCCc1c(Cc2ccccc2)[nH]c2ccccc12
+COc1ccc(cc1C(=O)NCc1cccnc1)C(=O)NCc1cccnc1
+COc1ccc(CNC(=O)Nc2ncc(s2)[N+]([O-])=O)cc1
+CC(=Cc1ccc(cc1)C(=O)O)c2ccc3c(c2)C(C)(C)CCC3(C)C
+CCOC(=O)c1ncc2[nH]c3cccc(OC(C)C)c3c2c1C
+COc1cc(OC)c(NC(=O)Nc2cc(C)on2)cc1Cl
+C1CCC(CC1)n1cnc2c(Nc3ccc(cc3)N3CCOCC3)nc(Oc3cccc4ccccc34)nc12
+Oc1ccc(cc1)-c1c(nn2c(cc(nc12)C(F)(F)F)C(F)(F)F)-c1ccccc1
+COC(=O)C[C@](O)(CCCC(C)(C)O)C(=O)O[C@H]1[C@H]2c3cc4OCOc4cc3CCN3CCC[C@]23C=C1OC
+CC(C)(Cc1c[nH]c2ccc(Cl)cc12)NCCOc1ccccc1OCC1CC1
+COc1ccc(cc1)-c1oc2cc(OC)ccc2c1C(=O)c1ccc(cc1)C#N
+CS(=O)(=O)CCNCc1nc(cs1)-c1ccc2ncnc(Nc3ccc(OCc4cccc(F)c4)c(Cl)c3)c2c1
+SC(=S)N1CCCC1
+Nc1nc2n(CCc3ccccc3)ncc2c2nc(nn12)-c1ccco1
+Oc1ccc2[nH]c3cc(c4C(=O)NC(=O)c4c3c2c1)-c1ccccc1
+CN(Cc1ccccc1)C(=O)[C@H](Cc1ccc2ccccc2c1)NC(=O)[C@@H]1C[C@@H](O)CN1C(=O)c1cn(C)c2ccccc12
+Cc1nn(c(C)c1C=NN2CCN(Cc3ccccc3)CC2)c4ccccc4
+CN[C@@H](C)[C@@H](O)c1ccccc1
+C[C@@]12CC[C@H]3[C@@H](CC[C@]4(O)C[C@@H](O)CC[C@]34C=O)[C@@]2(O)CC[C@@H]1C5=CC(=O)OC5
+COc1ccccc1C1(O)CCN(CCCn2c3ccccc3c3ccccc23)CC1
+Cc1oc(nc1CCN1CCC2(CC1)OC(=O)Nc1ccc(C)cc21)-c1ccccc1
+COc1ccc(Nc2ncnc3ccc(OC)cc23)cc1
+NS(=O)(=O)c1cc(cc(N2CCCC2)c1Oc1ccccc1)C(O)=O
+FC(F)(F)c1cccc(c1)C1=CCN(CCc2ccc3ccccc3c2)CC1
+Cc1c(CC(C)(C)C(O)=O)n(Cc2ccc(Cl)cc2)c2ccc(F)cc12
+C[C@@]12[C@H]3[C@H](C(O)=O)[C@@]45CC(=C)[C@@](O)(C4)CC[C@H]5[C@]3(OC1=O)C=C[C@@H]2O
+CC1CCN(CCCC(=O)c2ccc(F)cc2)CC1
+Nc1cccc(c1)-c1cc2c(Oc3cccc(O)c3)ncnc2[nH]1
+Oc1cc(O)c2C(=O)C[C@H](Oc2c1)c1ccccc1
+CC(C)N1CCN(CC1)c1ccc(cc1)C(=O)c1c(sc2cc(O)ccc12)-c1ccc(O)cc1
+COc1ccc(cc1OC)S(=O)(=O)N1[C@@H](C(=O)N2CCC[C@H]2C(N)=O)[C@](O)(c2cc(Cl)ccc12)c1ccccc1Cl
+Cc1ccc(=O)n(c1)-c1ccccc1
+CCOC(=O)C1=C(C)NC(=S)NC1c1cccc(O)c1
+CCCCCCCNS(=O)(=O)c1cccc2c(Cl)cccc12
+Fc1ccc(cc1)C(OCCN1CCN(CCCc2ccccc2)CC1)c1ccc(F)cc1
+CN(C)C(=O)C(CCN1CCC(O)(CC1)c1ccc(Cl)cc1)(c1ccccc1)c1ccccc1
+Cn1cnc2c(NCc3ccccc3)nc(NCCO)nc12
+O=C1CC2(CCCC2)CC(=O)N1CCCCNCC1COc2ccccc2O1
+CN(C)CC(O)Cn1c2ccc(Br)cc2c3cc(Br)ccc13
+CN1CCN2C(C1)c1ccccc1Cc1ccccc21
+CN(C)CCC(c1ccccc1)c1ccccn1
+NCC(CS(O)(=O)=O)c1ccc(Cl)cc1
+OC(=O)C1CC(NC(=O)Nc2ccccc2)c3c(Cl)cc(Cl)cc3N1
+COC(=O)C1=C(C)NC(C)=C(C1C)C(=O)OCCSc1ccccc1
+CC(=O)C(C#N)C(=O)Nc1cc(Br)ccc1Br
+COc1ccccc1OCC(O)COC(N)=O
+C[C@]12CCC3C(CCC4=CC(=O)CC[C@H]34)C1CC[C@@]2(O)C#C
+CCC(C)N(C)C(=O)c1cc2ccccc2c(n1)-c1ccccc1Cl
+NC(Cn1ccc(=O)n(Cc2ccccc2C(O)=O)c1=O)C(O)=O
+OC(=O)C1CCCN(CCC=C(c2ccccc2)c2ccccc2)C1
+Nc1ncnc2n(cnc12)C1CCCO1
+CN\C(NC#N)=N/c1ccc(cc1)C1=NNC(=O)CC1C
+CN1C2CCC1CC(C2)OC(=O)c1cc(C)cc(C)c1
+CCOC(=O)c1c(C)[nH]c2ccc3OC4N(CCc5cc(OC)ccc45)Cc3c12
+O=C1c2ccccc2-c2n[nH]c3cccc1c23
+Cn1cc(C=C2C(=O)Nc3cccnc23)c4ccccc14
+Clc1ccc(cc1)N1CCN(Cc2c[nH]c3ncccc23)CC1
+CN1CCN(CC(=O)N2c3c(C)scc3C(=O)Nc3ccccc23)CC1
+COc1ccc(cc1OC)-c1cc(=O)c2c(OC)c(OC)c(OC)c(OC)c2o1
+CC[C@H](CO)Nc1nc(NCc2ccccc2)c2ncn(C(C)C)c2n1
+NC1CCN(CC1)c1cccc(Cl)n1
+Clc1ccc2Nc3ccccc3C(=Nc2c1)N1CCNCC1
+Oc1c(C(=O)C2CC2)c(=O)[nH]c2cc(Cl)ccc12
+CCCCC1C(=O)N(N(C1=O)c1ccccc1)c1ccccc1
+CC(C)c1ccccc1S(=O)(=O)c1cc(N)c2ncccc2c1[N+]([O-])=O
+CN(C)Cc1c(oc2ccccc12)C(=O)NCCOc1ccc(cc1)C(=O)NO
+CO[C@@H]1[C@@H](C[C@H]2O[C@]1(C)n1c3ccccc3c3c4CNC(=O)c4c4c5ccccc5n2c4c13)N(C)C(=O)c1ccccc1
+CCN(CC)CCOC(=O)c1cc(Cl)c(N)cc1OC
+Cc1cc(c(O)c(C)c1CC1=NCCN1)C(C)(C)C
+Cn1c2CCNCCc2c2ccccc12
+c1ccc(cc1)-c1n[nH]c2c1oc1ccccc21
+NC(=N)SCCc1ccc(OCc2ccc(cc2)[N+]([O-])=O)cc1
+CCN(c1ccccc1)c1cc(NC)[n+](C)c(C)n1
+N\C(Sc1ccccc1N)=C(C#N)/C(C#N)=C(\N)Sc1ccccc1N
+CS(=O)(=O)Nc1ccc(Cc2noc(n2)-c2ccc3[nH]cc(CCN)c3c2)cc1
+COC(=O)[C@@H]1C[C@H](OC(C)=O)C(=O)[C@H]2[C@@]1(C)CC[C@H]1C(=O)O[C@@H](C[C@]21C)c1ccoc1
+Nc1nc(NCCc2ccc(O)cc2)nc2nc(nn12)-c1ccco1
+CN(C)c1ccc(cc1)\C=C1/C(=O)Nc2ccccc12
+OC(=O)[C@@H](Cc1ccc(O)c(O)c1)OC(=O)\C=C\c1ccc(O)c(O)c1
+Cn1cc(C(=O)C(=O)N[C@H]2CN3CCC2CC3)c2ccccc12
+Oc1ccc(Nc2nc(cs2)-c2ccc(Cl)cc2)cc1
+COc1oc(=O)c2cc(N)ccc2c1Cl
+O=c1cc(oc2c(cccc12)-c1ccccc1)N1CCNCC1
+OC(c1ccc(cc1)N(CC(F)(F)F)S(=O)(=O)c1ccccc1)(C(F)(F)F)C(F)(F)F
+CC1=NN=C(c2ccc(N)cc2)c2cc3OCOc3cc2C1
+Brc1ccc(NC(=O)N2NC(=O)[C@H]([C@@H]2c2ccccc2)c2ccccc2)cc1
+CC(=O)O[C@@]1(CC[C@H]2[C@@H]3C=C(C)C4=CC(=O)CC[C@@H]4[C@H]3CC[C@]12C)C(C)=O
+Cc1ccc(cc1)c2cn3c4CCCCc4sc3n2
+[O-][N+](=O)c1ccc(Cl)c(c1)C(=O)Nc1ccncc1
+CC(C)Oc1cccc(c1)-n1c(CCc2c[nH]c3ccc(Br)cc23)nc2ccccc2c1=O
+CCOC(=O)c1ncc2[nH]c3ccc(OCc4ccccc4)cc3c2c1COC
+Cc1ccc-2c(Cc3c(nn(c-23)-c2ccc(Cl)cc2Cl)C(=O)NC2CCCCC2)c1
+COc1ccc2Sc3ccccc3N(C[C@H](C)CN(C)C)c2c1
+NC(=N)NC(=N)Nc1cccc(Cl)c1
+Brc1ccc2[nH]c-3c(CC(=O)Nc4ccccc-34)c2c1
+COc1ccc(cc1O)[C@@H]2CC(=O)c3c(O)cc(O[C@@H]4O[C@H](CO[C@@H]5O[C@@H](C)[C@H](O)[C@@H](O)[C@H]5O)[C@@H](O)[C@H](O)[C@H]4O)cc3O2
+OC[C@H]1O[C@H]([C@H](O)[C@@H]1O)n1cnc2c(N[C@H]3CCC[C@@H]3O)ncnc12
+CCCc1c(O)c(CC=O)ccc1OCCCOc2ccc(OCC(=O)O)cc2
+COc1cc2ncnc(Nc3ccc(Cl)cc3F)c2cc1OC
+OC(=O)C1=CCCN(CCON=C(c2ccccc2)c2ccccc2)C1
+CC(C)c1cc(NNC(=O)Nc2cc(Cl)nc(Cl)c2)nc2n(C)nc(C)c12
+[O-][N+]1=C(C(=O)c2ccccc12)c1ccccn1
+OC(=O)c1ccccc1Nc1cccc(c1)C(F)(F)F
+CC(=C)[C@@H]1CC[C@@]2(CC[C@]3(C)[C@H](CC[C@@H]4[C@@]5(C)CC[C@H](O)C(C)(C)[C@@H]5CC[C@@]34C)[C@@H]12)C(O)=O
+CCCCN1CCC(CCC(=O)c2cc(Cl)c(N)cc2OC)CC1
+Cc1ccc(cc1)-c1nn(c2ncnc(N)c12)C(C)(C)C
+Cc1c(oc2c(cccc2c1=O)C(=O)OCCN1CCCCC1)-c1ccccc1
+CC(C)COc1ccc(cc1C#N)-c1nc(C)c(s1)C(O)=O
+Fc1ccc(cc1)C(=O)C1CCN(CCn2c(=O)[nH]c3ccccc3c2=O)CC1
+OC(=O)c1[nH]c2cc(Cl)cc(Cl)c2c1C=CC(=O)Nc3ccccc3
+COc1cc(N)c(Cl)cc1C(=O)CCC1CCN(CCNS(C)(=O)=O)CC1
+C(CN1CCN(CCOC(c2ccccc2)c2ccccc2)CC1)Cc1ccccc1
+CC(C)OC(=O)C(C)(C)Oc1ccc(cc1)C(=O)c1ccc(Cl)cc1
+COC(=O)Nc1nc2ccc(Sc3ccccc3)cc2[nH]1
+Ic1ccc(CCNC(=N)SCCCc2c[nH]cn2)cc1
+COC1(C[S@@](=O)c2ccccc2)CCN(CCc2c[nH]c3ccc(F)cc23)CC1
+CC1(C)Oc2ccc(cc2[C@@H](OC2=CC(=O)CC2)[C@@H]1O)C#N
+CN(C)c1ccc(NC(=O)Nc2cc(C)nc3c(F)cc(F)cc23)cc1
+Oc1ccc(cc1)-c1nc(c([nH]1)-c1ccncc1)-c1ccc(F)cc1
+O=C(NCCCCCCNC(=O)ON=C1CCCCC1)ON=C1CCCCC1
+CC[N+](CC)(CC)CC(=O)Nc1c(C)cccc1C
+CC(C)C[C@H](NC(=O)[C@H](CC(C)C)NC(=O)[C@H](CC(C)C)NC(=O)OCc1ccccc1)C=O
+COC(=O)c1csc(n1)C(=O)c2c[nH]c3ccccc23
+OCc1ccc(o1)c2nn(Cc3ccccc3)c4ccccc24
+COC(=O)[C@H](NC(=O)c1cc(nc2ccccc12)-c1ccccc1)c1ccccc1
+COC(=O)c1c(-c2cc(OC)c(OC)c(OC)c2)c2ccnc(OCc3ncccn3)c2c(=O)n1Cc1ccnc(C)c1
+NC(=O)c1ccc(cc1)-c1nc(c([nH]1)-c1ccccn1)-c1ccc2OCOc2c1
+COc1ccccc1N1CCN(CCCCN2C(=O)c3ccccc3C2=O)CC1
+CCCN(CCC)C1Cc2cc(OC)c(OC)cc2C1
+CC(C)(Sc1cc(c(O)c(c1)C(C)(C)C)C(C)(C)C)Sc1cc(c(O)c(c1)C(C)(C)C)C(C)(C)C
+CCN(CC)CCNC(=O)c1cc(Cl)c(N)cc1OC
+O=S(=O)(N1CCCNCC1)c1cccc2cnccc12
+CS(=O)(=O)Nc1ccc(cc1Oc1ccccc1)[N+]([O-])=O
+C(C1=NCCN1)c1cccc2ccccc12
+Cc1ncc(CN2CCC(=CC2)c2ccccc2)c(N)n1
+CN1Cc2c(ncn2-c2ccsc2C1=O)C(=O)OC(C)(C)C
+CCOC(=O)c1ncn-2c1CN(C)C(=O)c1cc(ccc-21)N=[N+]=[N-]
+Cc1nc(sc1CSc1ccc(OCC(O)=O)c(C)c1)-c1ccc(c(F)c1)C(F)(F)F
+C(N1CCC2(CCc3ccccc23)CC1)c1ccccc1
+CN(CC#C)Cc1ccccc1
+CCCCCCCCCCCC1C(=O)C(=O)CC(=O)C1=O
+COc1cc(OC)c(cc1NS(=O)(=O)c1ccc(cc1)C(F)(F)F)C(=O)CCCCN1CCC2(CC1)NC(=O)NC2=O
+Cc1cc(I)ccc1Nc1c(F)c(F)c(F)cc1C(=O)NOCC1CC1
+Clc1cccc(Nc2nnc(-c3ccccc3)c3ccccc23)c1
+CCc1nn(CCCN2CCN(CC2)c2cccc(Cl)c2)c(=O)n1CCOc1ccccc1
+CNCCC=C1c2ccccc2CCc2ccccc12
+COc1ccc(CCN(C)CCCN2CCc3cc(OC)c(OC)cc3CC2=O)cc1OC
+Cc1cccc(Nc2ccccc2C(O)=O)c1C
+[O-][N+](=O)c1ccc(Cl)c(c1)C(=O)Nc1ccccc1
+COc1ccc(cc1)S(=O)(=O)N(CCO)c2ccccc2CN(C)C/C=C/c3ccc(Cl)cc3
+C=CC(=O)c1ccc2ccccc2c1
+CC(C)(C)n1nc(-c2ccc(Cl)cc2)c2c(N)ncnc12
+Fc1ccc(cc1)-c1nc2SCCn2c1-c1ccncc1
+Brc1c(Br)c(Br)c2[nH]nnc2c1Br
+Oc1cc(O)c2c(c1)oc(-c1ccc(O)c(O)c1)c(O)c2=O
+Cc1ccc(O)c(N=Nc2ccccc2)n1
+NC(=O)OCC(COC(N)=O)c1ccccc1
+C[C@@H]1CC2C3C[C@H](F)C4=CC(=O)C=C[C@]4(C)[C@@]3(F)[C@@H](O)C[C@]2(C)[C@@]1(O)C(=O)CO
+C(Oc1cccc2C=C(CN3CCOCC3)COc12)C4CNCCO4
+Nc1nc2n(C3OC(CO)C(O)C3O)c(=O)n(CC=C)c2c(=O)[nH]1
+CCOC(=O)C1=C(C)NC(C)=C(C1c1cccc(Cl)c1Cl)C(=O)OC
+COC1C(O)C(CO)OC1n2cnc3c(NC4CCCCC4)ncnc23
+CCNC(=O)C1OC(C(O)C1O)n2cnc3c(N)ncnc23
+CC(Cc1ccccc1)(NC(=O)CN)c1ccccc1
+CC(N\C(Nc1ccncc1)=N\C#N)C(C)(C)C
+CC(COc1ccccc1)N(CCCl)Cc1ccccc1
+CCOC(=O)NCC(Cc1ccc(OCCc2nc(oc2C)c3ccccc3)cc1)NC(=CC(=O)c4ccc(cc4)C(F)(F)F)C
+CC(CNC1CCCCC1)OC(=O)c1ccccc1
+CC(C(O)=O)c1cccc(c1)C(=O)c1ccccc1
+CCCc1c(nn(c1-c1ccc(O)cc1)-c1ccc(O)cc1)-c1ccc(O)cc1
+OCc1c[nH]c2ccccc12
+Cc1cccc(Nc2cc(Cl)nc(SCC(O)=O)n2)c1C
+C[C@]12CC[C@H]3[C@@H](CCC4=CC(=O)CC[C@]34C)[C@@H]1CC[C@@]2(O)C#C
+c1[nH]nc(c1-c1ccnc2ccccc12)-c1ccccn1
+CN1c2cc3c(cc2N=C(c2ccc(cc2)C(O)=O)c2ccccc12)C(C)(C)CCC3(C)C
+CN(C)S(=O)(=O)c1ccc2Sc3ccccc3N(CCCN3CCN(C)CC3)c2c1
+Cc1c[nH]c(=O)n(CCCN2CCN(CC2)c2ccccc2OCC(F)(F)F)c1=O
+Fc1ccc(cc1)N1CCN(CCCN2c3cccc4cccc(c34)S2(=O)=O)CC1
+COc1ccc2n(C(=O)c3cccc(Cl)c3Cl)c(C)c(CCN3CCOCC3)c2c1
+CNC(=NC#N)NCCSCc1csc(N=C(N)N)n1
+NC(=N)NC(=N)NCCc1ccccc1
+Cc1cnc(cn1)C(=O)NCCc1ccc(cc1)S(=O)(=O)NC(=O)NC1CCCCC1
+CCc1ccc2c(nc(=O)n(CC)c2n1)-c1cccc(Cl)c1
+Oc1ccc([N+][O-])c2cccnc12
+CCCN1CCC[C@@H]2Cc3nc(N)ncc3C[C@@H]12
+COc1ccc(cc1)-n1nc(cc1-c1ccc(Cl)cc1)C(F)(F)F
+CSc1cc2CCN(C(=O)Nc3cccnc3)c2cc1C(F)(F)F
+CC(C)n1nnc2cc(ccc12)C(O)=O
+OC1(CCN(CCCC(c2ccc(F)cc2)c2ccc(F)cc2)CC1)c1ccc(Cl)c(c1)C(F)(F)F
+COc1cccc(CCc2ccccc2OCC[C@@H]2C[C@@H](O)CN2C)c1
+FC(F)(F)c1sc(cc1-c1ccccc1)-c1nc(no1)-c1cccc(c1)C(F)(F)F
+C[C@H](NC(=O)C(=C\c1ccc(O)c(O)c1)\C#N)c1ccccc1
+CCc1ccc(OCc2ccccc2C(=O)Nc2ccc3nc(C)cc(N)c3c2)cc1
+CCCCC\C=C/C\C=C/C\C=C/CCCCC(O)=O
+C(CN1CCOCC1)Nc1cc2CCCc3ccccc3-c2nn1
+ONC(=O)CCCCCN1C(=O)c2cccc3cccc(C1=O)c23
+Clc1cccc2c(cccc12)S(=O)(=O)NCCCCCCc1ccccc1
+C(C1CCNCC1)c1c[nH]cn1
+NC(=O)c1sc(cc1N)-c1ccsc1
+Cc1nnc2CN=C(c3cc(CCC(=O)N4CCOCC4)sc3-n12)c1ccccc1Cl
+Clc1ccc(cc1)C(=O)N[C@H]1CN2CCC1CC2
+CC\C=C/C\C=C/C\C=C/CCCCCCCC(O)=O
+COc1cc(cc(OC)c1OC)C(=O)NCc1ccc(OCCN(C)C)cc1
+CCc1ccccc1OC[C@@H](O)CN[C@H]1CCCc2ccccc12
+OC(=O)Cn1c(cc2ccccc12)C(=O)Nc1nc(cs1)-c1ccccc1Cl
+COC(=O)CN1CN(c2ccccc2)C3(CCN(Cc4ccc5ccccc5c4)CC3)C1=O
+Cc1cc(C)c(N(Cc2ccccc2)S(=O)(=O)c2ccc(OCCNC(=O)c3cc4ccccc4o3)cc2)c(c1)C(=O)NO
+Clc1ccc2nc(NC(=O)Cc3ccccc3)n3nc(nc3c2c1)-c1ccco1
+CC[C@]1(CCCN2CCc3c4[C@@H]21)C[C@](O)(C(=O)OC)n4c5ccccc35
+CN1CC(=O)N=C1NC(=O)Nc1cccc(Cl)c1
+Cc1nc2ccc(NC(=O)Nc3ccnc4cccnc34)cc2o1
+COc1cccc(NC(=O)C=Cc2ccc(Cl)cc2)c1
+CCCN(CC1CC1)c1nc(C)nc(Nc2c(Cl)cc(Cl)cc2Cl)c1Cl
+Cc1cccc(C)c1NC(=O)CN1CCN(CCCC(c2ccc(F)cc2)c2ccc(F)cc2)CC1
+Cc1cc(C)c(\C=C2/C(=O)Nc3ccccc23)[nH]1
+Cc1ccc-2c(Cc3c(nn(c-23)-c2ccc(Cl)cc2Cl)C(=O)NN2CCCCC2)c1
+Cc1ccc(cc1)C(=O)Cn1c2CCCCc2sc1=N
+COc1ccc(Cl)cc1NC(=O)Nc1cc(C)nc2ccccc12
+Cc1cc(F)c(Nc2ncnc3cc(OCc4ccccc4)ccc23)cc1O
+CCCCCCCCCCCCCCCC(=O)NCCO
+COc1ccc(CNC(=O)C=Cc2ccc3[nH]cc(CCN(C)C)c3c2)cc1
+CCn1c2ccccc2n(C2=C(CO)CN(CC3CCCCCCC3)CC2)c1=O
+OCCN1CCN(CC\C=C2\c3ccccc3Sc3ccc(cc23)C(F)(F)F)CC1
+CN([C@H](CN1CCCC1)c1ccccc1)C(=O)Cc1ccc(Cl)c(Cl)c1
+CCN(CC)CCNC(=O)c1ccc(N)cc1
+CSc1nc(NC2CCCC2)c(c(NC2CCCC2)n1)[N+]([O-])=O
+Oc1ccc(NC2=C(C(=O)NC2=O)c2ccccc2[N+]([O-])=O)cc1Cl
+C(COCc1ccccc1)Cc1cnc[nH]1
+Cn1ccc2cc(NC(=O)Nc3cccnc3)ccc12
+CC(C)[C@H]1c2ccc(F)cc2CC[C@@]1(CCN(C)CCCc1nc2ccccc2[nH]1)OC(=O)C1CC1
+CCCCNC(=O)NS(=O)(=O)c1ccc(C)cc1
+CN1CCN(CC(=O)N2c3ccccc3C(=O)Nc3cccnc23)CC1
+Cc1ccc(cc1)N(CC1=NCCN1)c1cccc(O)c1
+COc1c(C)c2COC(=O)c2c(O)c1C\C=C(/C)CCC(=O)OCCN1CCOCC1
+Cc1[nH]c(\C=C2/C(=O)Nc3ccc(cc23)S(=O)(=O)Cc2c(Cl)cccc2Cl)c(C)c1C(=O)N1CCC[C@@H]1CN1CCCC1
+COc1ccc(cc1)CN(CCN(C)C)c1ccccn1
+CNC(=O)c1ccc2cc(ccc2c1)C1(O)CCn2cncc12
+Cc1c(C)c2OC(C)(COc3ccc(CC4SC(=O)NC4=O)cc3)CCc2c(C)c1O
+C(C(C1CCCCC1)C1CCCCC1)C1CCCCN1
+CCc1c2Cn3c(cc4c(COC(=O)C4(O)CC)c3=O)-c2nc5ccc(O)cc15
+CC(CN1c2ccccc2Sc2ccccc12)N(C)C
+CCC(C)SSc1ncc[nH]1
+CS(=O)CCCCN=C=S
+COc1ccc(cc1)C(=O)CC1(O)C(=O)Nc2c1c(Cl)ccc2Cl
+CN1C2N(CCc3c2[nH]c2ccccc32)C(=O)c2ccccc12
+Cc1ccc2N=C3N(CCC3(O)C(=O)c2c1)c1ccccc1
+OCc1ccc(s1)-c1ccc(o1)-c1ccc(CO)s1
+Fc1ccc(cc1)C(CCCN1CCC(CC1)n1c2ccccc2[nH]c1=O)c1ccc(F)cc1
+C1CC1C(NC1=NCCO1)C1CC1
+COc1cc(N)c(Cl)cc1C(=O)OCCCN1CCCCC1
+Fc1ccc(Cc2n[nH]c(=O)c3ccccc23)cc1C(=O)N1CCN(CC1)C(=O)C1CC1
+C\C(=C/C(=O)Nc1ccccc1C(O)=O)c1ccc2ccccc2c1
+C1CN(CCN1)c1ccc(cc1)-c1cnc2c(cnn2c1)-c1ccnc2ccccc12
+Clc1cccc(Cl)c1C(=O)NCc2ccc3OCOc3c2
+Brc1ccc2ncnc(NCC=C)c2c1
+NC(=O)c1cccc(N)c1
+CN(C)CC(=O)Nc1ccc2[nH]c(=O)c3ccccc3c2c1
+Cn1c2cnc3ccc(cc3c2n(-c2ccc(cc2)C(C)(C)C#N)c1=O)-c1cnc2ccccc2c1
+Oc1nc(nc2CCSCc12)-c1ccc(cc1)C(F)(F)F
+C[C@]1(CCCN1c1nc(Nc2cc(n[nH]2)C2CC2)c2cccn2n1)C(=O)Nc1ccc(F)nc1
+COC(=O)C1=C(C)NC(C)=C([C@H]1c1ccccc1C(F)(F)F)[N+]([O-])=O
+OCC1(CO)N2CCC(CC2)C1=O
+Oc1ccc(CCC(=O)c2c(O)cc(O)cc2O)cc1
+CN(C)c1ccc2nc3ccc(cc3[s+]c2c1)N(C)C
+CCC(CC)CC1(CCCCC1)C(=O)Nc1ccccc1SC(=O)C(C)C
+C[C@H]1CN(C[C@@H](C)O1)c1ccc(NC(=O)c2cccc(-c3ccc(OC(F)(F)F)cc3)c2C)cn1
+COc1cc(Nc2ncc(F)c(Nc3ccc4OC(C)(C)C(=O)Nc4n3)n2)cc(OC)c1OC
+CS(=O)(=O)c1ccc(cc1)[C@@H](CC1CCCC1)C(=O)Nc1nccs1
+CCC[C@H](Nc1nc(ncc1C)-c1ccc(NC(=O)NCC)c(OC)c1)c1cccnc1
+OC(=O)c1ccc(cc1)c2ccc3cc(c(O)cc3c2)C4(CC5CC6CC(C5)C4)C6
+CC(C)Cn1cnc2c(N)nc3ccccc3c12
+C[C@H]1[C@H]2[C@H](Cc3ccccc3)NC(=O)[C@]22OC(=O)\C=C\[C@H](O)CCC[C@@H](C)C\C=C\[C@H]2[C@H](O)C1=C
+CC(C)c1ccccc1Cc1cc(C(=O)Nc2ccc(cc2)S(=O)(=O)c2ccccc2C(C)(C)C)c(O)c(O)c1O
+CC(Oc1ccc(O)cc1)(P(O)(O)=O)P(O)(O)=O
+OC(=O)c1ccc2cc(ccc2c1)-c1ccc(O)c(c1)C12CC3CC(CC(C3)C1)C2
+Cc1ccc(\C=N\NC(=O)c2ccccc2Oc2ccccc2)o1
+Nc1ncnc2n([C@@H]3O[C@H](COCc4ccc(cc4)C#N)[C@@H](O)[C@H]3O)c(NCc3ccc(Cl)c(Cl)c3)nc12
+Oc1ccc(cc1)\C=C\C(=O)c1ccc(O)cc1O
+Cc1cc(cc2[nH]c(nc12)-c1c(NC[C@@H](O)c2cccc(Cl)c2)cc[nH]c1=O)N1CCOCC1
+COc1ccc(Cl)cc1C(=O)NCCc2ccc(cc2)S(=O)(=O)NC(=O)NC3CCCCC3
+CN(C)C(=O)n1nnnc1Cc1ccc(cc1)-c1ccccc1
+CC(C)(C)Sc1c(CC(C)(C)C(O)=O)n(Cc2ccc(Cl)cc2)c2ccc(OCc3ccc4ccccc4n3)cc12
+Cc1ccc(cc1)S(=O)(=O)OCC(=O)Nc1ccc(C(O)=O)c(O)c1
+CCNC(=O)c1noc(c1-c1ccc(CN2CCOCC2)cc1)-c1cc(C(C)C)c(O)cc1O
+OC(C1CCN(CC1)C(=O)Oc1ccc(cc1)[N+]([O-])=O)(c1ccc2OCOc2c1)c1ccc2OCOc2c1
+Clc1ccc(OCCCCCC\N=C(\NC#N)Nc2ccncc2)cc1
+Ic1cnc(Nc2cccc(NC(=O)N3CCCC3)c2)nc1NCCCNC(=O)c1cccs1
+Cc1nc2c(O)cccc2c(=O)[nH]1
+NC(=O)Nc1sc(cc1C(N)=O)-c1ccc(F)cc1
+C\C=C\C\C=C\CCC(=O)[C@H]1O[C@H]1C(N)=O
+CN(C)C(=O)c1ccc(cc1)S(=O)(=O)c1ccc(NC(=O)[C@@](C)(O)C(F)(F)F)c(Cl)c1
+COc1cc2nccc(Oc3ccc(NC(=O)Nc4cc(C)on4)c(Cl)c3)c2cc1OC
+O=C(NC1CC1)c2cc(on2)c3cccs3
+CN1CCN(CC1)c1ccc(Nc2ncc3c(n2)n(-c2cccc(n2)C(C)(C)O)n(CC=C)c3=O)cc1
+CN(C)CC[C@H](CSc1ccccc1)Nc1ccc(cc1[N+]([O-])=O)S(=O)(=O)NC(=O)c1ccc(cc1)N1CCN(Cc2ccccc2-c2ccc(Cl)cc2)CC1
+CCCS(=O)(=O)Nc1ccc(F)c(C(=O)c2c[nH]c3ncc(cc23)-c2ccc(Cl)cc2)c1F
+S=C=NCCc1ccccc1
+C[C@@H](NC(=O)[C@@H](NC(=O)[C@H](CCCc1ccc(c(C)c1)-c1ccccc1)CC(=O)NO)C(C)(C)C)c1ccccc1
+O=C(NCCCCC1CCN(CC1)C(=O)c1ccccc1)\C=C\c1cccnc1
+Cn1cc(C2=C(C(=O)NC2=O)c2ccc(Cl)cc2Cl)c2ccccc12
+O=C(Nc1cccc2cccnc12)c1ccc(cc1)N1C(=O)[C@H]2[C@@H]3C[C@@H](C=C3)[C@H]2C1=O
+Oc1cc(ccc1NC(=O)Nc1ccccc1Br)[N+]([O-])=O
+COc1cccc(-c2cc(=O)c3ccccc3o2)c1N
+Cn1cncc1[C@@](N)(c1ccc(Cl)cc1)c1ccc2n(C)c(=O)cc(-c3cccc(Cl)c3)c2c1
+c1cc(ccn1)-c1sc(c(c1-c1ccncc1)-c1ccncc1)-c1ccncc1
+COc1ccc2c3C[C@@H]4N([C@@H](CC(C)C)c3[nH]c2c1)C(=O)[C@H](CCC(=O)OC(C)(C)C)NC4=O
+CC[C@H]1N(C2CCCC2)c2nc(Nc3ccc(cc3OC)C(=O)NC3CCN(C)CC3)ncc2N(C)C1=O
+COc1ccc(cc1CO)-c1ccc2c(nc(nc2n1)N1C[C@H](C)O[C@H](C)C1)N1CCOCC1
+NS(=O)(=O)OC[C@@H]1C[C@H](C[C@@H]1O)n1ccc2c(N[C@H]3CCc4ccccc34)ncnc12
+Oc1cccc(c1)-c1nc(N2CCOCC2)c2oc3ncccc3c2n1
+NC1(CCC1)c1ccc(cc1)-c1nc2ccn3c(n[nH]c3=O)c2cc1-c1ccccc1
+OCCSC1=C(SCCO)C(=O)c2ccccc2C1=O
+C[C@@H]1CC[C@@]2(CC[C@]3(C)C(=CC[C@@H]4[C@@]5(C)CC[C@H](O)C(C)(C)[C@@H]5CC[C@]43C)[C@@H]2[C@H]1C)C(=O)O
+CC1=NN(C(=O)C\1=C\c1ccc(o1)-c1cc(C)c(C)cc1[N+]([O-])=O)c1ccc(cc1)C(O)=O
+FC(F)(F)c1ccc(Oc2cccc(CC3CCN(CC3)C(=O)Nc3cccnc3)c2)nc1
+COc1ccc(C=CC(=O)CC(=O)C=Cc2cccc(O)c2OC)cc1O
+COc1ccc(cc1CO)-c1ccc2c(nc(nc2n1)N1CCOC[C@@H]1C)N1CCOC[C@@H]1C
+CNc1nc(cc(n1)-c1ccc2c(N)n[nH]c2c1)N1C[C@H](CC[C@H]1C)C(=O)NC1CCCCC1
+CCN(CC)CCCCN1c2ccccc2Oc2ccc(Cl)cc12
+Oc1ccc(C[C@@H]2N3[C@H](CN(Cc4cccc5ccccc45)C2=O)N(CCC3=O)C(=O)NCc2ccccc2)cc1
+OCCn1cc(cn1)-c1cnc2nnn(Cc3ccc4ncccc4c3)c2n1
+CN(C)c1cccc(c1)C(=O)Nc1ccc(C)c(NC(=O)c2ccc(O)cc2)c1
+COc1cc2c(NC3CCN(C)CC3)nc(nc2cc1OCCOCCN(C)C)N1CCCN(C)CC1
+Oc1ccc(Cl)cc1C(=O)Nc1cc(cc(c1)C(F)(F)F)C(F)(F)F
+NC(=O)[C@H]1CCCc2c1[nH]c1ccc(Cl)cc21
+COC(=O)c1c(C)[nH]c(C)c1C(=O)c1ccccc1Cc1ccccc1
+Oc1ccc(cc1)\C=C\c1cc(O)cc(O)c1
+Cn1cnc(=N)c2nc[nH]c12
+CN(NC(=O)CC(=O)NN(C)C(=S)c1ccccc1)C(=S)c1ccccc1
+CC1(C)CCC(=C(CN2CCN(CC2)c2ccc(cc2)C(=O)NS(=O)(=O)c2ccc(N[C@H](CCN3CCOCC3)CSc3ccccc3)c(c2)S(=O)(=O)C(F)(F)F)C1)c1ccc(Cl)cc1
+CNC(=O)[C@H](Cc1ccccc1)NC(=O)[C@H](CC(C)C)[C@H](CSc1cccs1)C(=O)NO
+O=C(Nc1ccccc1)N2CCC(Cc3cnc4ccccc4c3)CC2
+O=C(CCCCCCCn1cc(nn1)-c1cccnc1)Nc1ccccc1-c1ccccc1
+Cc1ccc(NCCCc2ccccc2)c(N)c1
+C[C@@]1(CCCN1)c1nc2c(cccc2[nH]1)C(N)=O
+CCCCCCCCCCC(C)(C)C(=O)Nc1c(OC)cc(OC)cc1OC
+CNCc1ccc(cc1)-c1[nH]c2cc(F)cc3C(=O)NCCc1c23
+CC(C)(C)c1ccc2cc(C#N)c(C#N)cc2c1
+COc1cc2ncn(-c3cc(OCc4ccccc4C(F)(F)F)c(s3)C(N)=O)c2cc1OC
+COc1ccc(cc1)S(=O)(=O)Nc1cccnc1Nc1ccc(O)cc1
+CC(C)C[C@H]([C@H](O)C(=O)NO)C(=O)N[C@H](C(=O)OC1CCCC1)c1ccccc1
+CCCCC(C)(C)[C@H](O)\C=C\[C@H]1[C@H](O)CC(=O)[C@@H]1C\C=C/CCCC(O)=O
+Oc1c(CC=C)cccc1\C=N\NC(=O)CN1CCN(Cc2ccccc2)CC1
+CCOc1cc(cc(Cl)c1OCC(=O)OC)\C=C1C(=O)N(N=C/1C)c1ccccc1
+CCCCCCCCc1ccc(cc1)-c1ccc(cc1)C(O)=O
+Cc1cnc(Nc2ccc(F)cc2Cl)nc1-c1c[nH]c(c1)C(=O)N[C@H](CO)c1cccc(Cl)c1
+COC(=O)C1=C(C)NC(C)=C(C1c1ccccc1[N+]([O-])=O)C(=O)OC
+Cc1cnc(Nc2ccc(OCCN3CCCC3)cc2)nc1Nc1cccc(c1)S(=O)(=O)NC(C)(C)C
+CC(C)c1c(O)c(O)c(C=O)c2c(O)c(c(C)cc12)-c1c(C)cc2c(C(C)C)c(O)c(O)c(C=O)c2c1O
+Ic1cc(ncn1)-c1ccccc1
+CNC(=O)c1ccc(cc1F)N1C(=S)N(C(=O)C1(C)C)c1ccc(C#N)c(c1)C(F)(F)F
+Cc1ccc(/C=C/2\CNC/C(=C/c3ccc(C)cc3)/C2=O)cc1
+CCOc1cc2ncc(C#N)c(Nc3ccc(OCc4ccccn4)c(Cl)c3)c2cc1NC(=O)\C=C\CN(C)C
+OC(=O)[C@H](Cc1c[nH]c2ccccc12)N1C(=O)c2ccccc2C1=O
+O=C(CN1C2=NCCN2c2ccccc12)c1ccc(cc1)-c1ccccc1
+OC(=O)C(=O)CBr
+CN(C)Cc1ccc(cc1)-c1nc2cccc3C(=O)NCCn1c23
+OC(=O)CCc1ccc(NCc2cccc(Oc3ccccc3)c2)cc1
+Oc1c(CN2CCCC2)cc(COCc3ccccc3)c4cccnc14
+COc1ccc(cc1)C2CC(=NN2c3ccc(cc3)S(=O)(=O)N)c4ccccc4
+CCc1oc2ccccc2c1C(=O)c1cc(Br)c(O)c(Br)c1
+Cc1csc(NC(=O)CSc2ccc(nn2)c3ccccc3)n1
+CCOc1ccc(NC(=S)N2CCC(CC2)C(O)(c3ccccc3)c4ccccc4)cc1
+C(Nc1nc(nnc1-c1ccccc1)-c1ccccn1)c1ccc(cc1)-c1ccccc1
+CN1CCc2c(C1)c1cc(C)ccc1n2CCc1ccc(C)nc1
+FC(F)(F)c1cccc(c1)N1CCN(CC1)c1cc(=O)n(C2CCCCC2)c(=O)[nH]1
+CC(Cc1ccc(O)c(O)c1)(NN)C(=O)O
+Cc1noc(NS(=O)(=O)c2ccc(NC(=O)c3cc(nc4c(C)cc(C)cc34)c5ccccn5)cc2)c1C
+COC(=O)[C@@H](N1CCc2sccc2C1)c1ccccc1Cl
+NCc1ccc(cc1)S(N)(=O)=O
+Nc1nc2n(COCCO)cnc2c(=O)[nH]1
+C[C@H]1C[C@H]2[C@@H]3CC[C@](O)(C(=O)CO)[C@@]3(C)C[C@H](O)[C@@H]2[C@@]4(C)C=CC(=O)C=C14
+CN1CCc2cc(Cl)c(O)cc2[C@H](C1)c1ccccc1
+Nc1[nH]nc2nnc(cc12)-c1c(nn2ccccc12)-c1ccccc1
+NNCCc1ccccc1
+CCOC(=O)C(C)Oc1cccc2c1ccn(CC(=O)Nc1ccc3OCCOc3c1)c2=O
+COc1ccc2nc([nH]c2c1)S(=O)Cc1ncc(C)c(OC)c1C
+OC(=O)c1ccc(O)c2ncccc12
+CC[N+](C)(CC)CCOC(=O)C(O)(C1CCCCC1)c1ccccc1
+CCCCN1CCCC1CNC(=O)c1cc(C#N)c2ccccc2c1OC
+CC(C)(C)C(O)/C=C/c1ccc2OCOc2c1
+[O-][N+](=O)c1cccc2cn[nH]c12
+O=C1N(C[C@H]2CCCc3cccc1c23)[C@@H]1CN2CCC1CC2
+CN1[C@H]2CCC[C@@H]1C[C@@H](C2)NC(=O)c3nn(C)c4ccccc34
+CCCc1nc(C)c2n1nc([nH]c2=O)-c1cc(ccc1OCC)S(=O)(=O)N1CCN(CC)CC1
+CN1CCC(CC1)=C1c2ccccc2C=Cc2ccccc12
+NC(=O)c1cccnc1
+C[C@@H]1C[C@H]2[C@@H]3CCC4=CC(=O)C=C[C@]4(C)[C@@]3(F)[C@@H](O)C[C@]2(C)[C@H]1C(=O)CO
+Oc1cc2CC[C@H]3NCc4ccccc4[C@@H]3c2cc1O
+COc1cc(C)nn1-c1nc(C)cc(OC)n1
+CCCN1CCCC[C@H]1C(=O)Nc1c(C)cccc1C
+CC(C)(C#N)c1cc(Cn2cncn2)cc(c1)C(C)(C)C#N
+CN(C)CCc1c[nH]c2ccc(C[C@H]3COC(=O)N3)cc12
+Cc1ccc(CNc2ncnc3ccc(cc23)-c2ccc(CO)o2)o1
+CN(C)CC/C=C\1/c2ccccc2COc3ccc(CC(=O)O)cc13
+C[C@H]1CN(CCCn2c3ccccc3c3ccccc23)C[C@@H](C)N1
+C[C@]12C[C@H](O)[C@H]3[C@@H](CCC4=CC(=O)CC[C@]34C)[C@@H]1CC[C@@H]2C(=O)CO
+CCOC(=O)c1cncn1[C@H](C)c1ccccc1
+Nc1nc(Cl)nc2n(cnc12)[C@@H]3O[C@H](CO)[C@@H](O)[C@H]3O
+CCN(CC)CC1CCCCN1CC(=O)N1c2ccccc2C(=O)Nc2cccnc12
+C[C@H]1O[C@H](O[C@@H]2[C@@H](CO)O[C@H](O[C@@H]3[C@@H](CO)OC(O)[C@H](O)[C@H]3O)[C@H](O)[C@H]2O)[C@H](O)[C@@H](O)[C@@H]1N[C@H]1C=C(CO)[C@@H](O)[C@H](O)[C@H]1O
+CNC(=O)Oc1ccc2N(C)C3N(C)CC[C@@]3(C)c2c1
+CCOc1cc(N)c(Cl)cc1C(=O)NCC1CN(Cc2ccc(F)cc2)CCO1
+CCOC(=O)OC(C)OC1=C(N(C)S(=O)(=O)c2ccccc12)C(=O)Nc1ccccn1
+CC(N(O)C(N)=O)c1cc2ccccc2s1
+COc1ccc2n([Mg]n3c(nc4cc(OC)ccc34)S(=O)Cc5ncc(C)c(OC)c5C)c(nc2c1)S(=O)Cc6ncc(C)c(OC)c6C
+NC(N)=Nc1nc(CSCC\C(N)=N/S(N)(=O)=O)cs1
+CN[C@@H]1C[C@H](c2ccccc12)c1ccc(Cl)c(Cl)c1
+CC(=O)NCCCCCCNC(=O)C
+Cc1c(O)c(=O)ccn1C
+Clc1ccc(cc1)C(=O)NCCN1CCOCC1
+C[C@H]1COc2c(N3CCN(C)CC3)c(F)cc3c2n1cc(C(O)=O)c3=O
+CC(C)OC(=O)CCC\C=C/C[C@H]1[C@@H](O)C[C@@H](O)[C@@H]1CC[C@@H](O)CCc1ccccc1
+CCCCCCNC(=O)n1cc(F)c(=O)[nH]c1=O
+Cc1onc(c1-c1ccc(cc1)S(N)(=O)=O)-c1ccccc1
+CCC(=O)NS(=O)(=O)c1ccc(cc1)-c1c(C)onc1-c1ccccc1
+Clc1ccccc1C(c1ccccc1)(c1ccccc1)n1ccnc1
+NCCc1ccccn1
+Nc1nc2ccc(OC(F)(F)F)cc2s1
+CCCCC\N=C(/N)N\N=C\c1c[nH]c2ccc(OC)cc12
+C/N=C(\N)/NCCC[C@H](N)C(=O)O
+CN(C)CC[C@@H](c1ccc(Br)cc1)c2ccccn2
+OC(=O)COCCN1CCN(CC1)[C@H](c1ccccc1)c1ccc(Cl)cc1
+CC(=O)N1CCN(CC1)c1ccc(OC[C@H]2CO[C@@](Cn3ccnc3)(O2)c2ccc(Cl)cc2Cl)cc1
+O=c1n([se]c2ccccc12)-c1ccccc1
+CC(C)c1ccc2oc3nc(N)c(cc3c(=O)c2c1)C(O)=O
+CCN(CC)C(=S)SSC(=S)N(CC)CC
+CC(C)(C)NC(=O)[C@@H]1CN(Cc2cccnc2)CCN1C[C@@H](O)C[C@@H](Cc1ccccc1)C(=O)N[C@@H]1[C@H](O)Cc2ccccc12
+Oc1ncc(F)cn1
+CO[C@H]1O[C@@H]2O[C@@]3(C)CC[C@H]4[C@H](C)CC[C@@H]([C@H]1C)[C@@]24OO3
+CCOC(=O)O[C@@]1(CC[C@H]2[C@@H]3CCC4=CC(=O)C=C[C@]4(C)[C@H]3[C@@H](O)C[C@]12C)C(=O)OCCl
+FC(F)(F)[C@]1(OC(=O)Nc2ccc(Cl)cc12)C#CC1CC1
+OC[C@H]1O[C@@H](Oc2cc(O)cc(\C=C\c3ccc(O)cc3)c2)[C@H](O)[C@@H](O)[C@@H]1O
+CC(C)[C@H]1CC[C@@H](CC1)C(=O)N[C@H](Cc1ccccc1)C(O)=O
+CCCCC(=O)N(Cc1ccc(cc1)-c1ccccc1-c1nn[nH]n1)[C@@H](C(C)C)C(O)=O
+Cc1[nH]cnc1CN1CCc2c(C1=O)c1ccccc1n2C
+CN(C)CCOC(c1ccccc1)c1ccccc1
+CN1[C@H]2CC[C@@H]1C[C@@H](C2)OC(=O)c3c[nH]c4ccccc34
+CNS(=O)(=O)Cc1ccc2[nH]cc(CCN(C)C)c2c1
+CC(C)[C@H](NC(=O)N(C)Cc1csc(n1)C(C)C)C(=O)N[C@H](C[C@H](O)[C@H](Cc1ccccc1)NC(=O)OCc1cncs1)Cc1ccccc1
+CCN1CCC[C@H]1CNC(=O)c1cc(ccc1OC)S(N)(=O)=O
+Cc1ncc(n1CCO)[N+]([O-])=O
+CCN(CC)CC(=O)Nc1c(C)cccc1C
+CC(C)N(CC[C@H](c1ccccc1)c1cc(C)ccc1O)C(C)C
+CN(C)CCN(Cc1ccccc1)c1ccccn1
+CC[C@]1(O)C[C@H]2CN(C1)CCc1c([nH]c3ccccc13)[C@@](C2)(C(=O)OC)c1cc2c(cc1OC)N(C)[C@@H]1[C@]22CCN3CC=C[C@](CC)([C@@H]23)[C@@H](O)[C@]1(O)C(N)=O
+Cc1ccsc1C(=CCCN1CCC[C@H](C1)C(O)=O)c1sccc1C
+COc1ccc(CN2CCN(CC2)C(c2ccc(F)cc2)c2ccc(F)cc2)c(OC)c1OC
+CCCCCCCCCCC[C@@H](C[C@@H]1OC(=O)[C@H]1CCCCCC)OC(=O)[C@H](CC(C)C)NC=O
+CN1[C@H](C[C@H](O)c2ccccc2)CCC[C@@H]1CC(=O)c1ccccc1
+CC(=O)NC[C@H]1CN(C(=O)O1)c1ccc(N2CCOCC2)c(F)c1
+Nc1c2CCCc2nc2CCCCc12
+Cc1[nH]c(=O)c(cc1-c1ccncc1)C#N
+CN(C\C=C\C#CC(C)(C)C)Cc1cccc2ccccc12
+C[C@@H]1O[C@H](C[C@H](N)[C@@H]1O)O[C@H]1C[C@@](O)(Cc2c(O)c3C(=O)c4ccccc4C(=O)c3c(O)c12)C(C)=O
+CSc1nc2cc(Cl)c(Oc3cccc(Cl)c3Cl)cc2[nH]1
+CC[C@]1(O)C[C@@H]2CN(C1)CCc3c([nH]c4ccccc34)[C@@](C2)(C(=O)OC)c5cc6c(cc5OC)N(C=O)[C@@H]7[C@@]86CCN9CC=C[C@](CC)([C@H]98)[C@@H](OC(=O)C)[C@]7(O)C(=O)OC
+CN(CCCN1c2ccccc2CCc2ccccc12)CC(=O)c1ccc(Cl)cc1
+CCOC(=O)N1CCC(CC1)=C1c2ccc(Cl)cc2CCc2cccnc12
+CCCc1nc(c(C(O)=O)n1Cc1ccc(cc1)-c1ccccc1-c1nn[nH]n1)C(C)(C)O
+O=C1[C@H]2CCCC[C@H]2C(=O)N1CCCCN1CCN(CC1)c1nsc2ccccc12
+CN(CCOc1ccc(NS(C)(=O)=O)cc1)CCc1ccc(NS(C)(=O)=O)cc1
+N[C@@H]1CONC1=O
+CN1CCN(Cc2ccc(cc2)C(=O)Nc2ccc(C)c(Nc3nccc(n3)-c3cccnc3)c2)CC1
+COc1cc(OC)cc(/C=C/c2ccc(O)cc2)c1
+Nc1nnc(c(N)n1)-c1cccc(Cl)c1Cl
+O[C@@H]1[C@H](Oc2cc(O)cc(O)c2C1=O)c1ccc(O)c(O)c1
+[O-][N+](=O)OCCNC(=O)c1cccnc1
+Oc1ccc(cc1CC=C)-c1cc(CC=C)ccc1O
+CCOC(=O)c1ncn-2c1CN(C)C(=O)c1cc(F)ccc-21
+OC[C@@H]1CC[C@@H](O1)n1cnc2c(O)ncnc12
+C[C@H](N[C@@H](CCc1ccccc1)C(O)=O)C(=O)N1CCC[C@H]1C(O)=O
+CCN(CC)Cc1ccc2cc(COC(=O)Nc3ccc(cc3)C(=O)NO)ccc2c1
+C1[C@H]2CNC[C@@H]1c1cc3nccnc3cc21
+COc1cc2nc(nc(NC3CCN(Cc4ccccc4)CC3)c2cc1OC)N1CCCN(C)CC1
+Cc1cccc(c1)C(=O)NCN1CCN(CC1)c1ccccc1C#N
+C[C@H]1CCC[C@@]2(C)O[C@H]2C[C@H](OC(=O)C[C@H](O)C(C)(C)C(=O)[C@H](C)[C@H]1O)C(\C)=C\c1csc(C)n1
+COc1ccc(cc1)c2noc(CC(=O)O)c2c3ccc(OC)cc3
+Oc1cc(O)c2C[C@@H](OC(=O)c3cc(O)c(O)c(O)c3)[C@H](Oc2c1)c1cc(O)c(O)c(O)c1
+COC(=O)c1ccc2n(CCCc3ccccc3)c(NC(=O)c4ccccc4)nc2c1
+O=C1c2ccccc2-c3c(NCCc4ccccc4)c(=O)[nH]c5cccc1c35
+CCN(CCO)CCCOc1ccc2c(Nc3cc(CC(=O)Nc4cccc(F)c4)[nH]n3)ncnc2c1
+CC1=C(C(CC(=O)N1)c1ccc(cc1)C(F)(F)F)C(=O)Nc1cc2cn[nH]c2cc1F
+CC(OC(=O)Nc1c(C)noc1-c1ccc(CSCCC(O)=O)cc1)c1ccccc1Cl
+CCCCS(=N)(=O)CC[C@H](N)C(O)=O
+CCc1cc(Nc2nccc(n2)-c2c(nc3ccccn23)-c2ccc(OC)c(c2)C(=O)Nc2c(F)cccc2F)c(OC)cc1N1CCC(CC1)N1CCN(CC1)S(C)(=O)=O
+Fc1ccc(C(=O)NOCC2CC2)c(Nc2ccc(I)cc2Cl)c1F
+CO[C@@H](C(=O)N1Cc2[nH]nc(NC(=O)c3ccc(cc3)N3CCN(C)CC3)c2C1)c1ccccc1
+CN(C)c1ccccc1CN1CCCN(Cc2ccccc2N(C)C)C1c1ccncc1
+Nc1nc(Nc2ccc(cc2)S(N)(=O)=O)nn1C(=O)c1c(F)cccc1F
+ONC(=O)CCCCCCC(=O)Nc1cccnc1
+Clc1cccc(Cl)c1C(=O)Nc1c[nH]nc1C(=O)NC1CCNCC1
+COC1=CC(=N\C\1=C/c1[nH]c(C)cc1C)c1cc2ccccc2[nH]1
+CCCS(=O)(=O)Nc1ccc(F)c(C(=O)c2c[nH]c3ncc(Cl)cc23)c1F
+ONC(=O)\C=C\c1cccc(c1)S(=O)(=O)Nc1ccccc1
+N[C@@H](CC(=O)N1CCn2c(C1)nnc2C(F)(F)F)Cc1cc(F)c(F)cc1F
+CN1CCN(CCOc2cc(OC3CCOCC3)c3c(Nc4c5OCOc5ccc4Cl)ncnc3c2)CC1
+COCC[n+]1c(C)n(Cc2cnccn2)c2c1C(=O)c1ccccc1C2=O
+C\C1=C/CC[C@@]2(C)O[C@@H]2[C@H]2OC(=O)C(=C)[C@@H]2CC1
+CNC(=O)c1ccccc1Sc1ccc2c(\C=C\c3ccccn3)n[nH]c2c1
+C[C@@H]1CCN(C[C@@H]1N(C)c1ncnc2[nH]ccc12)C(=O)CC#N
+COc1nc(C)cnc1NS(=O)(=O)c1cccnc1-c1ccc(cc1)-c1nnco1
+Cc1nc(Nc2ncc(s2)C(=O)Nc2c(C)cccc2Cl)cc(n1)N1CCN(CCO)CC1
+OC[C@@H](O)CONC(=O)c1ccc(F)c(F)c1Nc1ccc(I)cc1F
+COc1c(C)cnc(Cn2cnc3c(Cl)nc(N)nc23)c1C
+CN(C)CCN1C(=O)c2cccc3cc(N)cc(C1=O)c23
+CCCCCOC(=O)Nc1nc(=O)n(cc1F)[C@@H]1O[C@H](C)[C@@H](O)[C@H]1O
+FC(F)c1nc2ccccc2n1-c1nc(nc(n1)N1CCOCC1)N1CCOCC1
+Nc1nc(N)c2nc(-c3cccc(O)c3)c(nc2n1)-c1cccc(O)c1
+CC(C)[C@@H](N(CCCN)C(=O)c1ccc(C)cc1)c1nc2cc(Cl)ccc2c(=O)n1Cc1ccccc1
+CN(C)C\C=C\C(=O)Nc1cc2c(Nc3ccc(F)c(Cl)c3)ncnc2cc1O[C@H]1CCOC1
+Clc1cccc(NC(=O)Nc2ncc(CCNc3ncnc4ccsc34)s2)c1
+COCC(=O)NC\C=C\c1ccc2ncnc(Nc3ccc(Oc4ccc(C)nc4)c(C)c3)c2c1
+OCCCNc1cc(ccn1)c2ccnc(Nc3cccc(Cl)c3)n2
+Nc1ncn([C@H]2C[C@H](O)[C@@H](CO)O2)c(=O)n1
+CC(=O)Nc1ccc(OC[C@](C)(O)C(=O)Nc2ccc(c(c2)C(F)(F)F)[N+]([O-])=O)cc1
+CN1CC[C@@H]([C@H](O)C1)c1c(O)cc(O)c2c1oc(cc2=O)-c1ccccc1Cl
+COc1cc2c(ncnc2cc1OCCCN1CCCCC1)N1CCN(CC1)C(=O)Nc1ccc(OC(C)C)cc1
+CN(Cc1ccc2[nH]c(C)nc(=O)c2c1)c1ccc(s1)C(=O)N[C@@H](CCC(O)=O)C(O)=O
+C[C@@H](Oc1cc(sc1C(N)=O)-n1cnc2ccc(CN3CCN(C)CC3)cc12)c1ccccc1C(F)(F)F
+NC(=O)c1cccc(c1)-c1cc(Nc2ccc(OC(F)(F)F)cc2)ncn1
+CCN(CC)CCCCNc1ncc2cc(-c3cc(OC)cc(OC)c3)c(NC(=O)NC(C)(C)C)nc2n1
+CC1(C)CNc2cc(NC(=O)c3cccnc3NCc3ccncc3)ccc12
+Cc1cn(cn1)-c1cc(NC(=O)c2ccc(C)c(Nc3nccc(n3)-c3cccnc3)c2)cc(c1)C(F)(F)F
+CCCc1c(OCCCOc2ccc(OCC(O)=O)cc2)ccc(C(C)=O)c1O
+CC(Nc1ccccc1)c1cc(C)cn2c1nc(cc2=O)N1CCOCC1
+CNC(=O)Nc1ccc(cc1)-c1nc(N2CC3CCC(C2)O3)c2cnn(C3CCC4(CC3)OCCO4)c2n1
+CC(=O)NC1=NN(C(C)=O)C(C)(S1)c1ccccc1
+O=c1cc(oc2c(cccc12)-c1cccc2c3ccccc3sc12)N1CCOCC1
+CN(C)CCOc1ccc(cc1)-c1nc(c([nH]1)-c1ccc2c(CC\C2=N\O)c1)-c1ccncc1
+COc1cc(ccc1Nc1ncc2N(C)C(=O)c3ccccc3N(C)c2n1)C(=O)N1CCC(CC1)N1CCN(C)CC1
+Oc1ccc(cc1)-c1cc(=O)c2c(O)cc(O)cc2o1
+CN(c1cccc(Cl)c1)S(=O)(=O)c1ccc2NC(=O)\C(=C/c3[nH]c(C)c(C(=O)N4CCN(C)CC4)c3C)c2c1
+O\N=C1/C(Nc2ccccc12)=C1/C(=O)Nc2cc(Br)ccc12
+Cc1ccc(NC(=O)c2cccc(c2)C(C)(C)C#N)cc1Nc1ccc2ncn(C)c(=O)c2c1
+CC(=O)Nc1ccc(NC(=S)NC(=O)c2ccc(cc2)C(C)(C)C)cc1
+C[C@@H](CN1CC(=O)NC(=O)C1)N1CC(=O)NC(=O)C1
+NC(=O)N(c1ccc(C(N)=O)c(n1)-c1ccc(F)cc1F)c1c(F)cccc1F
+O=C1NC(=O)c2cc(Nc3ccccc3)c(Nc3ccccc3)cc12
+CO[C@@H]1C[C@H](C[C@@H](C)[C@@H]2CC(=O)[C@H](C)\C=C(C)\[C@@H](O)[C@@H](OC)C(=O)[C@H](C)C[C@H](C)\C=C\C=C\C=C(C)\[C@H](C[C@@H]3CC[C@@H](C)[C@@](O)(O3)C(=O)C(=O)N3CCCC[C@H]3C(=O)O2)OC)CC[C@H]1OCCO
+Cc1cnc2c(NCCN)nc3ccc(C)cc3n12
+C[C@@H](O)[C@@H]1NC(=O)[C@H](CCCCN)NC(=O)[C@H](Cc2c[nH]c3ccccc23)NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](Cc2ccccc2)NC(=O)[C@H](CC(N)=O)NC(=O)[C@H](CCCCN)NC(=O)[C@H](CSSC[C@H](NC(=O)[C@H](CO)NC(=O)[C@@H](NC(=O)[C@H](Cc2ccccc2)NC1=O)[C@@H](C)O)C(O)=O)NC(=O)CNC(=O)[C@H](C)N
+Cc1nc(sc1CSc1ccc(OCC(O)=O)c(C)c1)-c1ccc(cc1)C(F)(F)F
+Nc1ccccc1NC(=O)c1ccc(CNc2nccc(n2)-c2cccnc2)cc1
+C[C@H](CCC(O)=O)[C@H]1CC[C@H]2[C@@H]3[C@H](O)C[C@@H]4C[C@H](O)CC[C@]4(C)[C@H]3CC[C@]12C
+C[C@H](CCC(=O)O)[C@H]1CC[C@H]2[C@@H]3CC[C@@H]4C[C@H](O)CC[C@]4(C)[C@H]3CC[C@]12C
+C[C@]12O[C@H](C[C@]1(O)CO)n1c3ccccc3c3c4C(=O)NCc4c4c5ccccc5n2c4c13
+O=c1cc(oc(c1)-c1cccc2Sc3ccccc3Sc12)N1CCOCC1
+C\C=C1/C(=O)C[C@H]2[C@@H]3CCC4=CC(=O)CC[C@]4(C)[C@H]3CC[C@]12C
+C[C@@H](O)COc1cn2ncnc(Oc3ccc4[nH]c(C)cc4c3F)c2c1C
+Clc1cc2NC(=O)Cc2cc1CCN1CCN(CC1)c1nsc2ccccc12
+CC(C)NCCCn1c(Sc2cc3OCOc3cc2I)nc2c(N)ncnc12
+CC1(C)CCC(C)(C)c2cc(NC(=O)c3ccc(cc3)C(O)=O)ccc12
+Clc1ccc(s1)C(=O)NC[C@H]1CN(C(=O)O1)c1ccc(cc1)N1CCOCC1=O
+Cc1cccc(n1)-c1[nH]c(nc1-c1ccc2nccnc2c1)C(C)(C)C
+C(c1c[nH]c2ccccc12)c1c[nH]c2ccccc12
+CCC(=O)N1CCN(CC1)c1ccc(cc1C(F)(F)F)-n1c2c(ccc1=O)cnc1ccc(cc21)-c1cnc2ccccc2c1
+C[C@H](CCC(O)=O)[C@H]1CC[C@H]2[C@@H]3CC[C@@H]4C[C@H](O)CC[C@]4(C)[C@H]3C[C@H](O)[C@]12C
+C[C@H](CCC(O)=O)[C@H]1CC[C@H]2[C@@H]3[C@H](O)C[C@@H]4C[C@H](O)CC[C@]4(C)[C@H]3C[C@H](O)[C@]12C
+CC(=O)[C@H]1CC[C@H]2[C@@H]3CC=C4C[C@@H](O)CC[C@]4(C)[C@H]3CC[C@]12C
+COc1cc(ccc1OCCCN1CCC(CC1)c1noc2cc(F)ccc12)C(C)=O
+Brc1cnc(Nc2cccc(NC(=O)N3CCCC3)c2)nc1NCCc1c[nH]cn1
+COc1cc(ccc1Nc1ncc(Cl)c(Nc2ccccc2S(=O)(=O)C(C)C)n1)N1CCC(CC1)N1CCN(C)CC1
+Fc1ccc(Nc2ncnc3cc(OCCCN4CCOCC4)c(NC(=O)C=C)cc23)cc1Cl
+CCOc1cc(ccc1Nc1ncc2N(C)C(=O)c3ccccc3N(C)c2n1)N1CCC(O)CC1
+CCOC(=O)Nc1ccc(NCc2ccc(F)cc2)nc1N
+CC(=O)c1c(C)c2cnc(Nc3ccc(cn3)N3CCNCC3)nc2n(C2CCCC2)c1=O
+CCc1nc(c(s1)-c1ccnc(NC(=O)c2ccccc2)c1)-c1cccc(C)c1
+CS(=O)(=O)N1CCN(Cc2cc3nc(nc(N4CCOCC4)c3s2)-c2cccc3[nH]ncc23)CC1
+CCN1CCN(CC1)C(=O)Cc1ccc(Nc2ncc(F)c(Nc3ccc(cc3)C(=O)Nc3ccccc3Cl)n2)cc1
+N#CC[C@H](C1CCCC1)n1cc(cn1)-c1ncnc2[nH]ccc12
+OCCN(CCc1c[nH]c2ccccc12)Cc1ccc(\C=C\C(=O)NO)cc1
+C[C@@H](Nc1ccccc1C(O)=O)c1cc(C)cn2c1nc(cc2=O)N1CCOCC1
+COc1cc(C)c(\C=C\C(C)=C\C=C\C(C)=C\C(O)=O)c(C)c1C
+FC1(F)Oc2ccc(cc2O1)\C=C1/SC(=O)NC1=O
+COc1cc2ncnc(Nc3ccc(F)c(Cl)c3)c2cc1OCCCN1CCOCC1
+CC(C)CC(=O)Nc1n[nH]c2c1CN(C(=O)C1CCN(C)CC1)C2(C)C
+COc1cc(ccc1Nc1ncc2N(C)C(=O)c3ccccc3N(C)c2n1)N1CCN(C)CC1
+CCCCCCCC\C=C/CCCCCCCC(=O)NCCO
+OCCn1cc(c(n1)-c1ccncc1)-c1ccc2c(CC\C2=N/O)c1
+Nc1ccc(cn1)-c1ccc2ncc3ccc(=O)n(-c4cccc(c4)C(F)(F)F)c3c2c1
+COCCOc1cc2ncnc(Nc3cccc(c3)C#C)c2cc1OCCOC
+COc1ccc(cc1)S(=O)(=O)N(C(C)=O)c1ccccc1\C=C\c1cc[n+]([O-])cc1
+O[C@@H](COc1cccc2ncccc12)CN1CCN(CC1)[C@@H]1c2ccccc2[C@@H]2[C@H](c3ccccc13)C2(F)F
+CN1CCN(Cc2ccc(cc2)C(=O)Nc2ccc(C)c(Nc3nc(cs3)-c3cccnc3)c2)CC1
+COc1cc(ccc1Nc1ncc(Cl)c(Oc2cccc(NC(=O)C=C)c2)n1)N1CCN(C)CC1
+CN1CCN(CC1)c1ccc(Nc2ncc(Cl)c(Oc3cccc(NC(=O)C=C)c3)n2)cc1
+C[C@@H](NCCCc1cccc(c1)C(F)(F)F)c1cccc2ccccc12
+Oc1nnc(Sc2ncc(s2)[N+]([O-])=O)n1-c1ccc2OCCOc2c1
+CN(c1ccc2c(C)n(C)nc2c1)c1ccnc(Nc2ccc(C)c(c2)S(N)(=O)=O)n1
+COC(=O)Nc1ccc(cc1)-c1nc(N2CCOCC2)c2cnn(C3CCN(CC3)C(=O)OC)c2n1
+C[C@H](CCCC(C)(C)O)[C@H]1CC[C@@H]2[C@]1(C)CCC\C2=C/C=C1/C[C@@H](O)CCC1=C
+C1CCC(CC1)Nc2nc(Nc3ccc(cc3)N4CCOCC4)nc5[nH]cnc25
+C[C@@H](Oc1cc(cnc1N)-c1cnn(c1)C1CCNCC1)c1c(Cl)ccc(F)c1Cl
+Cn1cc(C2=C(C(=O)NC2=O)c2cn(C3CCN(Cc4ccccn4)CC3)c3ccccc23)c2ccccc12
+CC(=O)N[C@@H](CSC\C=C(/C)CC\C=C(/C)CCC=C(C)C)C(O)=O
+C[C@H](CCC(=O)NCCS(=O)(=O)O)[C@H]1CC[C@H]2[C@@H]3[C@H](O)C[C@@H]4C[C@H](O)CC[C@]4(C)[C@H]3C[C@H](O)[C@]12C
+COc1nccc(n1)-c1c(ncn1[C@H]1CC[C@H](O)CC1)-c1ccc(F)cc1
+COc1cccc2C(=O)c3c(O)c4C[C@](O)(C[C@H](O[C@H]5C[C@H](N)[C@H](O[C@@H]6CCCCO6)[C@H](C)O5)c4c(O)c3C(=O)c12)C(=O)CO
+Cn1cc(CNCC2CCN(CC2)c2ncc(cn2)C(=O)NO)c2ccccc12
+CN1CCN(CC1)c1ccc2nc([nH]c2c1)-c1c(N)c2c(F)cccc2[nH]c1=O
+COc1cc2c(Oc3ccc4[nH]c(C)cc4c3F)ncnc2cc1OCCCN1CCCC1
+OC[C@@H](O)CNC(=O)c1ccncc1Nc1ccc(I)cc1F
+Fc1ccc(Sc2ccc3c(-c4c(Cl)cccc4Cl)c(=O)ncn3n2)c(F)c1
+NCCCC[C@H](NC(=O)[C@@H]1CCCN1C(=O)[C@@H]1CSSC[C@H](N)C(=O)N[C@@H](Cc2ccc(O)cc2)C(=O)N[C@@H](Cc2ccccc2)C(=O)N[C@@H](CCC(N)=O)C(=O)N[C@@H](CC(N)=O)C(=O)N1)C(=O)NCC(N)=O
+CC(C)(C)c1cc(NC(=O)Nc2ccc(cc2)-c2cn3c(n2)sc2cc(OCCN4CCOCC4)ccc32)no1
+COc1cccc2cc([nH]c12)-c1nc([C@@H]2CC[C@@H](CC2)C(O)=O)n2ncnc(N)c12
+Cc1ccc(cc1)S(=O)(=O)Nc1nc2ccccc2nc1Nc1ccc2nsnc2c1
+COC(=O)c1sccc1S(=O)(=O)Nc1ccc(Nc2ccccc2)cc1OC
+CS(=O)(=O)c1ccc(cc1)c2nc(c([nH]2)c3ccncc3)c4ccc(F)cc4
+CN(c1ncccc1CNc1nc(Nc2ccc3NC(=O)Cc3c2)ncc1C(F)(F)F)S(C)(=O)=O
+Cc1ccc(F)c(NC(=O)Nc2ccc(cc2)-c2cccc3[nH]nc(N)c23)c1
+COc1cc(Nc2c(cnc3cc(OCCCN4CCN(C)CC4)c(OC)cc23)C#N)c(Cl)cc1Cl
+CCN(CC)CCNC(=O)c1c(C)[nH]c(\C=C2/C(=O)Nc3ccc(F)cc23)c1C
+COC[C@H](N1CCN(C[C@@H]1C)C1(C)CCN(CC1)C(=O)c1c(C)ncnc1C)c1ccc(cc1)C(F)(F)F
+Clc1ccc(Cl)c(SCC(=O)N\N=C\c2ccc[nH]2)c1
+Nc1cc(nc(N)[n+]1[O-])N2CCCCC2
+Cc1ccc(cc1)S(=O)(=O)NC(=O)NN1CCCCCC1
+CN(C)C(=O)Oc1ccc[n+](C)c1
+C[C@H]1C[C@H]2[C@@H]3CC[C@](OC(=O)C)(C(=O)C)[C@@]3(C)CC[C@@H]2[C@@]4(C)CCC(=O)C=C14
+CCc1nc(N)nc(N)c1-c1ccc(Cl)cc1
+Nc1nc(N)c2nc(-c3ccccc3)c(N)nc2n1
+CC(C)NCC(O)COc1ccc(CC(N)=O)cc1
+CCCC(=O)Nc1ccc(OCC(O)CNC(C)C)c(c1)C(C)=O
+CN1CC(c2ccccc2)c2cccc(N)c2C1
+CCC(=O)O[C@@H](OP(=O)(CCCCc1ccccc1)CC(=O)N1C[C@@H](C[C@H]1C(O)=O)C1CCCCC1)C(C)C
+Cn1cc(cn1)-c1ccc2nnc(n2n1)C(F)(F)c1ccc2ncccc2c1
+OC(Cn1cncn1)(Cn1cncn1)c1ccc(F)cc1F
+Clc1ccc2nsnc2c1NC1=NCCN1
+O=C1NC(=O)\C(S1)=C\c1ccc2nccc(-c3ccncc3)c2c1
+COc1cc(OC)c(Cl)c2O[C@]3([C@H](C)CC(=O)C=C3OC)C(=O)c12
+Cc1ccc(cc1)C(=O)c1cc(O)c(O)c(c1)[N+]([O-])=O
+CC(=O)Oc1ccccc1C(O)=O
+Cc1cc(Cl)ccc1OCCCC(=O)NO
+Cc1ccnc2c1NC(=O)c1cccnc1N2C1CC1
+CCOc1ccc2ccccc2c1C(=O)N[C@H]1[C@H]2SC(C)(C)[C@@H](N2C1=O)C(O)=O
+NC(=O)c1cnccn1
+OC(=O)COc1ccc(C(=O)c2cccs2)c(Cl)c1Cl
+CC1=NN(C(=O)C1)c1ccccc1
+COC(=O)\C=C\c1cc(O)ccc1O
+NS(=O)(=O)c1cc2c(NCNS2(=O)=O)cc1C(F)(F)F
+CN(C)CCN(Cc1cccs1)c1ccccn1
+Nc1c(CC(O)=O)cccc1C(=O)c1ccc(Br)cc1
+N[C@]1(CS(=O)(=O)[C@H]2[C@@H]([C@@H]12)C(O)=O)C(O)=O
+Cc1ccc(Cl)c(Nc2ccccc2C(O)=O)c1Cl
+C[C@H](CS)C(=O)N1CCC[C@H]1C(O)=O
+CC1(C)S[C@@H]2[C@H](NC(=O)[C@H](N)c3ccc(O)cc3)C(=O)N2[C@H]1C(O)=O
+O=C1NC(=O)C(N1)(c1ccccc1)c1ccccc1
+NCC(=O)CCC(O)=O
+Nc1ccc(cc1)S(=O)(=O)c1ccc(N)cc1
+CCCCC(=O)O[C@H]1CC[C@H]2[C@@H]3CCc4cc(O)ccc4[C@H]3CC[C@]12C
+OC(=O)CCCc1ccccc1
+CCCCc1ncc(\C=C(/Cc2cccs2)C(O)=O)n1Cc1ccc(cc1)C(O)=O
+Brc1c(NC2=NCCN2)ccc2nccnc12
+COc1cc(ccc1Cc1cn(C)c2ccc(NC(=O)OC3CCCC3)cc12)C(=O)NS(=O)(=O)c1ccccc1C
+Nc1ncnc2n(cnc12)[C@@H]1O[C@H](CO)[C@@H](O)[C@@H]1O
+Cc1cn([C@H]2C[C@H](N=[N+]=[N-])[C@@H](CO)O2)c(=O)[nH]c1=O
+CC(/C=C/C1=C(C)CCCC1(C)C)=C\C=C\C(C)=C/C(O)=O
+COC(=O)Nc1nc2ccc(cc2[nH]1)C(=O)c1ccccc1
+O=C1N=C(NCc2cccs2)S\C1=C/c1ccc2ncccc2c1
+CCCOc1ccc(cc1N)C(=O)OCCN(CC)CC
+CN(C)C(=N)NC(N)=N
+CC[N+](C)(C)c1cccc(O)c1
+Nc1c2CCCCc2nc2ccccc12
+CC(=O)OCC[N+](C)(C)C
+C[C@H](Cc1ccccc1)N(C)CC#C
+CC(C)NNC(=O)c1ccncc1
+CCOC(=O)[C@H](CCc1ccccc1)N[C@@H](C)C(=O)N1[C@H]2CCC[C@H]2C[C@H]1C(O)=O
+CC(=O)S[C@@H]1CC2=CC(=O)CC[C@]2(C)[C@H]2CC[C@@]3(C)[C@@H](CC[C@@]33CCC(=O)O3)[C@H]12
+S=c1[nH]cnc2nc[nH]c12
+Nc1nc(Cl)nc2n(cnc12)[C@H]1C[C@H](O)[C@@H](CO)O1
+OC(=O)c1cccc(c1)-c1noc(n1)-c1ccccc1F
+Cn1c2nc[nH]c2c(=O)n(C)c1=O
+OC(=O)c1cccnc1Nc1cccc(c1)C(F)(F)F
+COc1ccc(CCN(C)CCCC(C#N)(C(C)C)c2ccc(OC)c(OC)c2)cc1OC
+OC[C@@H](NC(=O)C(Cl)Cl)[C@H](O)c1ccc(cc1)[N+]([O-])=O
+CCCOc1ccccc1-c1nc2[nH]nnc2c(=O)[nH]1
+Cn1cnc(c1Sc1[nH]cnc2ncnc12)[N+]([O-])=O
+CC[C@@]1(O)C(=O)OCc2c1cc1-c3nc4ccccc4cc3Cn1c2=O
+N[C@H]1C[C@@H]1c1ccccc1
+CC(C)(C)NCC(O)c1cc(O)cc(O)c1.CC(C)(C)NCC(O)c1cc(O)cc(O)c1
+NC(=O)c1ccc[n+](c1)[C@@H]1O[C@H](COP(O)(=O)OP(O)(=O)OC[C@H]2O[C@H]([C@H](O)[C@@H]2O)n2cnc3c(N)ncnc23)[C@@H](O)[C@H]1O
+OC(=O)C(Cc1cc(=O)[nH]c2ccccc12)NC(=O)c1ccc(Cl)cc1
+COc1ccc2[nH]c(nc2n1)S(=O)Cc1ncc(C)c(OC)c1C
+COC(=O)C1=C(C)NC(C)=C(C1c1ccccc1[N+]([O-])=O)C(=O)OCC(C)C
+Cc1cc(C2CCCCC2)n(O)c(=O)c1
+Cc1ncc(CO)c(CO)c1O
+CCOCCn1c(nc2ccccc12)N1CCCN(C)CC1
+CN1C(=O)OC(C)(C)C1=O
+CN(C1CCN(CC1)c1nc2ccccc2n1Cc1ccc(F)cc1)c1nccc(=O)[nH]1
+CN1CCC(CC1)OC(c1ccccc1)c1ccccc1
+COc1ccc(cc1)C(Cl)=C(c1ccc(OC)cc1)c1ccc(OC)cc1
+CN(C)\N=N\c1[nH]cnc1C(N)=O
+NCCNCCNCCNCCN
+Cn1c2ncn(CC(O)=O)c2c(=O)n(C)c1=O
+CN(CCCCCCCCCCN(C)C(=O)Oc1cccc(c1)[N+](C)(C)C)C(=O)Oc1cccc(c1)[N+](C)(C)C
+C[C@@H](O[C@H]1OCCN(Cc2nc(=O)[nH][nH]2)[C@H]1c1ccc(F)cc1)c1cc(cc(c1)C(F)(F)F)C(F)(F)F
+Clc1ccc(Nc2nnc(Cc3ccncc3)c3ccccc23)cc1
+O=C1C(C(=O)c2ccccc12)c1ccccc1
+CC(=O)Oc1cc(ccc1C(O)=O)C(F)(F)F
+OP(O)(=O)C(Cl)(Cl)P(O)(O)=O
+CC(C)(C)CC(C)(C)c1ccc(OCCOCC[N+](C)(C)Cc2ccccc2)cc1
+OCCOCCOC(=O)c1ccccc1Nc1cccc(c1)C(F)(F)F
+CCOC(=O)c1ccc(N)cc1
+COc1ccc(CN2CCNCC2)c(OC)c1OC
+CN(Cc1ccc(cc1)C(C)(C)C)Cc1cccc2ccccc12
+COc1cccc2C(=O)c3c(O)c4C[C@](O)(C[C@@H](O[C@H]5C[C@H](N)[C@H](O)[C@H](C)O5)c4c(O)c3C(=O)c12)C(C)=O
+CC(=O)SCC(Cc1ccccc1)C(=O)NCC(=O)OCc1ccccc1
+COc1ccc(OC)c(c1)C(O)C(C)N
+C[C@@H]1CCN([C@H](C1)C(O)=O)C(=O)[C@H](CCCN=C(N)N)NS(=O)(=O)c1cccc2CC(C)CNc12
+CC(=O)CC(c1ccc(cc1)[N+]([O-])=O)c1c(O)c2ccccc2oc1=O
+CN1CCCC(CC1)n1nc(Cc2ccc(Cl)cc2)c2ccccc2c1=O
+C[N+]1(C)CCC(C1)OC(=O)C(O)(C1CCCC1)c1ccccc1
+CCN(CC)C(=O)Nc1ccc(OCC(O)CNC(C)(C)C)c(c1)C(C)=O
+CCN(CCO)CCCC(C)Nc1ccnc2cc(Cl)ccc12
+OC(=O)CCC(=O)Nc1ccc(cc1)S(=O)(=O)Nc1nccs1
+CCN1CCC[C@H]1CNC(=O)c1c(O)c(Cl)cc(Cl)c1OC
+NC(=O)N1c2ccccc2CC(=O)c2ccccc12
+CCCCCN(C)CCC(O)(P(O)(O)=O)P(O)(O)=O
+OC(=O)c1cc(ccc1O)\N=N\c1ccc(cc1)S(=O)(=O)Nc1ccccn1
+NC(=N)c1ccc(OCCCCCOc2ccc(cc2)C(N)=N)cc1
+CC[N+](C)(CC)CCC[n+]1c(-c2ccccc2)c2cc(N)ccc2c2ccc(N)cc12
+COc1ccc(Cc2nccc3cc(OC)c(OC)cc23)cc1OC
+OC(=O)Cc1sc(nc1-c1ccc(Cl)cc1)-c1ccccc1
+Nc1nc(=O)c2nc(CNc3ccc(cc3)C(=O)N[C@@H](CCC(O)=O)C(O)=O)cnc2[nH]1
+CN(C)C(=O)Oc1cccc(c1)[N+](C)(C)C
+NC(=O)CN1CCCC1=O
+COc1cc(OC)c(C(=O)CCCN2CCCC2)c(OC)c1
+CNCC[C@@H](Oc1ccccc1C)c1ccccc1
+Cc1cccc(C)c1NC1=NCCCS1
+N[C@@H](Cc1cc(I)c(Oc2cc(I)c(O)c(I)c2)c(I)c1)C(O)=O
+Nc1ccn([C@@H]2O[C@H](CO)[C@@H](O)[C@@H]2O)c(=O)n1
+CCC1=C(C)CN(C(=O)NCCc2ccc(cc2)S(=O)(=O)NC(=O)N[C@H]2CC[C@H](C)CC2)C1=O
+CN(C)CCCN1c2ccccc2Sc2ccc(cc12)C(C)=O
+CN(C)CCC=C1c2ccccc2C=Cc2ccccc12
+OCCN1C[C@H](O)[C@@H](O)[C@H](O)[C@H]1CO
+CCCCNc1ccc(cc1)C(=O)OCCN(C)C
+CCCc1cc(=O)[nH]c(=S)[nH]1
+CC[C@H](N1CCCC1=O)C(N)=O
+COc1ccc2CN(C)CC[C@@]34C=C[C@H](O)C[C@@H]3Oc1c24
+Cn1cc[nH]c1=S
+Cc1ccc(cn1)-c1ncc(Cl)cc1-c1ccc(cc1)S(C)(=O)=O
+CCn1cc(C(O)=O)c(=O)c2cc(F)c(cc12)N1CCN(C)CC1
+COc1cc(ccc1\N=N\c1ccc2c(cc(c(N)c2c1O)S(O)(=O)=O)S(O)(=O)=O)-c1ccc(\N=N\c2ccc3c(cc(c(N)c3c2O)S(O)(=O)=O)S(O)(=O)=O)c(OC)c1
+Cc1cn[nH]c1
+CC[Hg]Sc1ccccc1C(O)=O
+CC1=C(N2[C@H](SC1)[C@H](NC(=O)[C@H](N)c3ccc(O)cc3)C2=O)C(=O)O
+Cc1cnc(c[n+]1[O-])C(O)=O
+CC(C)NC[C@@H](O)COc1ccc(CC(N)=O)cc1
+Fc1ccc(cc1)-n1cc(C2CCN(CCN3CCNC3=O)CC2)c2cc(Cl)ccc12
+Cn1c2ncn(CC3OCCO3)c2c(=O)n(C)c1=O
+CC(C)CC1(CC=C)C(=O)NC(=O)NC1=O
+Nc1nc(N)nc(n1)-c1cc(Cl)ccc1Cl
+NCCCC(O)(P(O)(O)=O)P(O)(O)=O
+Nc1ccc(\N=N\c2ccccc2)c(N)n1
+CN(CS(O)(=O)=O)c1c(C)n(C)n(-c2ccccc2)c1=O
+OC1(CCN(CCCC(=O)c2ccc(F)cc2)CC1)c1ccc(Br)cc1
+Cc1oncc1C(=O)Nc1ccc(cc1)C(F)(F)F
+CN1CCN(CC1)C(c1ccccc1)c1ccccc1
+CC(=O)OCC(=O)NCCCOc1cccc(CN2CCCCC2)c1
+Oc1c(Cc2c(O)c3ccccc3oc2=O)c(=O)oc2ccccc12
+CC[C@H]1[C@@H](Cc2cncn2C)COC1=O
+CCOC(=O)n1ccn(C)c1=S
+Cc1cc(no1)C(=O)NNCc1ccccc1
+COc1ccc(cc1O)-c1cc(=O)c2c(O)cc(O[C@@H]3O[C@H](CO[C@@H]4O[C@@H](C)[C@H](O)[C@@H](O)[C@H]4O)[C@@H](O)[C@H](O)[C@H]3O)cc2o1
+CCCN(CCC)S(=O)(=O)c1ccc(cc1)C(O)=O
+Cc1c(CCO)sc[n+]1Cc1cnc(C)nc1N
+COc1ccc(cc1OC)C(=O)NCc1ccc(OCCN(C)C)cc1
+O=C(Nc1cccc2c1oc(cc2=O)-c1nnn[nH]1)c1ccc(OCCCCc2ccccc2)cc1
+CC(C)NCC(O)c1cc(O)cc(O)c1.CC(C)NCC(O)c1cc(O)cc(O)c1
+CC(=O)NCCCS(O)(=O)=O
+COCCc1ccc(OCC(O)CNC(C)C)cc1.COCCc1ccc(OCC(O)CNC(C)C)cc1
+CCCCCCCN(CC)CCCC(O)c1ccc(NS(C)(=O)=O)cc1.CCCCCCCN(CC)CCCC(O)c1ccc(NS(C)(=O)=O)cc1
+CCCCc1ccc2[nH]c(NC(=O)OC)nc2c1
+Oc1cc(O)c2c(c1)oc(cc2=O)-c1ccc(O)c(O)c1
+OC[C@H]1O[C@@H](Oc2ccc(O)cc2)[C@H](O)[C@@H](O)[C@@H]1O
+Nc1ccn([C@@H]2O[C@H](CO)[C@@H](O)C2(F)F)c(=O)n1
+Cn1cnc2n(C)c(=O)[nH]c(=O)c12
+CC(=O)Oc1cccc2C(=O)c3cc(cc(OC(C)=O)c3C(=O)c12)C(O)=O
+CCC1(CCCCN(C)C1)c1cccc(O)c1
+ClCCN(CCCl)P1(=O)NCCCO1
+NCC(O)c1ccc(O)cc1
+C1CN=C(N1)C1COc2ccccc2O1
+CNC1(C)C2CCC(C2)C1(C)C
+NS(=O)(=O)c1cc2c(NC(NS2(=O)=O)C(Cl)Cl)cc1Cl
+CC(C(O)=O)c1ccc(cc1)C(=O)c1cccs1
+CC(CCc1ccccc1)NC(C)C(O)c1ccc(O)cc1
+CCCCN(CCCC)CCC(O)c1cc2c(Cl)cc(Cl)cc2c2cc(ccc12)C(F)(F)F
+CCOc1ccccc1OCC1CNCCO1
+NC(CO)C(=O)NNCc1ccc(O)c(O)c1O
+ClCCNP1(=O)OCCCN1CCCl
+CCCC1C(=O)N2N(C1=O)c1cc(C)ccc1N=C2N(C)C
+OC[C@H]1O[C@H](C[C@@H]1O)n1cc(c(=O)[nH]c1=O)C(F)(F)F
+CCCN[C@H]1CCc2nc(N)sc2C1
+C[C@H]1CN(C[C@@H](C)N1)c1c(F)c(N)c2c(c1F)n(cc(C(O)=O)c2=O)C1CC1
+CC(C)(C)NC[C@H](O)COc1nsnc1N1CCOCC1
+CC[N+](C)(CC)CCOC(=O)C1c2ccccc2Oc2ccccc12
+CCN(C)C(=O)Oc1cccc(c1)[C@H](C)N(C)C
+O=C(CCNNC(=O)c1ccncc1)NCc1ccccc1
+CC(=O)N=c1sc(nn1C)S(N)(=O)=O
+O[C@@H]1CCCC[C@H]1N1CCC(CC1)c1ccccc1
+CC(C)Cc1ccc(cc1)[C@H](C)C(O)=O
+CC(C)C(=O)c1c(nn2ccccc12)C(C)C
+CN1CCN(CC1)C1=Nc2ccccc2Nc2sc(C)cc12
+OC(COc1cccc2oc(cc(=O)c12)C(O)=O)COc1cccc2oc(cc(=O)c12)C(O)=O
+CN(C)CCCSC(N)=N
+CC1(C)NC(=O)N(C1=O)c1ccc(c(c1)C(F)(F)F)[N+]([O-])=O
+Fc1c[nH]c(=O)[nH]c1=O
+O=C(O[C@H]1C[C@H]2C[C@H]3C[C@@H](C1)N2CC3=O)c1c[nH]c2ccccc12
+CCN(CC)CCOC(=O)C1(CCCC1)c1ccc(cc1)[N+]([O-])=O
+OC(=O)c1ccccc1OP(O)(O)=O
+Nc1ccc(O)c(c1)C(O)=O
+CC1(C)O[C@@H]2CO[C@@]3(COS(N)(=O)=O)OC(C)(C)O[C@H]3[C@@H]2O1
+Nc1ccccc1S(N)(=O)=O
+C[C@@H]1CN(CC[C@]1(C(O)=O)c1ccccc1)[C@H]1CC[C@](CC1)(C#N)c1ccc(F)cc1
+CCCCNc1c(C(=O)OCC)c(C)nc2n(CC)ncc12
+CC(C)(C)NC[C@H](O)c1ccc(O)c(CO)c1
+CC(C)NC[C@@H](O)c1ccc(O)c(O)c1
+COc1cc(ccc1OC(F)F)-c1ccc(=O)[nH]n1
+CC(O)(P(O)(O)=O)P(O)(O)=O
+CC(=O)Nc1ccc(O)cc1
+NCCc1ccc(O)c(O)c1
+CC(=O)OCC(=O)[C@@]12OC3(CCCC3)O[C@@H]1C[C@H]1[C@H]3CCC4=CC(=O)C=C[C@]4(C)[C@@]3(F)[C@@H](O)C[C@]21C
+CCN[C@H]1C[C@H](C)S(=O)(=O)c2sc(cc12)S(=O)(=O)N
+COc1cc2nc(nc(N)c2cc1OC)N3CCN(CC3)C(=O)c4ccco4
+CC[C@H]1OC(=O)[C@H](C)[C@@H](O[C@H]2C[C@@](C)(OC)[C@@H](O)[C@H](C)O2)[C@H](C)[C@@H](O[C@@H]2O[C@H](C)C[C@@H]([C@H]2O)N(C)C)[C@@](C)(C[C@@H](C)C(=O)[C@H](C)[C@@H](O)[C@]1(C)O)OC
+CC[N+](C)(C)Cc1ccccc1Br
+N[C@H]1CONC1=O
+Cc1nc2CCCCn2c(=O)c1CCN1CCC(CC1)c1noc2cc(F)ccc12
+CCN1CCC[C@H]1CNC(=O)c1c(OC)ccc(Br)c1OC
+Oc1ccc(OCc2ccccc2)cc1
+COc1ccc(C(=O)c2ccccc2)c(O)c1
+CC(=O)N[C@@H](CS)C(O)=O
+CCOC(=O)c1ccc(OC(=O)CCCCCNC(N)=N)cc1
+C[n+]1ccccc1C=NO
+NCC1(CC(O)=O)CCCCC1
+NCCCCCC(O)=O
+Nc1ccc(cc1)C(=O)NCC(O)=O
+COc1c(N2C[C@@H]3CCCN[C@@H]3C2)c(F)cc2c1n(cc(C(O)=O)c2=O)C1CC1
+Nc1nc(F)nc2n(cnc12)[C@@H]1O[C@H](CO)[C@@H](O)[C@@H]1O
+OC(=O)c1c(I)cc(I)c(NC(=O)CCCCC(=O)Nc2c(I)cc(I)c(C(=O)O)c2I)c1I
+CN1[C@H]2CC[C@@H]1C[C@@H](C2)OC(c1ccccc1)c1ccccc1
+Clc1cccc(N2CCN(CCCCOc3ccc4CCC(=O)Nc4c3)CC2)c1Cl
+COc1ccccc1N1CCN(CCCNc2cc(=O)n(C)c(=O)n2C)CC1
+CCCc1nc2c(C)cc(cc2n1Cc1ccc(cc1)-c1ccccc1C(O)=O)-c1nc2ccccc2n1C
+CC[C@H]1OC(=O)[C@H](C)[C@@H](O[C@H]2C[C@@](C)(OC)[C@@H](O)[C@H](C)O2)[C@H](C)[C@@H](O[C@@H]2O[C@H](C)C[C@@H]([C@H]2O)N(C)C)[C@](C)(O)C[C@@H](C)CN(C)[C@H](C)[C@@H](O)[C@]1(C)O
+COc1ccccc1Oc1c(NS(=O)(=O)c2ccc(cc2)C(C)(C)C)nc(nc1OCCO)-c1ncccn1
+C[N+](C)(C)CCOC(N)=O
+CCCCc1nc(Cl)c(CO)n1Cc1ccc(cc1)-c1ccccc1-c1nnn[nH]1
+CN1CC[C@]2(C)[C@@H]1N(C)c3ccc(O)cc32
+COc1nc(C)nc(Cl)c1NC1=NCCN1
+CCn1cc(C(O)=O)c(=O)c2cc(F)c(nc12)N1CCNCC1
+Nc1ccc(C(O)=O)c(O)c1
+COc1ccc2c(c1)C(=O)N(CCc1ccc(cc1)S(=O)(=O)NC(=O)NC1CCCCC1)C(=O)C2(C)C
+Nc1nc(=O)[nH]cc1F
+CC(C)c1cccc(C(C)C)c1O
+Clc1ccc2c(CCc3cccnc3C2=C2CCNCC2)c1
+CN(C)CCN(Cc1ccc(Cl)cc1)c1ccccn1
+CCOc1nc2cccc(C(O)=O)c2n1Cc1ccc(cc1)-c1ccccc1-c1nnn[nH]1
+COC(=O)Nc1nc2cc(ccc2[nH]1)C(=O)c1ccc(F)cc1
+O=c1[nH]cnc2[nH]ncc12
+Oc1noc2CNCCc12
+CC(C)[N+](C)(CCOC(=O)C1c2ccccc2Oc2ccccc12)C(C)C
+OC(=O)Cc1ccc(cc1)-c1ccccc1
+CC(C)NC[C@@H](O)COc1cccc2ccccc12
+CCN(CC)c1cc(C)nc2ncnn12
+NC(=O)C([C@@H]1CCN(CCc2ccc3OCCc3c2)C1)(c1ccccc1)c1ccccc1
+COc1ccccc1O
+CC(=O)N[C@@H](CC(=O)N[C@H](CCC(=O)O)C(=O)O)C(=O)O
+COc1ccc(C[C@H](C)NC[C@@H](O)c2ccc(O)c(NC=O)c2)cc1
+OC(CNCCNC(=O)N1CCOCC1)COc2ccc(O)cc2.OC(CNCCNC(=O)N1CCOCC1)COc2ccc(O)cc2
+Cn1c(=O)n(C)c2nc[nH]c2c1=O.Cn1c(=O)n(C)c2nc[nH]c2c1=O
+Oc1ccc(c(O)c1)-c1oc2cc(O)cc(O)c2c(=O)c1O
+Oc1cc(O)c2c(c1)oc(-c1cc(O)c(O)c(O)c1)c(O)c2=O
+CN1CCc2c(C1)c1ccccc1n2Cc1ccc(cc1)C(=O)NO
+Cc1[nH]c2ccccc2c1CCNCc1ccc(\C=C\C(=O)NO)cc1
+CC(=O)Nc1ccc(cc1)C(=O)Nc2cc(ccc2N)c3cccs3
+CC(=O)Nc1ccc(cc1)C(=O)Nc1ccccc1N
+COc1ccc(Cn2ccc3ccc(cc23)C(=O)NO)cc1
+Oc1ccc(cc1)-c1coc2cc(O)cc(O)c2c1=O
+CN1CCN(CC1)c1cc(Nc2cc(C)[nH]n2)nc(\C=C\c2ccccc2)n1
+COc1cc2c(Nc3ccc(NC(=O)c4ccccc4)cc3)ncnc2cc1OCCCN1CCOCC1
+CCOc1ccccc1-n1c(=O)c2ccccc2nc1C(C)N1CCN(CC1)C(=O)COc1ccc(Cl)cc1
+O=C(NC1CC1)Nc1c[nH]nc1-c1nc2cc(CN3CCOCC3)ccc2[nH]1
+OC(=O)[C@@]1(Cc2cccc(Nc3nccs3)n2)CC[C@@H](CC1)Oc1cccc(Cl)c1F
+COc1cc(Nc2ncc3CN=C(c4cc(Cl)ccc4-c3n2)c2c(F)cccc2OC)ccc1C(O)=O
+Nc1ccccc1NC(=O)c1ccc(CNC(=O)OCc2cccnc2)cc1
+OC(=O)c1ccc(Nc2ncc3CN=C(c4cc(Cl)ccc4-c3n2)c2c(F)cccc2F)cc1
+CCn1cc(c(n1)-c1ccc(NC(=O)N(C)C)cc1)-c1ccnc2[nH]c(cc12)-c1cccc(CN(C)C)c1
+CN1CCN(CC1)c1cc(Nc2cc(C)[nH]n2)nc(Sc2ccc(NC(=O)C3CC3)cc2)n1
+Cl[Pt]Cl
+NC(=O)c1ccc(I)c(c1)[N+]([O-])=O
+Cn1nnc2c(ncn2c1=O)C(N)=O
+CC(C)C[C@@H](NC(=O)[C@@H](Cc1ccccc1)NC(=O)C1=CNC=CN1)B(O)O
+Cn1cnc2c(F)c(Nc3ccc(Br)cc3Cl)c(cc12)C(=O)NOCCO
+CC(=O)CCCCn1c(=O)n(C)c2ncn(C)c2c1=O
+NCCCNCCSP(O)(O)=O
+N[C@@H](CCC(N)=O)C(O)=O
+COc1ccc2[nH]cc(CCNC(C)=O)c2c1
+Cn1c2ncn(CC(O)CO)c2c(=O)n(C)c1=O
+CN(C)C(=O)Oc1cc(OC(=O)N(C)C)cc(c1)C(O)CNC(C)(C)C
+CN1C(c2ccc(Cl)cc2)S(=O)(=O)CCC1=O
+COP(=O)(OC)C(O)C(Cl)(Cl)Cl
+N#Cc1ccc(cc1)C1CCCc2cncn12
+CC(NCCC(c1ccccc1)c1ccccc1)c1ccccc1
+CCC1(C)CC(=O)NC1=O
+COc1cc2CC[C@H](NC(C)=O)c3cc(=O)c(OC)ccc3-c2c(OC)c1OC
+CCCCCCC[N+](CC)(CC)CCCCc1ccc(Cl)cc1
+OC(=O)c1cn(C2CC2)c2cc(N3CCNCC3)c(F)cc2c1=O
+CCN(CC)CCOCCOC(=O)C1(CCCC1)c1ccccc1
+COc1cc(Cc2cnc(N)nc2N)cc(OC)c1OC
+Cc1cc(cc(C)c1CC1=NCCN1)C(C)(C)C
+C[N+](C)(C)CCCCCC[N+](C)(C)C
+Nc1ccc(cc1)S(=O)(=O)Nc1ccnn1-c1ccccc1
+CCn1cc(C(O)=O)c(=O)c2cc(F)c(cc12)N1CCNCC1
+NS(=O)(=O)c1cc2c(NCNS2(=O)=O)cc1Cl
+NC[C@H]1CC[C@@H](CC1)C(O)=O
+NCCc1cc[nH]n1
+CCN(CC)CCOC(=O)c1ccc(N)cc1
+N[C@@H](Cc1ccc(O)c(O)c1)C(O)=O
+CCCCOc1ccc(CC(=O)NO)cc1
+COc1ccc(CCN2CCC(CC2)Nc2nc3ccccc3n2Cc2ccc(F)cc2)cc1
+CC[N+](CC)(CC)CCOc1cccc(OCC[N+](CC)(CC)CC)c1OCC[N+](CC)(CC)CC
+CC(=O)Nc1nnc(s1)S(N)(=O)=O
+C[N+]1(CCCCC[N+]2(C)CCCC2)CCCC1
+C[C@](N)(Cc1ccc(O)c(O)c1)C(O)=O
+CC(=O)c1ccc(cc1)S(=O)(=O)NC(=O)NC1CCCCC1
+CCN(CC)CCNC(=O)c1cc(ccc1OC)S(C)(=O)=O
+CCN(CC)CCOC(=O)C(c1ccccc1)c1ccccc1
+OC(=O)Cc1cc(I)c(Oc2ccc(O)c(I)c2)c(I)c1
+COc1ccc2n(C(=O)c3ccc(Cl)cc3)c(C)c(CC(=O)OCC(O)=O)c2c1
+NCCCC[C@H](N[C@@H](CCc1ccccc1)C(O)=O)C(=O)N1CCC[C@H]1C(O)=O
+OC(=O)COC(=O)Cc1ccccc1Nc1c(Cl)cccc1Cl
+NC[C@@H]1O[C@H](O[C@H]2[C@@H](O)[C@H](O[C@@H]3[C@@H](O)[C@H](N)C[C@H](N)[C@H]3O[C@H]4O[C@H](CN)[C@@H](O)[C@H](O)[C@H]4N)O[C@@H]2CO)[C@H](N)[C@@H](O)[C@@H]1O
+CCCCOc1ccc(cc1)C(=O)CCN1CCCCC1
+CN(CCCOc1ccc(Cl)cc1Cl)CC#C
+Cc1cc(N)c2ccccc2[n+]1CCCCCCCCCC[n+]1c(C)cc(N)c2ccccc12
+NS(=O)(=O)c1cc(C(O)=O)c(NCc2ccco2)cc1Cl
+Cn1c2ncn(CCO)c2c(=O)n(C)c1=O
+Nc1ncnc2n(cnc12)[C@@H]3O[C@H](COP(=O)(O)O)[C@@H](O)[C@H]3O
+NS(=O)(=O)c1cc2c(cc1Cl)N=CNS2(=O)=O
+C[C@H](N)[C@H](O)c1cccc(O)c1
+Clc1ccc2oc(=O)[nH]c2c1
+CCCCOc1cc(C(=O)NCCN(CC)CC)c2ccccc2n1
+C(N(Cc1ccccc1)c1ccccc1)C1=NCCN1
+NC(=N)NCCN1CCCCCCC1.NC(=N)NCCN1CCCCCCC1
+Cn1c2nc(Cl)[nH]c2c(=O)n(C)c1=O.CN(C)CCOC(c1ccccc1)c1ccccc1
+CCCCC(CC)CNC(=N)NC(=N)NCCCCCCNC(=N)NC(=N)NCC(CC)CCCC
+CC[C@H](C)C(=O)O[C@H]1C[C@@H](C)C=C2C=C[C@H](C)[C@H](CC[C@@H]3C[C@@H](O)CC(=O)O3)[C@@H]12
+Nc1cccc2C(=O)N(Cc12)C1CCC(=O)NC1=O
+CC(N)C1CCC(CC1)C(=O)Nc2ccncc2
+CCOC(=O)[C@@]1(CCCCCCOc2ccc(Cl)cc2)CO1
+CCCc1nn(C)c2c1[nH]c(nc2=O)-c1cc(ccc1OCC)S(=O)(=O)N1CCN(C)CC1
+COc1cc(CNC(=O)CCCC\C=C\C(C)C)ccc1O
+Cc1[nH]c(\C=C2/C(=O)Nc3ccccc23)c(C)c1CCC(O)=O
+COCCn1c2c(C(=O)c3ccccc3C2=O)[n+](Cc2cnccn2)c1C
+OC(=O)c1nn(Cc2ccc(Cl)cc2Cl)c2ccccc12
+CO[C@H]1C[C@H](C)CC2=C(NCC=C)C(=O)C=C(NC(=O)\C(C)=C\C=C/[C@H](OC)[C@@H](OC(N)=O)\C(C)=C\[C@H](C)[C@H]1O)C2=O
+CN1CCN(CC1)c2cc(Nc3cc(C)n[nH]3)nc(Sc4ccc(NC(=O)C5CC5)cc4)n2
+CC(C)C[C@H](NC(=O)[C@H](Cc1ccccc1)NC(=O)c1cnccn1)B(O)O
+C(N1CCCNCCNCCCNCC1)c1ccc(CN2CCCNCCNCCCNCC2)cc1
+CC(C)(C)NC(=O)[C@@H]1C[C@@H]2CCCC[C@@H]2CN1C[C@@H](O)[C@H](Cc3ccccc3)NC(=O)[C@H](CC(=O)N)NC(=O)c4ccc5ccccc5n4
+C[C@]12CC[C@H]3[C@@H](CCc4cc(O)ccc34)[C@@H]1CCC2=O
+CC[C@H]1OC(=O)[C@H](C)[C@@H](O[C@H]2C[C@@](C)(OC)[C@@H](O)[C@H](C)O2)[C@H](C)[C@@H](O[C@@H]2O[C@H](C)C[C@@H]([C@H]2O)N(C)C)[C@](C)(O)C[C@@H](C)C(=O)[C@H](C)[C@@H](O)[C@]1(C)O
+CO[C@H]1[C@@H](C[C@@H]2CN3CCc4c([nH]c5cc(OC)ccc45)[C@H]3C[C@@H]2[C@@H]1C(=O)OC)OC(=O)c1cc(OC)c(OC)c(OC)c1
+CC1(C)O[C@@H]2C[C@H]3[C@@H]4CCC5=CC(=O)CC[C@]5(C)[C@@]4(F)[C@@H](O)C[C@]3(C)[C@@]2(O1)C(=O)CCl
+C1CCN(CC1)C1(CCCCC1)c1cc2ccccc2s1
+Cc1ccc(C[N+](C)(C)C)o1
+C[C@]12CCC3C(CCC4=C3CCC(=O)C4)C1CC[C@@]2(O)C#C
+NC(C(O)=O)c1cc(O)cc(O)c1
+NC(C(O)=O)c1ccc(C(O)=O)c(O)c1
+Cc1cc(sc1C(N)C(=O)O)C(=O)O
+BrC1C(Br)C(Br)C(Br)C(Br)C1Br
+NC(=N)NC(=N)Nc1ccccc1
+CN1[C@H]2CC[C@@H]1C[C@@H](C2)OC(=O)[C@H](CO)c3ccccc3
+Cc1cccc(n1)C#Cc1ccccc1
+CC[C@@]1(O)C(=O)OCc2c1cc1-c3nc4ccc(O)cc4cc3Cn1c2=O
+Cc1nc[nH]c1CCN
+OC(=O)[C@@H](S)[C@@H](S)C(O)=O
+CC1(C)O[C@@H]2C[C@H]3[C@@H]4C[C@H](F)C5=CC(=O)C=C[C@]5(C)[C@@]4(F)[C@@H](O)C[C@]3(C)[C@@]2(O1)C(=O)CO
+CC(=O)O[C@]1(CC[C@H]2[C@@H]3CCC4=CC(=O)CC[C@@H]4[C@H]3CC[C@]12C)C#C
+C[C@]12N[C@H](Cc3ccccc13)c1ccccc21
+CN(Cc1cnc2nc(N)nc(N)c2n1)c1ccc(cc1)C(=O)N[C@@H](CCC(O)=O)C(O)=O
+COc1ccc2nccc([C@H](O)[C@@H]3C[C@@H]4CCN3C[C@@H]4C=C)c2c1
+CC(C)c1c(C(=O)Nc2ccccc2)c(c(-c2ccc(F)cc2)n1CC[C@@H](O)C[C@@H](O)CC(O)=O)-c1ccccc1
+CCP(CC)(CC)=[Au]S[C@@H]1O[C@H](COC(C)=O)[C@@H](OC(C)=O)[C@H](OC(C)=O)[C@H]1OC(C)=O
+C[C@H](\C=C(C)\C=C\C(=O)NO)C(=O)c1ccc(cc1)N(C)C
+COc1ccc(N(C(=O)Oc2c(C)cccc2C)c2ccnc(Nc3ccc(cc3)N3CCN(C)CC3)n2)c(OC)c1
+CC1CN(CC(=O)Nc2ccc3Sc4c(Cc3c2)cccc4-c2cc(=O)cc(o2)N2CCOCC2)CC(C)O1
+COc1cc2c(Oc3ccc(NC(=O)C4(CC4)C(=O)Nc4ccc(F)cc4)cc3F)ccnc2cc1OCCCN1CCOCC1
+CCOc1cc2ncc(C#N)c(Nc3ccc(F)c(Cl)c3)c2cc1NC(=O)\C=C\CN(C)C
+Clc1ccc(cc1)C1(CCNCC1)c1ccc(cc1)-c1cn[nH]c1
+CC(=O)Nc1cccc(c1)-n1c2c(C)c(=O)n(C)c(Nc3ccc(I)cc3F)c2c(=O)n(C2CC2)c1=O
+O=C1NC(=O)[C@H]([C@@H]1c1c[nH]c2ccccc12)c1cn2CCCc3cccc1c23
+Nc1cc(c(cn1)-c1cc(nc(n1)N1CCOCC1)N1CCOCC1)C(F)(F)F
+CCN1CCN(CC1)c1ccc(Nc2cc(ncn2)N(C)C(=O)Nc2c(Cl)c(OC)cc(OC)c2Cl)cc1
+CC(C)(C)c1cnc(CSc2cnc(NC(=O)C3CCNCC3)s2)o1
+COC(=O)c1ccc2c(NC(=O)\C2=C(/Nc2ccc(cc2)N(C)C(=O)CN2CCN(C)CC2)c2ccccc2)c1
+CC(C)n1c(C)ncc1-c1ccnc(Nc2ccc(cc2)S(C)(=O)=O)n1
+CN(C)Cc1cccc(N\C(c2ccccc2)=C2/C(=O)Nc3cc(ccc23)C(=O)N(C)C)c1
+O=C(NCC#N)c1ccc(cc1)-c1ccnc(Nc2ccc(cc2)N2CCOCC2)n1
+Cn1cc(cn1)-c1[nH]c2cc(NC(=O)[C@H](N)C3CCCCC3)cc3c2c1cn[nH]c3=O
+Cc1c[nH]c(n1)-c1cnc(NCCNc2ccc(cn2)C#N)nc1-c1ccc(Cl)cc1Cl
+Cn1cc(cn1)-c1ccc2nnc(Sc3ccc4ncccc4c3)n2n1
+FC(F)(F)Oc1ccc(NC(=O)c2sccc2NCc2ccnc3ccccc23)cc1
+Cc1cc(C(=O)NOCCO)c(Nc2ccc(I)cc2F)n(C)c1=O
+CCOc1ccn(-c2ccc(F)cc2)c(=O)c1C(=O)Nc1ccc(Oc2ccnc(N)c2Cl)c(F)c1
+CN1CCN(Cc2ccc(NC(=O)c3ccc(C)c(c3)C#Cc3cnc4cccnn34)cc2C(F)(F)F)CC1
+CCN1CCC(CC1)n1cc(CNc2cc(Cl)c3ncc(C#N)c(Nc4ccc(F)c(Cl)c4)c3c2)nn1
+COc1ccc(cc1OC)-c1cc2nccn2c(Nc2ncccc2C(N)=O)n1
+COc1cc(OC)c(\C=C\S(=O)(=O)Cc2ccc(OC)c(NCC(O)=O)c2)c(OC)c1
+Cn1cnc(c1)-c1cc2nccc(Oc3ccc(NC(=S)NC(=O)Cc4ccccc4)cc3F)c2s1
+C[C@@H](N)c1ccc(cc1)C(=O)Nc1ccnc2[nH]ccc12
+CN(c1cccc(Cl)c1)S(=O)(=O)c1ccc2NC(=O)\C(=C\c3[nH]c(C)c(C(=O)N4CCN(C)CC4)c3C)c2c1
+S=C(NCc1ccc2OCOc2c1)N1CCN(CC1)c1ncnc2c3ccccc3oc12
+Cc1ccc(cc1)-n1nc(cc1NC(=O)Nc1ccc(OCCN2CCOCC2)c2ccccc12)C(C)(C)C
+COc1cc(Nc2nc3ccccc3nc2NS(=O)(=O)c2ccc(NC(=O)c3ccc(C)c(OC)c3)cc2)cc(OC)c1
+CN(c1ccccc1CNc1nc(Nc2ccc3NC(=O)Cc3c2)ncc1C(F)(F)F)S(C)(=O)=O
+Nc1ncnc2n(cc(-c3ccc(OCc4ccccc4)cc3)c12)[C@H]1C[C@H](CN2CCC2)C1
+C[C@]12CC[C@H]3[C@@H](CCc4cc(O)ccc34)[C@@H]1CC[C@@H]2O
+CC[C@H](C)C(=O)O[C@H]1C[C@H](O)C=C2C=C[C@H](C)[C@H](CC[C@@H](O)C[C@@H](O)CC(O)=O)[C@@H]12
+CS(=O)c1ccc(cc1)-c1nc(c([nH]1)-c1ccncc1)-c1ccc(F)cc1
+CC(C)(C)c1nc(c(s1)-c1ccnc(N)n1)-c1cccc(NS(=O)(=O)c2c(F)cccc2F)c1F
+CO[C@H]1\C=C\O[C@@]2(C)Oc3c(C2=O)c2c(O)c(\C=N\N4CCN(CC4)C4CCCC4)c(NC(=O)\C(C)=C/C=C/[C@H](C)[C@H](O)[C@@H](C)[C@@H](O)[C@@H](C)[C@H](OC(C)=O)[C@@H]1C)c(O)c2c(O)c3C
+COc1cc(cc(OC)c1O)[C@H]1[C@@H]2[C@H](COC2=O)[C@H](O[C@@H]2O[C@@H]3CO[C@@H](C)O[C@H]3[C@H](O)[C@H]2O)c2cc3OCOc3cc12
+CC(=O)[C@H]1CC[C@H]2[C@@H]3CCC4=CC(=O)CC[C@]4(C)[C@H]3CC[C@]12C
+CN\C(NCCSCc1csc(CN(C)C)n1)=C/[N+]([O-])=O
+CC[C@H](C)C(=O)O[C@H]1CCC=C2C=C[C@H](C)[C@H](CC[C@@H]3C[C@@H](O)CC(=O)O3)[C@@H]12
+CCOC(=O)C1=C[C@]2(CC)CCCN3CCc4c([C@H]23)n1c1ccccc41
+C[C@H]1CC2C3CC[C@H](C(C)=O)[C@@]3(C)C[C@H](O)C2[C@@]2(C)CCC(=O)C=C12
+CC(C)(C)NC(=O)[C@H]1CC[C@H]2[C@@H]3CC[C@H]4NC(=O)C=C[C@]4(C)[C@H]3CC[C@]12C
+COc1cc(cc(OC)c1OC)[C@H]1[C@@H]2[C@H](COC2=O)[C@@H](O)c2cc3OCOc3cc12
+CC1(C)O[C@@H]2C[C@H]3[C@@H]4CCC5=CC(=O)C=C[C@]5(C)[C@@]4(F)[C@@H](O)C[C@]3(C)[C@@]2(O1)C(=O)CO
+COc1cc(ccc1O)\C=C\C(=O)CC(=O)\C=C\c1ccc(O)c(OC)c1
+CC(C)NCC(O)COc1cccc2ccccc12
+C[C@]12CC[C@H]3[C@@H](CCc4cc(O)ccc34)[C@@H]1CC[C@@]2(O)C#C
+CO[C@H]1C[C@H](C)CC2=C(NCCN(C)C)C(=O)C=C(NC(=O)\C(C)=C\C=C/[C@H](OC)[C@@H](OC(N)=O)\C(C)=C\[C@H](C)[C@H]1O)C2=O
+CCC(C)[C@H]1O[C@]2(CC[C@@H]1C)C[C@@H]1C[C@@H](C\C=C(C)\[C@@H](OC3C[C@H](OC)C(O[C@H]4C[C@H](OC)[C@@H](O)[C@H](C)O4)[C@H](C)O3)[C@@H](C)\C=C\C=C3/CO[C@@H]4[C@H](O)C(C)=C[C@@H](C(=O)O1)[C@]34O)O2
+CCC(=O)[C@@]1(C)[C@H](C)C[C@H]2[C@@H]3CCC4=CC(=O)C=C[C@]4(C)[C@H]3[C@@H](O)C[C@]12C
+OCCN1CCN(CC\C=C2\c3ccccc3Sc3ccc(Cl)cc23)CC1
+C[C@@H]1C[C@H]2[C@@H]3CCC4=CC(=O)C=C[C@]4(C)[C@@]3(Cl)[C@@H](O)C[C@]2(C)[C@@]1(OC(=O)c5ccco5)C(=O)CCl
+CC(C)(C)NCC(O)c1cc(O)cc(O)c1
+Nc1ncn([C@@H]2O[C@H](CO)[C@@H](O)[C@H]2O)c(=O)n1
+CC(=O)OCC(=O)[C@]12OC(C)(C)O[C@@H]2C[C@H]3[C@@H]4C[C@H](F)C5=CC(=O)C=C[C@]5(C)[C@@]4(F)[C@@H](O)C[C@@]31C
+CCN(CC)C(=O)C(\C#N)=C\c1cc(O)c(O)c(c1)[N+]([O-])=O
+CNC(=O)c1cc(Oc2ccc(NC(=O)Nc3ccc(Cl)c(c3)C(F)(F)F)cc2)ccn1
+O[C@H]1CC[C@@]2(O)[C@H]3Cc4ccc(O)c5OC1[C@]2(CCN3CC1CCC1)c45
+COc1ccc(\C=C\C(=O)Nc2ccccc2C(O)=O)cc1OC
+CC(C)(c1ccc(O)cc1)c2ccc(O)cc2
+NNC(=O)c1ccncc1
+OC(=O)c1ccccc1
+Cc1cc(O)c2C(=O)c3c(O)cc(O)cc3C(=O)c2c1
+Cc1cc(ccc1NC(=O)c1ccnn1C)\N=N\c1ccccc1C
+CNC(=O)C1OC(C(O)C1O)n2cnc3c(NCc4cccc(I)c4)ncnc23
+CN1C[C@H](CNC(=O)OCc2ccccc2)C[C@H]2[C@H]1Cc1cn(C)c3cccc2c13
+C[C@]12CC[C@H]3[C@@H](CCc4cc(O)ccc34)[C@@H]1C[C@@H](O)[C@@H]2O
+C[C@]12C[C@H](O)[C@@]3(F)[C@@H](CCC4=CC(=O)C=C[C@]34C)[C@@H]1C[C@@H](O)[C@]2(O)C(=O)CO
+CO[C@@H]1C[C@H](C[C@@H](C)[C@@H]2CC(=O)[C@H](C)\C=C(C)\[C@@H](O)[C@@H](OC)C(=O)[C@H](C)C[C@H](C)\C=C\C=C\C=C(C)\[C@H](C[C@@H]3CC[C@@H](C)[C@@](O)(O3)C(=O)C(=O)N3CCCC[C@H]3C(=O)O2)OC)CC[C@H]1O
+C[C@H]1O[C@H](O[C@@H]2[C@@H](CO)O[C@H](O[C@@H]3[C@@H](CO)O[C@@H](O)[C@H](O)[C@H]3O)[C@H](O)[C@H]2O)[C@H](O)[C@@H](O)[C@@H]1N[C@H]1C=C(CO)[C@@H](O)[C@H](O)[C@H]1O
+CC(C)[C@@]12O[C@H]2[C@@H]3O[C@]34[C@]5(O[C@H]5C[C@H]6C7=C(CC[C@@]64C)C(=O)OC7)[C@@H]1O
+C[C@@]12CC[C@H]3[C@@H](CCC4=CC(=O)CC[C@H]34)[C@@H]2CC[C@@]1(O)C#C
+CN(C)c1nc(N)c(nc1Cl)C(=O)Nc1cccnc1
+OC(=O)c1ccc(cc1C1CCCC1)-c1c[nH]c2ncc(cc12)-c1ccccc1
+CC(C)n1nc(-c2cc3cc(O)ccc3[nH]2)c2c(N)ncnc12
+CC[C@H](Nc1ncnc2[nH]cnc12)c1nc2cccc(F)c2c(=O)n1-c1ccccc1
+COc1ccc2nccc([C@H](O)[C@H]3C[C@@H]4CCN3C[C@@H]4C=C)c2c1
+CC[C@]1(O)C[C@@H]2CN(C1)CCc3c([nH]c4ccccc34)[C@@](C2)(C(=O)OC)c5cc6c(cc5OC)N(C)[C@@H]7[C@@]86CCN9CC=C[C@](CC)([C@H]98)[C@@H](OC(=O)C)[C@]7(O)C(=O)OC
+CC[C@H]1CN2CCc3cc(OC)c(OC)cc3[C@@H]2C[C@@H]1C[C@H]1NCCc2cc(OC)c(OC)cc12
+Cc1ccc(C=C2CNCC(=Cc3ccc(C)cc3)C2=O)cc1
+COc1c(C)c2COC(=O)c2c(O)c1C\C=C(/C)CCC(O)=O
+OC(=O)c1cccnc1
+Oc1ccc(\C=C\C(=O)OCCc2ccccc2)cc1O
+C[C@H]1C[C@H]2[C@@H]3CC[C@](O)(C(C)=O)[C@@]3(C)CC[C@@H]2[C@@]2(C)CCC(=O)C=C12
+OC[C@H]1O[C@H](C[C@@H]1O)n2cc(F)c(=O)[nH]c2=O
+CC(=O)C[C@@H](c1ccccc1)c1c(O)c2ccccc2oc1=O
+C[C@]12C[C@H](O)C3C(CCC4=CC(=O)CC[C@]34C)C1CC[C@]2(O)C(=O)CO
+CC[C@]12CC[C@H]3[C@@H](CCC4=CC(=O)CC[C@H]34)[C@@H]1CC[C@@]2(O)C#C
+CC(C)c1ccc(NC(=O)c2cccs2)c(c1)-c1nc2ccccc2[nH]c1=O
+Cn1cc(\C=C2\C(=O)Nc3cccnc23)c2ccccc12
+CC[C@]1(O)CC2CN(C1)CCc1c([nH]c3ccccc13)[C@@](C2)(C(=O)OC)c1cc2c(cc1OC)N(C=O)[C@@H]1[C@]22CCN3CC=C[C@](CC)([C@@H]23)[C@@H](OC(C)=O)[C@]1(O)C(=O)OC
+CC(C)(C)NC(=O)[C@H]1CCC2C3CCC4NC(=O)C=C[C@]4(C)C3CC[C@]12C
+Nc1nnc2[nH]c3ccccc3nc12
+C[C@H]1C[C@H]2[C@@H]3CC[C@H](C(=O)C)[C@@]3(C)C[C@H](O)[C@@H]2[C@@]4(C)CCC(=O)C=C14
+OC(=O)[C@H]1C[C@H](NC(=O)Nc2ccccc2)c2c(Cl)cc(Cl)cc2N1
+Oc1cc(O)cc(c1)\C=C\c1ccc(O)c(O)c1
+OC1C(=CC(=O)O)CCCc2ccccc12
+CCCC(=O)Nc1ncnc2n(cnc12)[C@@H]1O[C@@H]2COP(O)(=O)O[C@H]2[C@H]1OC(=O)CCC
+Nc1cc(nc(N)[n+]1[O-])N1CCCCC1
+C1CC1C(NC2=NCCO2)C3CC3
+COc1nccc(n1)c2c(ncn2C3CCC(O)CC3)c4ccc(F)cc4
+CC(NC(=O)c1ccccc1\N=C\c1c(O)ccc2ccccc12)c1ccccc1
+NCC(O)(CS(O)(=O)=O)c1ccc(Cl)cc1
+CCNC(=O)[C@H]1O[C@H](C(O)C1O)n1cnc2c(N)nc(NCCc3ccc(CCC(O)=O)cc3)nc12
+Cc1c(nn(c1-c1ccc(Cl)cc1)-c1ccc(Cl)cc1Cl)C(=O)NN1CCCCC1
+CN1CC[C@]2(C)[C@H]1N(C)c1ccc(O)cc21
+Oc1ccc2C[C@H]3N(CC4CC4)CC[C@@]45[C@@H](Oc1c24)C(=O)\C(C[C@@]35O)=C\c1ccccc1
+CNc1cc(OC)c(cc1Cl)C(=O)N[C@@H]2CCN(Cc3ccccc3)[C@@H]2C
+COc1ccccc1N1CCN(CCN(C(=O)C2CCCCC2)c2ccccn2)CC1
+Cc1c[nH]c(n1)-c1cnc(NCCNc2ccc(cc2)C#N)nc1-c1ccc(Cl)cc1Cl
+CN1CCCC1CCSc1ccc(O)cc1
+O=C(C1CC1)c1ccc(OCCCc2c[nH]cn2)cc1
+Oc1ccc(cc1)-c1oc2cc(O)cc(O)c2c(=O)c1O
+NC(=O)CN1CC[C@@H](NC(=O)[C@@H]2CCCN2)C1=O
+COC(=O)[C@H](CC(C)C)NC(=O)c1ccc(NC[C@@H](N)CS)cc1-c1cccc2ccccc12
+COc1cccc(OC)c1-c1cc(nn1-c1ccnc2cc(Cl)ccc12)C(=O)NC1(C2CC3CC(C2)CC1C3)C(O)=O
+C[C@H](N)Cc1c[nH]cn1
+CN1CCN(CC1)C(=O)CN[C@@H]1C[C@H]1c1ccc(OCc2ccccc2)cc1
+Cc1ccc(cc1NC(=O)c1cccc(NC(=O)Nc2cccc(c2)C(=O)Nc2cc(ccc2C)C(=O)Nc2ccc(c3cc(cc(c23)S(O)(=O)=O)S(O)(=O)=O)S(O)(=O)=O)c1)C(=O)Nc1ccc(c2cc(cc(c12)S(O)(=O)=O)S(O)(=O)=O)S(O)(=O)=O
+Clc1ccc(cc1)C12CC3CC(CC(C3)(C1)C(=O)NCc1ccncc1)C2
+C[C@H]1CCC\C=C\C2C[C@H](O)C[C@H]2[C@H](O)\C=C\C(=O)O1
+CC(=O)C1C(=O)C=C2Oc3c(c(O)c(C)c(O)c3C(C)=O)[C@]2(C)C1=O
+CC(=O)Oc1ccccc1C(=O)Oc1cccc(CO[N+]([O-])=O)c1
+CSCC[C@H](NC=O)C(=O)N[C@@H](CC(O)=O)C(=O)NCC(=O)N[C@@H](CS)C(=O)N[C@@H](CCC(O)=O)C(=O)N[C@@H](CC(C)C)C(O)=O
+CC(\C=C\C=C(C)\C=C\C1=C(C)CCCC1(C)C)=C/CO
+Oc1cc2c3c(oc(=O)c4cc(O)c(O)c(oc2=O)c34)c1O
+COc1ccc(cc1C12CC3CC(CC(C3)C1)C2)-c1ccc2cc(ccc2c1)C(O)=O
+CC#C[C@]1(O)CC[C@H]2[C@@H]3CCC4=CC(=O)CCC4=C3[C@H](C[C@]12C)c1ccc(cc1)N(C)C
+C[C@@H]1C[C@H]2[C@@H]3CCC4=CC(=O)C=C[C@]4(C)[C@@]3(F)[C@@H](O)C[C@]2(C)[C@@]1(O)C(=O)CO
+CN(C)c1ccc(cc1)C(=O)NCCCCCCC(=O)NO
+Cc1cc(ccc1NS(=O)(=O)c1cc(Cl)ccc1Cl)[N+]([O-])=O
+CO[C@@H]1[C@@H](CC[C@]2(CO2)[C@H]1[C@@]1(C)O[C@@H]1CC=C(C)C)OC(=O)NC(=O)CCl
+OC[C@H]1O[C@H]([C@H](O)[C@@H]1O)n1cccnc1=O
+CC(/C=C/C1=C(C)CCCC1(C)C)=C\C=C\C(C)=C\C(=O)Nc1ccc(O)cc1
+OC[C@H]1O[C@H](O)C[C@@H](O)[C@@H]1O
+COc1cc(O)c(cc1/C=C/C(=O)c2ccc(O)cc2)C(C)(C)C=C
+Oc1c(Cl)cc(Cl)c(Cl)c1Cc1c(O)c(Cl)cc(Cl)c1Cl
+NC(=O)C1CCCc2c1[nH]c1ccc(Cl)cc21
+NCCCCNCCCN
+CCCCC\C=C/C\C=C/C\C=C/C\C=C/CCCC(=O)NCCO
+C\C(=C/c1ccc(cc1)C(O)=O)c1ccc2c(c1)C(C)(C)CCC2(C)C
+ONC(=O)CCCCCCC(=O)NO
+Oc1ccc(C(=O)c2cc(O)c(O)c(O)c2)c(O)c1O
+COc1ccc(cc1OC1CCCC1)[C@@H]1CNC(=O)C1
+OC(=O)c1cc(O)c(O)c(O)c1
+CC(C)c1onc(c1COc1ccc(\C=C\c2cccc(c2)C(O)=O)c(Cl)c1)-c1c(Cl)cccc1Cl
+N\C(Sc1ccccc1N)=C(C#N)/C(C#N)=C(/N)Sc1ccccc1N
+COc1ccc(C[C@H](N)C(=O)N[C@H]2[C@@H](O)[C@@H](O[C@@H]2CO)n3cnc4c(ncnc34)N(C)C)cc1
+C[C@@H]1C[C@H]2[C@@H]3C[C@H](F)C4=CC(=O)C=C[C@]4(C)[C@@]3(F)[C@@H](O)C[C@]2(C)[C@@]1(O)C(=O)CO
+C[C@@]12CC[C@H]3[C@@H](CCC4=C3CCC(=O)C4)[C@@H]2CC[C@@]1(O)C#C
+CN1[C@H]2C[C@@H](C[C@@H]1[C@H]1O[C@@H]21)OC(=O)[C@H](CO)c1ccccc1
+OCC(O)CONC(=O)c1ccc(F)c(F)c1Nc1ccc(I)cc1F
+COc1ccc2nccc([C@H](O)[C@H]3C[C@@H]4CC[N@]3C[C@@H]4C=C)c2c1
+CC1(C)O[C@@H]2C[C@H]3[C@@H]4C[C@H](F)C5=CC(=O)C=C[C@]5(C)[C@H]4[C@@H](O)C[C@]3(C)[C@@]2(O1)C(=O)CO
+CC1(C)O[C@@H]2C[C@H]3[C@@H]4C[C@H](F)C5=CC(=O)CC[C@]5(C)[C@H]4[C@@H](O)C[C@]3(C)[C@@]2(O1)C(=O)CO
+COc1ccc2[C@@H](OC(=O)c2c1OC)[C@@H]1N(C)CCc2cc3OCOc3c(OC)c12
+S=C(NC1CCCCC1)N2CCC(CC2)C3C=NC=N3
+CN\C(NCCSCc1csc(CN(C)C)n1)=C\[N+]([O-])=O
+CS(=O)(=O)CCNCc1ccc(o1)-c1ccc2ncnc(Nc3ccc(OCc4cccc(F)c4)c(Cl)c3)c2c1
+CN(\N=C\c1cnc2ccc(Br)cn12)S(=O)(=O)c1cc(ccc1C)[N+]([O-])=O
+CO[C@H]1\C=C\O[C@@]2(C)Oc3c(C2=O)c2c(O)c(\C=N\N4CCN(C)CC4)c(NC(=O)\C(C)=C/C=C/[C@H](C)[C@H](O)[C@@H](C)[C@@H](O)[C@@H](C)[C@H](OC(C)=O)[C@@H]1C)c(O)c2c(O)c3C
+CS(C)=O
+O
+Ctrl_PBS
+lepirudin
+cetuximab
+etanercept
+bivalirudin
+leuprolide
+peginterferon alfa-2a
+alteplase
+interferon alfa-n1
+darbepoetin alfa
+urokinase
+goserelin
+reteplase
+erythropoietin
+salmon calcitonin
+interferon alfa-n3
+pegfilgrastim
+sargramostim
+peginterferon alfa-2b
+asparaginase escherichia coli
+thyrotropin alfa
+"antihemophilic factor, human recombinant"
+anakinra
+gramicidin d
+human immunoglobulin g
+anistreplase
+insulin human
+tenecteplase
+interferon gamma-1b
+"interferon alfa-2a, recombinant"
+desmopressin
+coagulation factor viia recombinant human
+palifermin
+glucagon
+aldesleukin
+botulinum toxin type b
+omalizumab
+insulin lispro
+insulin glargine
+collagenase clostridium histolyticum
+adalimumab
+somatotropin
+abciximab
+drotrecogin alfa
+gemtuzumab ozogamicin
+indium in-111 satumomab pendetide
+pegaspargase
+interferon beta-1a
+pegademase
+eptifibatide
+infliximab
+follitropin
+vasopressin
+interferon beta-1b
+interferon alfacon-1
+hyaluronidase (ovine)
+insulin pork
+trastuzumab
+rituximab
+basiliximab
+muromonab
+digoxin immune fab (ovine)
+ibritumomab tiuxetan
+daptomycin
+tositumomab
+pegvisomant
+botulinum toxin type a
+streptokinase
+alemtuzumab
+capromab pendetide
+cyclosporine
+alefacept
+efalizumab
+antithymocyte immunoglobulin (rabbit)
+filgrastim
+coagulation factor ix (recombinant)
+octreotide
+interferon alfa-2b
+oxytocin
+natalizumab
+palivizumab
+daclizumab
+bevacizumab
+technetium tc-99m arcitumomab
+cyanocobalamin
+tetrahydrofolic acid
+ademetionine
+phenylalanine
+choline
+ascorbic acid
+spermine
+succinic acid
+tryptophan
+ergocalciferol
+citrulline
+folic acid
+icosapent
+vitamin e
+pyridoxine
+lipoic acid
+aspartame
+cholecalciferol
+menadione
+adenine
+fluvoxamine
+flunisolide
+baclofen
+amphetamine
+nicotine
+cevimeline
+lorazepam
+esmolol
+ethchlorvynol
+phentermine
+tramadol
+betaxolol
+oseltamivir
+hydroxocobalamin
+caffeine
+succinylcholine
+ticlopidine
+trospium
+midodrine
+remikiren
+pantoprazole
+torasemide
+citalopram
+eletriptan
+bethanidine
+nelfinavir
+isoetharine
+diflorasone
+gadodiamide
+guanadrel
+enflurane
+cefotiam
+pregabalin
+temazepam
+methyclothiazide
+aminosalicylic acid
+reboxetine
+butabarbital
+alclometasone
+ranolazine
+methysergide
+cabergoline
+doxycycline
+diethylstilbestrol
+lymecycline
+calcium acetate
+anagrelide
+carmustine
+sulfisoxazole
+cefmenoxime
+ropinirole
+isradipine
+diatrizoate
+cefmetazole
+amsacrine
+liothyronine
+disopyramide
+pamidronic acid
+clemastine
+venlafaxine
+conjugated estrogens
+travoprost
+bleomycin
+chlorambucil
+etomidate
+etonogestrel
+morphine
+bupivacaine
+dapiprazole
+penciclovir
+tenofovir disoproxil
+flucloxacillin
+ertapenem
+desogestrel
+mitomycin
+talbutal
+bexarotene
+chlorthalidone
+ethoxzolamide
+pentobarbital
+valproic acid
+capreomycin
+acetaminophen
+codeine
+piperacillin
+dihydroergotamine
+amitriptyline
+floxuridine
+fluorometholone
+nitroprusside
+calcium glucoheptonate
+hydromorphone
+indomethacin
+ethambutol
+ipratropium
+methadone
+atenolol
+pimecrolimus
+omeprazole
+metixene
+cetirizine
+terfenadine
+diltiazem
+protriptyline
+aminohippuric acid
+alfuzosin
+trimethadione
+clobazam
+megestrol acetate
+tioguanine
+methylergometrine
+buclizine
+aztreonam
+aminoglutethimide
+mefloquine
+sulfadiazine
+sapropterin
+vinorelbine
+anidulafungin
+clozapine
+sucralfate
+grepafloxacin
+doxylamine
+levonorgestrel
+norepinephrine
+cidofovir
+mirtazapine
+meprobamate
+thiethylperazine
+treprostinil
+colestipol
+trihexyphenidyl
+dydrogesterone
+mexiletine
+amlodipine
+oxyphencyclimine
+procyclidine
+phenylephrine
+digoxin
+sulpiride
+profenamine
+nimodipine
+beclomethasone dipropionate
+carisoprodol
+phenylpropanolamine
+sorafenib
+zoledronic acid
+eszopiclone
+alprazolam
+ardeparin
+loxapine
+mupirocin
+carbamoylcholine
+rosiglitazone
+ampicillin
+metocurine iodide
+phenoxymethylpenicillin
+secobarbital
+promazine
+methylphenidate
+zolpidem
+famciclovir
+triprolidine
+streptozocin
+cefpiramide
+lindane
+prochlorperazine
+nitric oxide
+bendroflumethiazide
+ceftazidime
+cerivastatin
+entecavir
+betamethasone
+teniposide
+epirubicin
+loracarbef
+lansoprazole
+droperidol
+framycetin
+clomocycline
+meperidine
+cefalotin
+imipramine
+nabumetone
+methscopolamine bromide
+metharbital
+ketorolac
+quinine
+tenoxicam
+dronabinol
+montelukast
+fluoxetine
+methohexital
+chlordiazepoxide
+duloxetine
+chlorpromazine
+amikacin
+raloxifene
+celecoxib
+gallamine triethiodide
+dicloxacillin
+nabilone
+altretamine
+sotalol
+buspirone
+cefotaxime
+oxycodone
+flutamide
+tolmetin
+cimetidine
+haloperidol
+levallorphan
+tridihexethyl
+triflupromazine
+acetyldigitoxin
+vancomycin
+dextromethorphan
+bentoquatam
+anisotropine methylbromide
+albendazole
+trandolapril
+caspofungin
+carteolol
+metolazone
+oxaliplatin
+lercanidipine
+foscarnet
+mephenytoin
+rofecoxib
+cefdinir
+guanidine
+toremifene
+benazepril
+amoxapine
+pyridostigmine
+adinazolam
+azelaic acid
+pentostatin
+methoxsalen
+piroxicam
+perflutren
+hydroxyzine
+zanamivir
+tigecycline
+doxapram
+benzthiazide
+carbamazepine
+cisatracurium
+cephalexin
+cinnarizine
+fondaparinux
+vinblastine
+atropine
+fenoprofen
+fenfluramine
+clonidine
+sulfamethizole
+valaciclovir
+carbenicillin
+mazindol
+lactulose
+voriconazole
+levocarnitine
+enalapril
+diclofenac
+fluticasone propionate
+lisuride
+doxazosin
+fluocinolone acetonide
+piperazine
+amiloride
+oxytetracycline
+ulobetasol
+gadoteridol
+labetalol
+thiopental
+medroxyprogesterone acetate
+cisapride
+sulindac
+cyclothiazide
+chloroquine
+ethionamide
+butorphanol
+bisoprolol
+amodiaquine
+furazolidone
+rifabutin
+candoxatril
+paramethadione
+demeclocycline
+oxandrolone
+nicardipine
+fluphenazine
+testosterone
+bacitracin
+clorazepic acid
+guanabenz
+alendronic acid
+clofarabine
+dexmedetomidine
+prednisone
+clofibrate
+adenosine
+simvastatin
+pemetrexed
+nystatin
+dextropropoxyphene
+mitotane
+stavudine
+leucovorin
+pentazocine
+magnesium sulfate
+trazodone
+sevelamer
+metaxalone
+flumethasone
+sulfametopyrazine
+nafarelin
+epinephrine
+cefixime
+chlorpropamide
+aprepitant
+isoflurophate
+thioridazine
+moricizine
+amphotericin b
+warfarin
+midazolam
+tobramycin
+trovafloxacin
+pentosan polysulfate
+fludrocortisone
+mycophenolate mofetil
+cephaloglycin
+flurazepam
+fluorescein
+daunorubicin
+ergotamine
+nitrofurantoin
+nicergoline
+eplerenone
+amprenavir
+naltrexone
+delavirdine
+tamsulosin
+sufentanil
+lamivudine
+ibandronate
+diethylcarbamazine
+flurbiprofen
+oxacillin
+apomorphine
+paroxetine
+nedocromil
+adefovir dipivoxil
+azatadine
+clodronic acid
+lisinopril
+homatropine methylbromide
+trimipramine
+nitroglycerin
+rocuronium
+thiabendazole
+atracurium besylate
+meclizine
+hetacillin
+hydrocortisone
+mannitol
+gadobenic acid
+modafinil
+scopolamine
+carbinoxamine
+etodolac
+prilocaine
+epinastine
+isoflurane
+ethotoin
+tetracycline
+meropenem
+potassium chloride
+irinotecan
+metyrosine
+clavulanic acid
+benzquinamide
+hydrocortamate
+alprostadil
+clidinium
+tirofiban
+propiomazine
+roxithromycin
+nalidixic acid
+mefenamic acid
+cryptenamine
+naproxen
+gadopentetic acid
+perindopril
+haloprogin
+primidone
+candesartan cilexetil
+tolazoline
+gentamicin
+tazarotene
+fenoldopam
+halazepam
+alfentanil
+colistin
+dicyclomine
+minaprine
+indapamide
+tropicamide
+biperiden
+ribavirin
+fentanyl
+meloxicam
+rosoxacin
+tadalafil
+carprofen
+ethynodiol diacetate
+levomenthol
+cinoxacin
+fosfomycin
+diazepam
+phenmetrazine
+trifluoperazine
+phensuximide
+cefaclor
+brompheniramine
+progabide
+clocortolone
+dobutamine
+oxazepam
+donepezil
+nalbuphine
+clofazimine
+flurandrenolide
+cysteamine
+methylphenobarbital
+perphenazine
+levorphanol
+chlorphenesin
+penicillamine
+prednisolone
+diflunisal
+ranitidine
+tacrolimus
+benzphetamine
+alprenolol
+ritodrine
+conivaptan
+emtricitabine
+quinapril
+clomifene
+isosorbide dinitrate
+risedronic acid
+omapatrilat
+bumetanide
+mechlorethamine
+dienestrol
+sulfapyridine
+oxybuprocaine
+iron dextran
+testolactone
+benzylpenicilloyl polylysine
+triazolam
+ethanol
+remifentanil
+bitolterol
+methdilazine
+etacrynic acid
+ondansetron
+bimatoprost
+cocaine
+zonisamide
+paricalcitol
+tinidazole
+repaglinide
+amantadine
+almotriptan
+spectinomycin
+ketotifen
+buprenorphine
+levosimendan
+ceforanide
+colesevelam
+metacycline
+tipranavir
+mesoridazine
+maprotiline
+salicylic acid
+diethylpropion
+salmeterol
+meclofenamic acid
+hexafluronium
+cycrimine
+zalcitabine
+demecarium
+acetylsalicylic acid
+phenprocoumon
+fulvestrant
+mezlocillin
+fexofenadine
+isoniazid
+naratriptan
+rizatriptan
+dirithromycin
+netilmicin
+hydrocodone
+norgestimate
+carboplatin
+pindolol
+mepivacaine
+zaleplon
+apraclonidine
+dactinomycin
+ezetimibe
+edetic acid
+dipyridamole
+telithromycin
+ethinylestradiol
+lomefloxacin
+cyclopentolate
+ramelteon
+nandrolone phenpropionate
+dimenhydrinate
+glycopyrronium
+exemestane
+oxaprozin
+doxorubicin
+frovatriptan
+hydrochlorothiazide
+cyclacillin
+salbutamol
+levobupivacaine
+ganciclovir
+hydroxyurea
+letrozole
+busulfan
+metyrapone
+clobetasol propionate
+balsalazide
+sulfamethoxazole
+glyburide
+minocycline
+guanfacine
+bethanechol
+isosorbide mononitrate
+phylloquinone
+mycophenolic acid
+methoxyflurane
+irbesartan
+topotecan
+thalidomide
+melphalan
+memantine
+gatifloxacin
+lubiprostone
+abacavir
+ergoloid mesylate
+ibuprofen
+novobiocin
+benzylpenicillin
+nitrendipine
+tocainide
+praziquantel
+azlocillin
+oxybutynin
+acetophenazine
+isoprenaline
+cefditoren
+clonazepam
+dihydrotachysterol
+mequitazine
+atazanavir
+etidronic acid
+deslanoside
+vigabatrin
+diphenoxylate
+streptomycin
+benzocaine
+primaquine
+deserpidine
+ouabain
+dimethyl sulfoxide
+hesperetin
+fluvastatin
+oxamniquine
+rosuvastatin
+arbutamine
+quinacrine
+sertraline
+sibutramine
+methyprylon
+trilostane
+heparin
+miconazole
+colistimethate
+cefuroxime
+chlorpheniramine
+trimethaphan
+atovaquone
+amiodarone
+diazoxide
+gliclazide
+phenacemide
+ambenonium
+dutasteride
+bicalutamide
+rabeprazole
+prednicarbate
+proguanil
+pioglitazone
+tiludronic acid
+doxacurium
+carvedilol
+sulfinpyrazone
+cefapirin
+micafungin
+doxepin
+diclofenamide
+cloxacillin
+cefprozil
+desipramine
+candicidin
+thiamylal
+gemifloxacin
+bupropion
+trimetrexate
+halothane
+dinoprost tromethamine
+chloroprocaine
+terazosin
+amdinocillin
+calcium chloride
+ofloxacin
+cilostazol
+itraconazole
+procarbazine
+arsenic trioxide
+kanamycin
+orphenadrine
+phenobarbital
+escitalopram
+rescinnamine
+propafenone
+naloxone
+domperidone
+fluoxymesterone
+pergolide
+desflurane
+clindamycin
+dexfenfluramine
+oxymorphone
+flecainide
+estramustine
+zopiclone
+tubocurarine
+bromocriptine
+nadolol
+mitoxantrone
+lomustine
+ridogrel
+dezocine
+levobunolol
+ceftriaxone
+metipranolol
+estazolam
+dantrolene
+rifaximin
+ketamine
+budesonide
+quetiapine
+enoxaparin
+mivacurium
+levacetylmethadol
+encainide
+paclitaxel
+diphenidol
+dexamethasone
+sevoflurane
+chlorprothixene
+epoprostenol
+gemfibrozil
+clomipramine
+bepridil
+decamethonium
+alimemazine
+docetaxel
+iodixanol
+olsalazine
+mitiglinide
+ergometrine
+lisdexamfetamine
+retapamulin
+eculizumab
+desonide
+posaconazole
+darunavir
+telbivudine
+paliperidone
+panitumumab
+ranibizumab
+arformoterol
+hydralazine
+exenatide
+mecasermin
+pramlintide
+nelarabine
+abatacept
+carbetocin
+lumiracoxib
+tetracosactide
+corticotropin
+fenoterol
+glisoxepide
+pirbuterol
+bismuth subsalicylate
+bevantolol
+glucosamine
+practolol
+sulfacytine
+sulfadoxine
+rolitetracycline
+oxtriphylline
+insulin aspart
+insulin detemir
+insulin glulisine
+fosamprenavir
+fosphenytoin
+josamycin
+st. john's wort
+polythiazide
+quinethazone
+cefamandole
+cefazolin
+cefonicid
+cefoperazone
+cefotetan
+cefoxitin
+ceftizoxime
+cefradine
+metocurine
+pancuronium
+pipecuronium
+vecuronium
+cilazapril
+forasartan
+tolevamer
+potassium cation
+saprisartan
+spirapril
+tasosartan
+amobarbital
+aprobarbital
+butobarbital
+heptabarbital
+hexobarbital
+lithium cation
+mestranol
+penbutolol
+iohexol
+ephedra sinica root
+ephedrine
+mephentermine
+procaterol
+rasagiline
+quinupristin
+calcium
+magnesium oxide
+magnesium cation
+cortisone acetate
+ginkgo biloba
+glymidine
+paramethasone
+sodium bicarbonate
+yohimbine
+bezafibrate
+colchicine
+drospirenone
+digitoxin
+magnesium salicylate
+salsalate
+choline magnesium trisalicylate
+methotrimeprazine
+ginseng
+temafloxacin
+danazol
+clenbuterol
+bambuterol
+tiotropium
+ciclesonide
+theobromine
+cefepime
+cefacetrile
+ceftibuten
+cefpodoxime
+antrafenine
+testosterone propionate
+paromomycin
+nitroxoline
+stepronin
+aminophenazone
+ajmaline
+amrinone
+aprindine
+allylestrenol
+cholestyramine
+methadyl acetate
+19-norandrostenedione
+antipyrine
+alfacalcidol
+glutethimide
+gamma-hydroxybutyric acid
+mmda
+bufotenine
+dihydroetorphine
+diamorphine
+midomafetamine
+5-androstenedione
+bezitramide
+fencamfamin
+ethylmorphine
+"2,5-dimethoxy-4-ethylamphetamine"
+bolasterone
+4-methoxyamphetamine
+1-testosterone
+fenethylline
+barbital
+"4-bromo-2,5-dimethoxyamphetamine"
+4-hydroxytestosterone
+dimethyltryptamine
+camazepam
+dichloralphenazone
+"dihydro-2-thioxo-5-((5-(2-(trifluoromethyl)phenyl)-2-furanyl)methyl)-4,6(1h,5h)-pyrimidinedione"
+etorphine
+difenoxin
+tenamfetamine
+dehydrochloromethyltestosterone
+delorazepam
+clostebol
+androstenediol
+ecgonine
+dextromoramide
+desomorphine
+chlorhexadol
+carfentanil
+androstenedione
+"4-bromo-2,5-dimethoxyphenethylamine"
+boldenone
+18-methyl-19-nortestosterone
+flunitrazepam
+ethyl loflazepate
+drotebanol
+diprenorphine
+fenproporex
+dihydrocodeine
+cloxazolam
+bolandiol
+alphacetylmethadol
+chlorphentermine
+bromazepam
+clotiazepam
+cathinone
+1-(2-phenylethyl)-4-phenyl-4-acetoxypiperidine
+chloral hydrate
+calusterone
+dihydromorphine
+methylenedioxyethamphetamine
+fludiazepam
+formebolone
+methyl-1-testosterone
+kaolin
+dextroamphetamine
+metamfetamine
+phendimetrazine
+oxprenolol
+sulfamerazine
+sulfamethazine
+liotrix
+ursodeoxycholic acid
+ketazolam
+prazepam
+quazepam
+solifenacin
+iron
+zinc
+cinolazepam
+nitrazepam
+cilastatin
+imipenem
+tiaprofenic acid
+lopinavir
+bacampicillin
+meticillin
+pivampicillin
+pivmecillinam
+tazobactam
+ticarcillin
+periciazine
+deferasirox
+valganciclovir
+amyl nitrite
+erythrityl tetranitrate
+aceprometazine
+alverine
+molindone
+pipotiazine
+thiothixene
+isopropamide
+lincomycin
+5-fluorouridine
+sorbitol
+trans-2-hydroxycinnamic acid
+roflumilast
+8-azaguanine
+virginiamycin m1
+topiroxostat
+rutin
+aica ribonucleotide
+dalfopristin
+pantothenic acid
+castanospermine
+propylene glycol
+epothilone d
+hyperforin
+sinefungin
+formic acid
+"7,9-dimethylguanine"
+"(6s)-5,6,7,8-tetrahydrofolic acid"
+epicaptopril
+prostaglandin d2
+triglu-5-formyl-tetrahydrofolate
+"3,5-dinitrocatechol"
+daidzin
+glycochenodeoxycholic acid
+xanthine
+cephalosporin analog
+zinc trihydroxide
+s-ethylisothiourea
+maltotetraose
+7-deazaguanine
+hydrolyzed cephalothin
+platelet activating factor
+flufenamic acid
+calcipotriol
+prostaglandin b2
+"1,10-phenanthroline"
+guanine
+9-methylguanine
+thymol
+ditiocarb
+cyclic adenosine monophosphate
+vorinostat
+peldesine
+terlipressin
+cholic acid
+glycocholic acid
+fusidic acid
+pyroquilon
+2-methoxyethanol
+methylphosphinic acid
+domoic acid
+stanolone
+fosmidomycin
+oxitriptan
+penicillin g acyl-serine
+ge-2270a
+patupilone
+acetic acid
+(6r)-folinic acid
+cephalosporin c
+dexpropranolol
+"3,5-diiodotyrosine"
+heptaethylene glycol
+hemin
+4-hydroxycoumarin
+uracil
+ubenimex
+cephalothin group
+naringenin
+brequinar
+glutaric acid
+phencyclidine
+oxyphenbutazone
+capric acid
+tiratricol
+ribostamycin
+deoxycholic acid
+doconexent
+radicicol
+phenacetin
+benzoic acid
+salicylhydroxamic acid
+prostaglandin g2
+oxalic acid
+deacetoxycephalosporin c
+clorobiocin
+p-coumaric acid
+6-deoxyerythronolide b
+hypoxanthine
+aurodox
+valpromide
+zinc substituted heme c
+butyrylthiocholine
+seocalcitol
+geneticin
+phenethylamine
+carbocisteine
+taurocholic acid
+9-deazaguanine
+arecoline
+caprylic acid
+cholesterol
+niflumic acid
+arachidonic acid
+latamoxef
+trioxsalen
+thiotepa
+estriol
+estrone sulfate
+quinestrol
+fleroxacin
+1-benzylimidazole
+aniracetam
+apramycin
+aldosterone
+coumarin
+octylphenoxy polyethoxyethanol
+methylecgonine
+camptothecin
+farnesyl thiopyrophosphate
+hydroxyfasudil
+licofelone
+gentamicin c1a
+myxothiazol
+lawsone
+streptolydigin
+5-methyltetrahydrofolic acid
+bifonazole
+inecalcitol
+neamine
+benoxaprofen
+dantron
+oxyphenisatin
+phenolphthalein
+prenylamine
+urethane
+zomepirac
+lysergic acid diethylamide
+buformin
+tienilic acid
+zimelidine
+methaqualone
+rapacuronium
+maraviroc
+amineptine
+cyclandelate
+cyproterone acetate
+debrisoquine
+flunarizine
+fluspirilene
+mepenzolate
+tetrabenazine
+ixabepilone
+posizolid
+biricodar
+dronedarone
+dexloxiglumide
+nebivolol
+huperzine a
+omacetaxine mepesuccinate
+lorcaserin
+osanetant
+vildagliptin
+voglibose
+elacridar
+dapoxetine
+cilansetron
+calanolide a
+bifeprunox
+bicifadine
+bepotastine
+becocalcidiol
+phenserine
+vapreotide
+pegaptanib
+milnacipran
+lucinactant
+ximelagatran
+nesiritide
+galiximab
+pagoclone
+tesmilifene
+flibanserin
+oritavancin
+g17dt
+renzapride
+ceftobiprole
+clevidipine
+desmoteplase
+permethrin
+defibrotide
+rifalazil
+ospemifene
+lofexidine
+pexelizumab
+ramoplanin
+ezogabine
+afelimomab
+azimilide
+epratuzumab
+bectumomab
+oregovomab
+banoxantrone
+plitidepsin
+ign311
+satraplatin
+adecatumumab
+migalastat
+ularitide
+indacaterol
+slv319
+abaloparatide
+cimicoxib
+labetuzumab
+ancrod
+matuzumab
+16-bromoepiandrosterone
+trabectedin
+fontolizumab
+nn344
+bavituximab
+cr002
+pev3a
+ngx267
+pretomanid
+vintafolide
+egaptivon pegol
+rozrolimupab
+pracinostat
+apd791
+beraprost
+tetrodotoxin
+cobimetinib
+methsuximide
+fibrinolysin
+interferon alfa
+glatiramer
+gallium nitrate
+rotigotine
+vandetanib
+eldecalcitol
+girentuximab
+pimavanserin
+peg-uricase
+ingn 225
+romiplostim
+obiltoxaximab
+dexlansoprazole
+rindopepimut
+histamine
+regramostim
+amibegron
+albinterferon alfa-2b
+xtl-001
+nav 1800
+srp 299
+briakinumab
+human interferon omega-1
+7-ethyl-10-hydroxycamptothecin
+technetium tc-99m ciprofloxacin
+otelixizumab
+telaprevir
+mipomersen
+brivaracetam
+naronapride
+amg 108
+iratumumab
+enokizumab
+naluzotan
+ramucirumab
+farletuzumab
+prx-08066
+veltuzumab
+apremilast
+ustekinumab
+bl-1020
+gts-21
+gantacurium
+maxy-g34
+andrographolide
+trastuzumab emtansine
+pro-542
+tnx-901
+prasterone sulfate
+abiraterone
+gpi-1485
+nbi-6024
+parathyroid hormone
+trestolone
+peginterferon alfacon-1
+"sar9, met (o2)11-substance p"
+seletracetam
+inotuzumab ozogamicin
+ri 624
+kos-1584
+myo-029
+ct-011
+leronlimab
+gi-5005
+obeticholic acid
+glembatumumab vedotin
+amg-222
+aldoxorubicin
+cariprazine
+glycopeg-gcsf
+olaratumab
+iph 2101
+tb-402
+lumateperone
+caplacizumab
+imc-1c11
+ykp-1358
+eldelumab
+"1alpha,24s-dihydroxyvitamin d2"
+cenobamate
+bisegliptin
+spiramycin
+teicoplanin
+sulfadimethoxine
+nylidrin
+pizotifen
+pentaerythritol tetranitrate
+garenoxacin
+lumiliximab
+canakinumab
+paclitaxel trevatide
+noscapine
+romidepsin
+ipilimumab
+solabegron
+nimotuzumab
+elocalcitol
+icatibant
+atrasentan
+tedisamil
+rufinamide
+alogliptin
+tapentadol
+hyaluronidase (human recombinant)
+sugammadex
+silodosin
+prasugrel
+eltrombopag
+doripenem
+tolvaptan
+regadenoson
+ferumoxytol
+asenapine
+vernakalant
+lacosamide
+dalbavancin
+nalmefene
+ridaforolimus
+vadimezan
+avanafil
+tariquidar
+clenoliximab
+lanoteplase
+fluasterone
+dersalazine
+incadronic acid
+droxidopa
+tolperisone
+udenafil
+sitaxentan
+sulodexide
+maxacalcitol
+tocilizumab
+alvimopan
+ziconotide
+teriparatide
+temsirolimus
+amisulpride
+simeprevir
+dapagliflozin
+pegnivacogin
+semuloparin
+biib015
+sonepcizumab
+motavizumab
+elotuzumab
+ave9633
+carotuximab
+xmab 2513
+pegpleranib
+tucidinostat
+saxagliptin
+coltuximab ravtansine
+teprotumumab
+lucatumumab
+pertuzumab
+indisulam
+siplizumab
+rilonacept
+abafungin
+vitespen
+bazedoxifene
+telavancin
+ambrisentan
+idraparinux
+doxercalciferol
+oxymetholone
+armodafinil
+etravirine
+calfactant
+cethromycin
+ravuconazole
+cangrelor
+avasimibe
+diethylnorspermine
+dotarizine
+lonafarnib
+squalamine
+apolizumab
+cariporide
+clomethiazole
+sibrotuzumab
+propentofylline
+prucalopride
+repinotan
+muraglitazar
+deramciclane
+tramiprosate
+ocinaplon
+thrombopoietin
+etilevodopa
+astaxanthin
+bivatuzumab
+lerdelimumab
+valomaciclovir
+adipiplon
+dextofisopam
+tg4010
+mitemcinal
+ceftaroline fosamil
+agomelatine
+lexatumumab
+nemonoxacin
+reslizumab
+apixaban
+teplizumab
+catumaxomab
+tafenoquine
+pegsunercept
+mepolizumab
+taranabant
+otamixaban
+isavuconazonium
+dalfampridine
+denosumab
+volociximab
+ofatumumab
+safinamide
+liraglutide
+saredutant
+abetimus
+pasireotide
+odanacatib
+golimumab
+esmirtazapine
+amediplase
+belatacept
+vilazodone
+sipuleucel-t
+nitrous oxide
+aprotinin
+dabigatran etexilate
+arbekacin
+betahistine
+degarelix
+desvenlafaxine
+dexmethylphenidate
+fesoterodine
+iobenguane
+gadofosveset trisodium
+isometheptene
+levonordefrin
+lumefantrine
+methacholine
+methyltestosterone
+nilvadipine
+norelgestromin
+potassium iodide
+fospropofol
+fosaprepitant
+stanozolol
+buserelin
+gimatecan
+aluminum hydroxide
+calcium carbonate
+lornoxicam
+bufuralol
+sparteine
+aniline
+gestodene
+seproxetine
+beta-naphthoflavone
+bafilomycin a1
+enclomiphene
+zaltoprofen
+ketobemidone
+seratrodast
+ginsenoside rb1
+triclofos
+danaparoid
+glycine betaine
+beractant
+saralasin
+tetryzoline
+ammonium chloride
+bendamustine
+benzyl alcohol
+cabazitaxel
+chenodeoxycholic acid
+dalteparin
+difluprednate
+dimercaprol
+prussian blue
+hexocyclium
+histrelin
+hydroxyprogesterone caproate
+lanreotide
+lanthanum carbonate
+levopropoxyphene
+mangafodipir
+mebutamate
+methenamine
+methylnaltrexone
+nepafenac
+niclosamide
+nonoxynol-9
+phenyl aminosalicylate
+polidocanol
+pralatrexate
+protokylol
+pyrithione
+raltegravir
+phenylbutyric acid
+sulfameter
+tinzaparin
+tiopronin
+triethylenetetramine
+triptorelin
+unoprostone
+viomycin
+hymecromone
+brefeldin a
+anisomycin
+5beta-dihydrotestosterone
+chloramphenicol succinate
+tranilast
+dibromotyrosine
+epibatidine
+ferulic acid
+epitestosterone
+farnesyl diphosphate
+geranylgeranyl diphosphate
+hexestrol
+3-isobutyl-1-methyl-7h-xanthine
+5-(2-methylpiperazine-1-sulfonyl)isoquinoline
+wortmannin
+methylthioninium
+sulthiame
+gosogliptin
+puromycin
+(r)-warfarin
+capravirine
+"7,8-dichloro-1,2,3,4-tetrahydroisoquinoline"
+testosterone succinate
+thiamphenicol
+"r,s-warfarin alcohol"
+"s,r-warfarin alcohol"
+ethyl biscoumacetate
+azidocillin
+salicylamide
+sulfamoxole
+dimetindene
+nandrolone decanoate
+metiamide
+roxatidine acetate
+bopindolol
+bupranolol
+cinitapride
+tofisopam
+nadroparin
+triflusal
+lurasidone
+ticagrelor
+tafluprost
+ivacaftor
+azilsartan medoxomil
+ioflupane i-123
+lomitapide
+vismodegib
+dehydroascorbic acid
+taurochenodeoxycholic acid
+tauroursodeoxycholic acid
+temocapril
+agmatine
+serotonin
+n-methylnicotinamide
+tyramine
+uric acid
+ellagic acid
+bamet-ud2
+pitavastatin
+dpdpe
+cholecystokinin
+rilpivirine
+ulipristal
+fingolimod
+brentuximab vedotin
+eribulin
+gabapentin enacarbil
+boceprevir
+fidaxomicin
+cabozantinib
+belimumab
+teriflunomide
+linagliptin
+perampanel
+gadoxetic acid
+asparaginase erwinia chrysanthemi
+icosapent ethyl
+carfilzomib
+linaclotide
+arbaclofen placarbil
+mirabegron
+peginesatide
+regorafenib
+aclidinium
+teduglutide
+raxibacumab
+bedaquiline
+certolizumab pegol
+formestane
+fluticasone furoate
+canagliflozin
+dimethyl fumarate
+glycerol phenylbutyrate
+pomalidomide
+dabrafenib
+ferric carboxymaltose
+levomilnacipran
+adrafinil
+amperozide
+dolutegravir
+riociguat
+macitentan
+luliconazole
+sofosbuvir
+obinutuzumab
+chlorcyclizine
+magaldrate
+kebuzone
+isoxsuprine
+isoxicam
+indoramin
+indoprofen
+indenolol
+indalpine
+ifenprodil
+ibuproxam
+hexoprenaline
+hexetidine
+azosemide
+glibornuride
+fusafungine
+fluprednidene
+fluocortolone
+flumequine
+floctafenine
+fenbufen
+etofibrate
+etofenamate
+etilefrine
+etifoxine
+eperisone
+enviomycin
+ditazole
+dimetacrine
+dexetimide
+cyclopentamine
+cyamemazine
+barbexaclone
+chlorphenoxamine
+cefaloridine
+articaine
+beclamide
+befunolol
+captodiame
+canrenoic acid
+butriptyline
+brotizolam
+bisacodyl
+benzoctamine
+benfluorex
+benactyzine
+aliskiren
+ledipasvir
+secukinumab
+vorapaxar
+miltefosine
+vedolizumab
+suvorexant
+nivolumab
+siltuximab
+pembrolizumab
+empagliflozin
+eliglustat
+tedizolid phosphate
+albiglutide
+dulaglutide
+metreleptin
+netupitant
+naloxegol
+ceftolozane
+blinatumomab
+ibrutinib
+amorolfine
+anthrax immune globulin human
+avibactam
+cannabidiol
+cefminox
+ceritinib
+ciprofibrate
+cobicistat
+corifollitropin alfa
+corticorelin ovine triflutate
+vortioxetine
+tibolone
+tasimelteon
+sodium oxybate
+edoxaban
+umeclidinium
+dinutuximab
+lenvatinib
+olodaterol
+idebenone
+vilanterol
+ivabradine
+benzydamine
+potassium alum
+trimebutine
+pinaverium
+tixocortol
+difluocortolone
+quinagolide
+"thyroid, porcine"
+elvitegravir
+daclatasvir
+ancestim
+magnesium hydroxide
+asfotase alfa
+hydroxyethyl starch
+methoxy polyethylene glycol-epoetin beta
+turoctocog alfa
+pentastarch
+nitrous acid
+poractant alfa
+paraldehyde
+eslicarbazepine acetate
+aurothioglucose
+peginterferon beta-1a
+dienogest
+medrogestone
+potassium citrate
+brexpiprazole
+chromic chloride
+gadoteric acid
+iothalamic acid
+ioversol
+ioxilan
+isosulfan blue
+technetium tc-99m mebrofenin
+technetium tc-99m oxidronate
+iron sucrose
+ferric pyrophosphate
+florbetaben (18f)
+florbetapir (18f)
+sodium citrate
+iopromide
+technetium tc-99m sestamibi
+technetium tc-99m exametazime
+technetium tc-99m pyrophosphate
+etizolam
+dosulepin
+butyrfentanyl
+lofentanil
+dasabuvir
+edivoxetine
+nisoxetine
+lortalamine
+talopram
+etoperidone
+lorpiprazole
+lobeglitazone
+netoglitazone
+rivoglitazone
+ciglitazone
+cirazoline
+synephrine
+arotinolol
+moxisylyte
+trimazosin
+pegloticase
+pholcodine
+limaprost
+loxoprofen
+dexibuprofen
+dexketoprofen
+droxicam
+tolfenamic acid
+firocoxib
+clonixin
+bisoxatin
+polaprezinc
+fibrinogen human
+blonanserin
+zotepine
+brilaroxazine
+barnidipine
+aranidipine
+azelnidipine
+benidipine
+cilnidipine
+darodipine
+efonidipine
+lacidipine
+levamlodipine
+manidipine
+niguldipine
+niludipine
+methylene blue
+hydracarbazine
+pirlindole
+toloxatone
+benmoxin
+iproclozide
+mebanazine
+octamoxin
+pheniprazine
+phenoxypropazine
+pivhydrazine
+safrazine
+caroxazone
+dextran
+tegafur
+gimeracil
+bemiparin
+reviparin
+parnaparin
+certoparin
+imidafenacin
+idarucizumab
+lixisenatide
+picosulfuric acid
+phenylacetic acid
+ubidecarenone
+cimetropium
+eluxadoline
+artesunate
+bismuth subcitrate potassium
+sodium aurothiomalate
+choline c 11
+activated charcoal
+fimasartan
+lumacaftor
+magnesium trisilicate
+molsidomine
+morniflumate
+pipamperone
+polyethylene glycol
+propacetamol
+tianeptine
+ramosetron
+rolapitant
+sacubitril
+ombitasvir
+paritaprevir
+silibinin
+tenofovir alafenamide
+butylscopolamine
+chondroitin sulfate
+alirocumab
+evolocumab
+oxaprotiline
+solithromycin
+kitasamycin
+catridecacog
+polycarbophil
+antilymphocyte immunoglobulin (horse)
+"synthetic conjugated estrogens, a"
+"synthetic conjugated estrogens, b"
+carindacillin
+procaine benzylpenicillin
+zinc oxide
+zinc sulfate
+sulbactam
+sodium fluoride
+tegafur-uracil
+vayarin
+"antihemophilic factor (recombinant), pegylated"
+osimertinib
+daratumumab
+mersalyl
+tipiracil
+invert sugar
+levobetaxolol
+hydroxyamphetamine
+dexpanthenol
+rauwolfia serpentina root
+polyestradiol phosphate
+norethynodrel
+indocyanine green acid form
+fluprednisolone
+esterified estrogens
+meprednisone
+norgestrel
+phosphoric acid
+sodium acetate
+isosorbide
+magnesium chloride
+magnesium acetate tetrahydrate
+monopotassium phosphate
+dipotassium phosphate
+potassium perchlorate
+protirelin
+"sodium phosphate, monobasic"
+insulin beef
+glycerin
+sodium sulfate
+iofetamine i-123
+magnesium carbonate
+potassium lactate
+sodium fluorophosphate
+acrivastine
+octinoxate
+ferric ammonium citrate
+fludeoxyglucose (18f)
+ferumoxsil
+ferumoxides
+secretin porcine
+secretin human
+omega-3-acid ethyl esters
+methyl salicylate
+iobenguane sulfate i-123
+dexchlorpheniramine maleate
+necitumumab
+insulin degludec
+omega-3-carboxylic acids
+ixazomib
+"rabies virus inactivated antigen, b"
+haemophilus influenzae type b strain 1482 capsular polysaccharide tetanus toxoid conjugate antigen
+rotavirus vaccine
+"rabies virus inactivated antigen, a"
+rubella virus vaccine
+varicella zoster vaccine (live/attenuated)
+haemophilus influenzae type b capsular polysaccharide meningococcal outer membrane protein conjugate antigen
+bacillus calmette-guerin substrain tice live antigen
+paspalum notatum pollen
+cynodon dactylon pollen
+poa annua pollen
+sorghum halepense pollen
+poa pratensis pollen
+festuca pratensis pollen
+dactylis glomerata pollen
+lolium perenne pollen
+phleum pratense pollen
+holcus lanatus pollen
+agrostis gigantea pollen
+anthoxanthum odoratum pollen
+elymus repens pollen
+distichlis spicata pollen
+clostridium tetani toxoid antigen (formaldehyde inactivated)
+corynebacterium diphtheriae toxoid antigen (formaldehyde inactivated)
+influenza a virus a/california/7/2009 x-181 (h1n1) antigen (propiolactone inactivated)
+poa compressa pollen
+phalaris arundinacea pollen
+bouteloua gracilis pollen
+urochloa mutica pollen
+secale cereale pollen
+pascopyrum smithii pollen
+japanese encephalitis virus strain sa 14-14-2 antigen (formaldehyde inactivated)
+influenza b virus b/brisbane/60/2008 antigen (formaldehyde inactivated)
+typhoid vi polysaccharide vaccine
+bacillus calmette-guerin substrain connaught live antigen
+yellow fever vaccine
+bromus secalinus pollen
+arrhenatherum elatius pollen
+koeleria macrantha pollen
+agrostis stolonifera pollen
+phalaris minor pollen
+lolium perenne subsp. multiflorum pollen
+sorghum bicolor subsp. drummondii pollen
+hepatitis a vaccine
+haemophilus influenzae type b strain 20752 capsular polysaccharide tetanus toxoid conjugate antigen
+anthrax vaccine
+influenza a virus a/brisbane/59/2007(h1n1) hemagglutinin antigen (propiolactone inactivated)
+influenza b virus b/brisbane/60/2008 hemagglutinin antigen (propiolactone inactivated)
+influenza a virus a/california/7/2009 x-181 (h1n1) hemagglutinin antigen (propiolactone inactivated)
+influenza b virus b/brisbane/60/2008 antigen (propiolactone inactivated)
+typhoid vaccine live
+azficel-t
+mineral oil
+carboxymethylcellulose
+polyethylene glycol 400
+trolamine salicylate
+aluminum chloride
+resorcinol
+docusate
+potassium nitrate
+calcium citrate
+vitamin d
+desirudin
+plantago seed
+potassium bicarbonate
+allantoin
+n-acetyltyrosine
+potassium bitartrate
+magnesium citrate
+castor oil
+eucalyptus oil
+chloroxylenol
+racepinephrine
+calcium gluconate
+selenious acid
+opium
+omega-3 fatty acids
+selenium
+chromium
+oxyquinoline
+potassium hydroxide
+zinc citrate
+pyrantel
+bicisate
+antithrombin alfa
+calcium threonate
+ferric sulfate
+zinc picolinate
+homatropine
+magnesium glycinate
+peppermint oil
+sage oil
+ferrous bisglycinate
+methylcellulose
+thonzylamine
+borage oil
+aluminum sulfate
+zinc gluconate
+tocopherol
+levomefolic acid
+protocatechualdehyde
+dihydroergocornine
+dl-methylephedrine
+bismuth subcarbonate
+bentonite
+prothrombin
+protein c
+methscopolamine
+tetradecyl hydrogen sulfate (ester)
+factor ix complex (human)
+clove oil
+calcium phosphate
+evening primrose oil
+selexipag
+alectinib
+pidotimod
+sennosides
+cefroxadine
+alfaxalone
+altrenogest
+amitraz
+avilamycin
+azaperone
+bambermycins
+carbomycin
+clorsulon
+coumaphos
+dichlorvos
+doramectin
+efrotomycin
+enrofloxacin
+eprinomectin
+famphur
+fenprostalene
+fenthion
+florfenicol
+gamithromycin
+gleptoferron
+haloxon
+lasalocid
+luprostiol
+marbofloxacin
+medetomidine
+mibolerone
+narasin
+oleandomycin
+orbifloxacin
+phenothiazine
+phosmet
+prostalene
+robenacoxib
+roxarsone
+selamectin
+sulfachlorpyridazine
+sulfaethoxypyridazine
+sulfanitran
+sulfaquinoxaline
+tepoxalin
+thiostrepton
+tiamulin
+tildipirosin
+tilmicosin
+tulathromycin a
+tylosin
+zeranol
+atipamezole
+ceftiofur
+dexamethasone isonicotinate
+nalorphine
+sarafloxacin
+cloprostenol
+difloxacin
+dihydrostreptomycin
+flunixin
+fluprostenol
+hygromycin b
+maduramicin
+melengestrol
+pirlimycin
+propiopromazine
+ractopamine
+romifidine
+salinomycin
+tiletamine
+tricaine
+tylvalosin
+zolazepam
+detomidine
+lesinurad
+insulin argine
+insulin peglispro
+insulin tregopil
+ixekizumab
+elbasvir
+grazoprevir
+ferric oxide
+indigotindisulfonic acid
+ravulizumab
+venetoclax
+thiocolchicoside
+asunaprevir
+etafedrine
+bilastine
+isatoic anhydride
+atezolizumab
+levoleucovorin
+antithrombin iii human
+human rabies virus immune globulin
+tetanus immune globulin
+susoctocog alfa
+eftrenonacog alfa
+normethadone
+velpatasvir
+rupatadine
+gestrinone
+human varicella-zoster immune globulin
+dehydrocholic acid
+epoetin delta
+hepatitis b vaccine (recombinant)
+opicapone
+isavuconazole
+nomegestrol
+delamanid
+artenimol
+amifampridine
+vinflunine
+pitolisant
+tafamidis
+conatumumab
+tucatinib
+bremelanotide
+tabalumab
+latanoprostene bunod
+eptacog alfa pegol (activated)
+psilocybin
+rusalatide acetate
+equol
+ficlatuzumab
+figitumumab
+iferanserin
+naldemedine
+voclosporin
+ipragliflozin
+acalabrutinib
+olaptesed pegol
+peficitinib
+tezacaftor
+durvalumab
+bapineuzumab
+misonidazole
+encorafenib
+angiotensin 1-7
+dutogliptin
+ribociclib
+depatuxizumab mafodotin
+lasmiditan
+icotinib
+ebastine
+epetraborole
+onartuzumab
+clobetasol
+cabotegravir
+bryostatin 1
+rifamycin
+tetrahydrocannabivarin
+solanezumab
+istradefylline
+talazoparib
+sarilumab
+talinolol
+tremelimumab
+pazufloxacin
+brodalumab
+danoprevir
+allicin
+imidapril
+anisodamine
+hyodeoxycholic acid
+capmatinib
+mirodenafil
+fostemsavir
+bictegravir
+sirukumab
+baricitinib
+esketamine
+tofogliflozin
+lampalizumab
+ertugliflozin
+guselkumab
+osilodrostat
+dalotuzumab
+entinostat
+emibetuzumab
+ublituximab
+relugolix
+revefenacin
+ligelizumab
+seribantumab
+brexanolone
+landogrozumab
+romosozumab
+etiracetam
+valspodar
+pf-00610355
+vadastuximab talirine
+lanicemine
+cudc-907
+prulifloxacin
+"2,4-thiazolidinedione"
+apalutamide
+gw842166
+lanopepden
+lebrikizumab
+valbenazine
+6-o-benzylguanine
+deflazacort
+varlilumab
+abametapir
+flomoxef
+bempedoic acid
+selinexor
+delafloxacin
+avelumab
+teneligliptin
+lemborexant
+duvelisib
+idalopirdine
+crenezumab
+carboxyamidotriazole
+dacomitinib
+ilaprazole
+binimetinib
+rilotumumab
+anifrolumab
+glasdegib
+elagolix
+letaxaban
+entrectinib
+ocrelizumab
+benznidazole
+omarigliptin
+diacerein
+avatrombopag
+abemaciclib
+isoflavone
+axelopran
+alpelisib
+tecovirimat
+benralizumab
+triptolide
+voxilaprevir
+gantenerumab
+sarecycline
+setrobuvir
+visilizumab
+bq-123
+letermovir
+vabicaserin
+albaconazole
+urelumab
+ritobegron
+oxitropium
+lorvotuzumab mertansine
+patritumab
+naftopidil
+tetrahydropalmatine
+mannitol busulfan
+abediterol
+fulranumab
+tarextumab
+imagabalin
+vaborbactam
+m-chlorophenylpiperazine
+mk-212
+sotatercept
+gevokizumab
+sultamicillin
+lorlatinib
+gilteritinib
+duligotuzumab
+erdafitinib
+brincidofovir
+simtuzumab
+cordycepin
+fasinumab
+dupilumab
+deutetrabenazine
+sarpogrelate
+tralokinumab
+cudc-101
+eplivanserin
+gepirone
+etrolizumab
+ajulemic acid
+atamestane
+zalutumumab
+ganitumab
+iron isomaltoside 1000
+landiolol
+etaracizumab
+bergapten
+canrenone
+cerlapirdine
+bunazosin
+temefos
+polatuzumab vedotin
+inclacumab
+tulobuterol
+cixutumumab
+platinum
+abicipar pegol
+ascrinvacumab
+epofolate
+brigatinib
+carmegliptin
+ecopipam
+aducanumab
+propiverine
+luspatercept
+simendan
+darexaban
+nefopam
+gs-5745
+doravirine
+eltanolone
+dopexamine
+vanucizumab
+ifetroban
+salvinorin a
+eravacycline
+labetuzumab govitecan
+tanezumab
+carisbamate
+radezolid
+ly-2456302
+ensituximab
+temocillin
+fezakinumab
+piclozotan
+dusigitumab
+betrixaban
+siponimod
+ricolinostat
+relebactam
+bacillus calmette-guerin substrain danish 1331 live antigen
+sagopilone
+esreboxetine
+fresolimumab
+polmacoxib
+remimazolam
+lisofylline
+vatreptacog alfa
+gemigliptin
+indusatumab vedotin
+anagliptin
+liothyronine i-131
+orvepitant
+muplestim
+nitroaspirin
+omadacycline
+bococizumab
+rimegepant
+glpg-0492
+favipiravir
+lynestrenol
+piribedil
+betulinic acid
+acotiamide
+copanlisib
+promestriene
+mirvetuximab soravtansine
+piritramide
+mogamulizumab
+fedratinib
+9-aminocamptothecin
+plozalizumab
+molgramostim
+batefenterol
+inebilizumab
+lobucavir
+oxetacaine
+mavrilimumab
+benzodiazepine
+samidorphan
+indobufen
+mebeverine
+blosozumab
+abexinostat
+tecemotide
+azd-3043
+lexaptepid pegol
+bimagrumab
+ondelopran
+dacetuzumab
+indiplon
+nafamostat
+sisomicin
+tovetumab
+ozanimod
+plazomicin
+mizoribine
+evogliptin
+"3,5-diiodothyropropionic acid"
+ibipinabant
+protionamide
+rolofylline
+lurbinectedin
+lumretuzumab
+gusperimus
+ritanserin
+ibalizumab
+balugrastim
+intetumumab
+spiradoline
+perazine
+pilsicainide
+sotagliflozin
+carlumab
+td-8954
+monteplase
+demcizumab
+butylphthalide
+bucindolol
+cicletanine
+bcg vaccine
+lafutidine
+hydroxytyrosol
+sifalimumab
+abituzumab
+higenamine
+balaglitazone
+ecromeximab
+laniquidar
+naptumomab estafenatox
+cepeginterferon alfa-2b
+crotedumab
+concizumab
+perflubutane
+tecarfarin
+lefamulin
+depatuxizumab
+amithiozone
+tandospirone
+grapiprant
+pegvaliase
+pegamotecan
+oleandrin
+rontalizumab
+amatuximab
+reproterol
+clazakizumab
+pradigastat
+benperidol
+oxatomide
+eltoprazine
+lavoltidine
+tazemetostat
+ozanezumab
+sacituzumab govitecan
+trofosfamide
+factor xiii (human)
+bimekizumab
+chlorsulfaquinoxaline
+gallopamil
+cafedrine
+theodrenaline
+opipramol
+remogliflozin etabonate
+nikkomycin z
+darolutamide
+lactitol
+milatuzumab
+dihydralazine
+doxifluridine
+pivagabine
+methylprednisone
+prothipendyl
+robatumumab
+pexidartinib
+neosaxitoxin
+deoxyspergualin
+acteoside
+tinoridine
+cortivazol
+enfortumab vedotin
+hypericin
+rovalpituzumab tesirine
+biapenem
+ramatroban
+namilumab
+racotumomab
+methanesulfonyl fluoride
+tramazoline
+9-(n-methyl-l-isoleucine)-cyclosporin a
+surinabant
+tregalizumab
+macimorelin
+lcb01-0371
+nefiracetam
+1alpha-hydroxyvitamin d5
+valnoctamide
+mephedrone
+amitriptylinoxide
+troxerutin
+lusutrombopag
+olokizumab
+artemisinin
+von willebrand factor human
+fluindione
+levosalbutamol
+bezlotoxumab
+calcium glubionate anhydrous
+methallenestril
+lenograstim
+nedaplatin
+coagulation factor x human
+protein s human
+coagulation factor vii human
+anti-inhibitor coagulant complex
+coagulation factor ix human
+esculin
+inosine pranobex
+clobetasone
+alphaprodine
+zofenopril
+alclofenac
+nandrolone
+plecanatide
+tunicamycin
+rhein
+4-methylumbelliferyl beta-d-glucoside
+inositol
+troleandomycin
+gluconic acid
+oxabolone cipionate
+phosphocreatine
+antihemophilic factor human
+kallidinogenase
+brinase
+lipegfilgrastim
+trenonacog alfa
+bamifylline
+prednylidene
+bismuth subnitrate
+guanoxan
+butaperazine
+sulfadicramide
+medifoxamine
+apronalide
+fluocortin
+dibenzepin
+gestonorone
+calcium lactate
+suxibuzone
+alaproclate
+propanidid
+cymarin
+begelomab
+quinupramine
+phthalylsulfathiazole
+magnesium silicate
+tropatepine
+proxibarbal
+prifinium
+propatyl nitrate
+clothiapine
+ferrous sulfate anhydrous
+ethyl chloride
+sitafloxacin
+penimepicycline
+cefatrizine
+dichlorobenzyl alcohol
+sultopride
+clorindione
+benziodarone
+carbocromen
+aluminium acetoacetate
+sulfaisodimidine
+meticrane
+bumadizone
+miocamycin
+ipecac
+azidamfenicol
+atracurium
+epicillin
+febarbamate
+proscillaridin
+ormeloxifene
+delapril
+melevodopa
+alminoprofen
+sulfaperin
+hydrotalcite
+trichloroethylene
+tetrazepam
+pyrithyldione
+pinazepam
+pheneticillin
+flurithromycin
+fenozolone
+dihydroergocristine
+bufexamac
+diphenadione
+piperidolate
+deanol
+phenprobamate
+styramate
+cibenzoline
+magnesium aspartate
+pheneturide
+feprazone
+calcium lactate gluconate
+cloricromen
+benzilone
+bromisoval
+difenpiramide
+edrecolomab
+vinbarbital
+norfenefrine
+difemerine
+sodium feredetate
+chlorproethazine
+melitracen
+dihydroergocryptine
+epimestrol
+emetine
+neocitrullamon
+oxyfedrine
+terguride
+linsidomine
+metildigoxin
+acetylglycinamide chloral hydrate
+oxypertine
+mefruside
+carbutamide
+nifenazone
+methylpropylpropanediol dinitrate
+rokitamycin
+guanoxabenz
+phenglutarimide
+fenyramidol
+moxestrol
+thiazinam
+ferric hydroxide
+tolonidine
+mebutizide
+lonazolac
+simfibrate
+endralazine
+medazepam
+guar gum
+mazaticol
+proxyphylline
+tioclomarol
+cadralazine
+xenon
+nicomorphine
+phenibut
+midecamycin
+oxaflozane
+pecilocin
+ronifibrate
+cefcapene
+lanatoside c
+etybenzatropine
+cefodizime
+tenidap
+sulfametomidine
+magnesium peroxide
+bencyclane
+fluperolone
+paraoxon
+iprindole
+cefsulodin
+otilonium
+bendazac
+budipine
+tyrothricin
+cefetamet
+emepronium
+carfecillin
+poldine
+cloranolol
+aloxiprin
+pranoprofen
+metergoline
+mebicar
+veralipride
+propyphenazone
+pentaerithrityl
+proglumetacin
+chlormadinone
+mepindolol
+cyclopenthiazide
+methylestrenolone
+gedocarnil
+nebacumab
+gitoformate
+guacetisal
+isepamicin
+iprazochrome
+bevonium
+ethenzamide
+nizofenone
+sulfatolamide
+bifemelane
+trifluperidol
+moperone
+prajmaline
+sulfamazone
+thiopropazate
+rimiterol
+norgestrienone
+ferrous chloride
+pentamycin
+emylcamate
+bietaserpine
+allobarbital
+rociverine
+mephenesin
+mesterolone
+naftidrofuryl
+calcium pangamate
+etamiphylline
+almasilate
+diethyl ether
+oxiracetam
+promegestone
+pyrrolnitrin
+guanazodine
+phenoperidine
+phenazocine
+umifenovir
+carbaspirin calcium
+mifamurtide
+melagatran
+clorexolone
+bornaprine
+potassium gluconate
+fabomotizole
+methoxyphenamine
+aluminium glycinate
+oxolinic acid
+mofebutazone
+methoserpidine
+mepartricin
+pentifylline
+tiracizine
+etanautine
+tenitramine
+cefbuperazone
+pridinol
+loprazolam
+methylthiouracil
+ethacizine
+saruplase
+alcuronium
+proquazone
+aloglutamol
+lorajmine
+bunaftine
+lorcainide
+montmorillonite
+benorilate
+propicillin
+hexapropymate
+clofenamide
+formocortal
+fluanisone
+tiemonium iodide
+cefozopran
+metahexamide
+mosapramine
+dihexyverine
+dexchlorpheniramine
+cefpirome
+quingestanol
+clometocillin
+niaprazine
+tacalcitol
+vinyl ether
+acetyldigoxin
+tretoquinol
+sulbenicillin
+distigmine
+penthienate
+sulfathiourea
+gepefrine
+pristinamycin
+decamethoxine
+sodium tartrate
+fenquizone
+metenolone
+hydroquinine
+trolnitrate
+diphemanil
+pirprofen
+nifuratel
+terodiline
+sulfaguanidine
+halometasone
+methylpentynol
+potassium guaiacolsulfonate
+cyclobarbital
+camylofin
+penamecillin
+elcatonin
+piromidic acid
+fazadinium bromide
+bioallethrin
+magnesium gluconate
+glycyrrhizic acid
+mephenoxalone
+peruvoside
+epanolol
+fenpiverinium
+niperotidine
+dexrabeprazole
+emetonium iodide
+vinylbital
+rufloxacin
+sulfamethoxypyridazine
+tertatolol
+prenalterol
+cefazedone
+guanoclor
+aluminium clofibrate
+imipramine oxide
+dixyrazine
+magnesium orotate
+tilidine
+clopamide
+ethadione
+calcium levulinate
+muzolimine
+xipamide
+benzylthiouracil
+reposal
+paclitaxel poliglumex
+bufylline
+talampicillin
+aspoxicillin
+carbromal
+ceftezole
+pipemidic acid
+enprostil
+calcium silicate
+potassium permanganate
+caroverine
+metampicillin
+doxefazepam
+clopenthixol
+cloprednol
+pipenzolate
+clofibride
+timepidium
+mefenorex
+gamolenic acid
+fluclorolone
+demegestone
+imidazole salicylate
+fosfructose
+etynodiol
+fluticasone
+adefovir
+lormetazepam
+fenofibric acid
+enasidenib
+harmaline
+brofaromine
+pibrentasvir
+glecaprevir
+albutrepenonacog alfa
+human cytomegalovirus immune globulin
+bismuth subgallate
+valproate bismuth
+coumermycin a1
+deoxyepinephrine
+emicizumab
+varicella zoster vaccine (recombinant)
+semaglutide
+nonacog beta pegol
+"2,5-dimethoxy-4-ethylthioamphetamine"
+piperaquine
+testosterone cypionate
+testosterone enanthate
+testosterone undecanoate
+testosterone enantate benzilic acid hydrazone
+"n-(2-hydroxybenzyl)-2,5-dimethoxy-4-cyanophenylethylamine"
+ferric cation
+win 55212-2
+stanolone acetate
+estradiol acetate
+estradiol benzoate
+estradiol cypionate
+estradiol dienanthate
+estradiol valerate
+trestolone acetate
+fish oil
+patent blue
+black cohosh
+sulesomab
+potassium carbonate
+besilesomab
+nomegestrol acetate
+cyclopropane
+strontium chloride
+epitizide
+mrk-409
+magnesium acetate
+moroctocog alfa
+tildrakizumab
+choline salicylate
+pentetic acid
+medical cannabis
+"5-methoxy-n,n-dimethyltryptamine"
+nabiximols
+burosumab
+bromotheophylline
+fosnetupitant
+typhoid vaccine
+clinafloxacin
+thiosalicylic acid
+taspoglutide
+nordazepam
+furafylline
+tretamine
+acetyl sulfisoxazole
+englitazone
+erenumab
+eptinezumab
+fremanezumab
+galcanezumab
+palmidrol
+sodium zirconium cyclosilicate
+nitrate
+cannabidivarin
+malacidin a
+malacidin b
+(s)-warfarin
+nigericin
+valinomycin
+basifungin
+sc-236
+ns-398
+dexverapamil
+emopamil
+tetrandrine
+dexniguldipine
+ont-093
+desmethylsertraline
+"(1,2,6,7-3h)testosterone"
+tocopherylquinone
+benazeprilat
+tenofovir
+8-chlorotheophylline
+aripiprazole lauroxil
+fosinoprilat
+ramiprilat
+trandolaprilat
+moexiprilat
+fanolesomab
+perindoprilat
+quinaprilat
+monomethyl fumarate
+quinoline yellow ws
+deacetylbisacodyl
+echinacea
+centella asiatica
+salvia miltiorrhiza root
+influenza a virus a/victoria/210/2009 x-187 (h3n2) hemagglutinin antigen (formaldehyde inactivated)
+influenza b virus b/brisbane/60/2008 hemagglutinin antigen (formaldehyde inactivated)
+influenza a virus a/california/7/2009 (h1n1) live (attenuated) antigen
+human adenovirus e serotype 4 strain cl-68578 antigen
+vibrio cholerae cvd 103-hgr strain live antigen
+influenza a virus a/victoria/210/2009 x-187 (h3n2) antigen (formaldehyde inactivated)
+influenza a virus a/perth/16/2009 (h3n2) live (attenuated) antigen
+beroctocog alfa
+acetylcysteine zinc
+sodium ascorbate
+calcium ascorbate
+zinc ascorbate
+niacinamide ascorbate
+zinc acetate
+ferrous gluconate
+ferrous succinate
+ferrous ascorbate
+ferrous fumarate
+potassium triiodide
+zinc glycinate
+potassium acetate
+potassium sulfate
+potassium
+"sodium phosphate, dibasic"
+"sodium phosphate, monobasic, unspecified form"
+"sodium phosphate, dibasic, unspecified form"
+lithium hydroxide
+lithium citrate
+lithium carbonate
+mometasone furoate
+magnesium
+magnesium levulinate
+magnesium lactate
+sodium cation
+aluminium phosphate
+aluminum cation
+tetraferric tricitrate decahydrate
+chromic citrate
+chromic nitrate
+chromium gluconate
+chromium nicotinate
+chromous sulfate
+zinc cation
+zinc chloride
+hydrocortisone aceponate
+hydrocortisone acetate
+hydrocortisone butyrate
+hydrocortisone cypionate
+hydrocortisone phosphate
+hydrocortisone probutate
+hydrocortisone valerate
+hydrocortisone succinate
+sulfate ion
+chloride ion
+"zinc sulfate, unspecified form"
+andexanet alfa
+ivosidenib
+tedizolid
+hydroxyprogesterone
+eslicarbazepine
+calcium cation
+lecanemab
+segesterone acetate
+plantago ovata seed
+lanadelumab
+edetate calcium disodium anhydrous
+influenza a virus a/uruguay/716/2007(h3n2) antigen (propiolactone inactivated)
+influenza a virus a/brisbane/59/2007(h1n1) antigen (propiolactone inactivated)
+oxyphenisatin acetate
+prednisolone phosphate
+prednisolone hemisuccinate
+fluprednidene acetate
+curcumin sulfate
+methylprednisolone aceponate
+methylprednisolone hemisuccinate
+prednisone acetate
+perphenazine enanthate
+clocortolone acetate
+drostanolone propionate
+melengestrol acetate
+betamethasone phosphate
+oxazepam acetate
+norethindrone enanthate
+quingestanol acetate
+cortisone
+calcium polycarbophil
+adenovirus type 7 vaccine live
+ferric oxyhydroxide
+damoctocog alfa pegol
+cemiplimab
+"smallpox (vaccinia) vaccine, live"
+elapegademase
+inotersen
+cinazepam
+pyrazolam
+bentazepam
+larotrectinib
+emapalumab
+cefamandole nafate
+dabigatran
+ceftobiprole medocaril
+cannabinol
+turoctocog alfa pegol
+hyaluronidase
+polymyxin b
+racephedrine
+solriamfetol
+remdesivir
+risankizumab
+camrelizumab
+murepavadin
+setrusumab
+gancotamab
+anetumab ravtansine
+isatuximab
+icrucumab
+ripretinib
+codrituzumab
+filgotinib
+brolucizumab
+xentuzumab
+lintuzumab
+oliceridine
+vobarilizumab
+parsatuzumab
+emactuzumab
+bevacizumab zirconium zr-89
+refanezumab
+rozanolixizumab
+flurbiprofen axetil
+bermekimab
+pamrevlumab
+opicinumab
+trastuzumab deruxtecan
+konjac mannan
+margetuximab
+voxelotor
+dalantercept
+pateclizumab
+human interferon beta
+gremubamab
+apomab
+zanubrutinib
+tafasitamab
+ipafricept
+givosiran
+abrilumab
+frovocimab
+tezepelumab
+upadacitinib
+somapacitan
+leridistim
+tigatuzumab
+pemigatinib
+telisotuzumab vedotin
+utomilumab
+zolbetuximab
+ropeginterferon alfa-2b
+pcs-499
+dexpramipexole
+interferon alfa-2c
+ponezumab
+asunercept
+tirzepatide
+suvratoxumab
+jnj-26489112
+25-desacetylrifapentine
+gastric inhibitory polypeptide
+mitazalimab
+avapritinib
+olorofim
+salvianolic acid a
+nemolizumab
+bleselumab
+imlifidase
+thyrotropin
+pertussis vaccine
+gedivumab
+pegteograstim
+hydroquinidine
+posiphen
+ubrogepant
+biochanin a
+formononetin
+valanafusp alfa
+sofituzumab vedotin
+evinacumab
+xanomeline
+"carfentanil, c-11"
+istiratumab
+sor-c13
+pidilizumab
+gma-161
+ladiratuzumab vedotin
+tomaralimab
+vesencumab
+pinatuzumab vedotin
+lulizumab pegol
+lorukafusp alfa
+elexacaftor
+naratuximab emtansine
+yersinia pestis 195/p antigen (formaldehyde inactivated)
+benzhydrocodone
+alloin
+frangula purshiana bark
+modified vaccinia ankara
+zenocutuzumab
+cilazaprilat
+prednisolone acetate
+golodirsen
+"ebola zaire vaccine (live, attenuated)"
+ferric maltol
+tmc-310911
+moderna covid-19 vaccine
+ala-geninthiocin
+selpercatinib
+fluoroestradiol f-18
+belantamab mafodotin
+satralizumab
+pralsetinib
+atoltivimab
+maftivimab
+odesivimab
+naxitamab
+berotralstat
+CN/C(=N\CCSCc1nc[nH]c1C)NC#N
+CCc1cc(C(N)=S)ccn1
+NS(=O)(=O)c1cc(C(=O)O)c(NCc2ccco2)cc1Cl
+Cc1cnc(NC(=O)C2=C(O)c3ccccc3S(=O)(=O)N2C)s1
+CN1C(C(=O)Nc2ccccn2)=C(O)c2sc(Cl)cc2S1(=O)=O
+O=C(O)c1cn(C2CC2)c2cc(N3CCNCC3)c(F)cc2c1=O
+CCCCC1C(=O)N(c2ccccc2)N(c2ccccc2)C1=O
+CC(=O)[C@@]1(O)CC[C@H]2[C@@H]3C=C(Cl)C4=CC(=O)CC[C@]4(C)[C@H]3CC[C@@]21C
+C=CC1CN2CCC1CC2[C@@H](O)c1ccnc2ccc(OC)cc12
+CN/C(=C\[N+](=O)[O-])NCCSCc1ccc(CN(C)C)o1
+Cc1cccc(Nc2ccccc2C(=O)O)c1C
+O=c1ccc2ccccc2o1
+CC(=O)N1CCN(c2ccc(OC[C@H]3CO[C@](Cn4ccnc4)(c4ccc(Cl)cc4Cl)O3)cc2)CC1
+CCCNC(=O)NS(=O)(=O)c1ccc(Cl)cc1
+CC[C@@H](CO)NCCN[C@@H](CC)CO
+COC1=CC(=O)C[C@@H](C)[C@]12Oc1c(Cl)c(OC)cc(OC)c1C2=O
+CN(C)CCCN1c2ccccc2CCc2ccccc21
+COc1cc2c(c(OC)c1OC)-c1ccc(OC)c(=O)cc1[C@@H](NC(C)=O)CC2
+O=NN(CCCl)C(=O)NC1CCCCC1
+CCO
+CC/C(=C(\c1ccccc1)c1ccc(OCCN(C)C)cc1)c1ccccc1
+O=C(N[C@H](CO)[C@H](O)c1ccc([N+](=O)[O-])cc1)C(Cl)Cl
+C[C@]12CCC(=O)C=C1CC[C@@H]1[C@@H]2CC[C@@]2(C)[C@H]1CC[C@]2(C)O
+Cn1cnc([N+](=O)[O-])c1Sc1ncnc2[nH]cnc12
+CN(C)CCC(c1ccc(Cl)cc1)c1ccccn1
+C#C[C@]1(O)CC[C@H]2[C@@H]3CCC4=Cc5oncc5C[C@]4(C)[C@H]3CC[C@@]21C
+Cc1ccc(C)c(OCCCC(C)(C)C(=O)O)c1
+CN1C(=O)CCS(=O)(=O)C1c1ccc(Cl)cc1
+CC1=C(CC(=O)O)c2cc(F)ccc2/C1=C\c1ccc([S+](C)[O-])cc1
+Nc1c2c(nc3ccccc13)CCCC2
+CN(C)[C@@H]1C(O)=C(C(N)=O)C(=O)[C@@]2(O)C(O)=C3C(=O)c4c(O)cccc4[C@@](C)(O)[C@H]3C[C@@H]12
+CCOC(=O)C(C)(C)Oc1ccc(Cl)cc1
+CC(C)(S)[C@@H](N)C(=O)O
+COc1cc([C@@H]2c3cc4c(cc3[C@@H](O[C@@H]3O[C@@H]5CO[C@@H](C)O[C@H]5[C@H](O)[C@H]3O)[C@H]3COC(=O)[C@H]23)OCO4)cc(OC)c1O
+CC(CCc1ccccc1)NCC(O)c1ccc(O)c(C(N)=O)c1
+O=C(O)c1cc(/N=N/c2ccc(S(=O)(=O)Nc3ccccn3)cc2)ccc1O
+CCOc1ccc(NC(C)=O)cc1
+CC(C)C(=O)Nc1ccc([N+](=O)[O-])c(C(F)(F)F)c1
+O=C1CN(/N=C/c2ccc(-c3ccc([N+](=O)[O-])cc3)o2)C(=O)N1
+O=P1(N(CCCl)CCCl)NCCCO1
+CS(=O)(=O)Nc1ccc([N+](=O)[O-])cc1Oc1ccccc1
+NC(=O)N1c2ccccc2C=Cc2ccccc21
+CCN1CCCC1CNC(=O)c1cc(S(N)(=O)=O)ccc1OC
+CN(C)CCCN1c2ccccc2Sc2ccc(Cl)cc21
+CCc1oc2ccccc2c1C(=O)c1cc(I)c(O)c(I)c1
+CSc1ccc2c(c1)N(CCC1CCCCN1C)c1ccccc1S2
+CCC1(c2ccccc2)C(=O)NC(=O)NC1=O
+C[C@H]1O[C@H](O[C@H]2[C@H](O)[C@@H](O)[C@@H](O[C@H]3[C@H](O)[C@@H](O)[C@H](O)O[C@@H]3CO)O[C@@H]2CO)[C@H](O)[C@@H](O)[C@@H]1N[C@H]1C=C(CO)[C@@H](O)[C@H](O)[C@H]1O
+Clc1ccccc1CN1CCc2sccc2C1
+CN(C)C(=N)NC(=N)N
+COc1ccc2c(c1)c(CC(=O)O)c(C)n2C(=O)c1ccc(Cl)cc1
+C[C@](N)(Cc1ccc(O)c(O)c1)C(=O)O
+COC(=O)C1=C(C)NC(C)=C(C(=O)OC)C1c1ccccc1[N+](=O)[O-]
+O=C(CCCN1CCC(O)(c2ccc(Cl)cc2)CC1)c1ccc(F)cc1
+CC(C)Cc1ccc(C(C)C(=O)O)cc1
+CCOC(=O)[C@H](CCc1ccccc1)N[C@@H](C)C(=O)N1CCC[C@H]1C(=O)O
+CN(C)CCC=C1c2ccccc2CCc2ccccc21
+C1CCC(C(CC2CCCCN2)C2CCCCC2)CC1
+CN1C(=O)CN=C(c2ccccc2)c2cc(Cl)ccc21
+Cn1c(=O)c2c(ncn2C)n(C)c1=O
+C#C[C@]1(O)CC[C@H]2[C@@H]3CCc4cc(O)ccc4[C@H]3CC[C@@]21C
+C[C@H](CS)C(=O)N1CCC[C@H]1C(=O)O
+CCC(C)(C)C(=O)O[C@H]1C[C@@H](C)C=C2C=C[C@H](C)[C@H](CC[C@@H]3C[C@@H](O)CC(=O)O3)[C@H]21
+CC(=O)Oc1cc(C(C)C)c(OCCN(C)C)cc1C
+COc1ccc2cc([C@H](C)C(=O)O)ccc2c1
+Cc1cccc(C)c1OCC(C)N
+CN(C)CCCN1c2ccccc2CCc2ccc(Cl)cc21
+OCCN1CCN(CCCN2c3ccccc3Sc3ccc(C(F)(F)F)cc32)CC1
+CC(C)OC(=O)C(C)(C)Oc1ccc(C(=O)c2ccc(Cl)cc2)cc1
+Oc1ncnc2[nH]ncc12
+O=C1NC(=O)C(c2ccccc2)(c2ccccc2)N1
+CO[C@H]1/C=C/O[C@@]2(C)Oc3c(C)c(O)c4c(O)c(c(/C=N/N5CCN(C)CC5)c(O)c4c3C2=O)NC(=O)/C(C)=C\C=C\[C@H](C)[C@H](O)[C@@H](C)[C@@H](O)[C@@H](C)[C@H](OC(C)=O)[C@@H]1C
+COc1ccc([C@@H]2Sc3ccccc3N(CCN(C)C)C(=O)[C@@H]2OC(C)=O)cc1
+Cn1c(=O)c2[nH]cnc2n(C)c1=O
+Cn1ccnc1S
+CC(C)N(CCC(C(N)=O)(c1ccccc1)c1ccccn1)C(C)C
+CN(C/C=C/C#CC(C)(C)C)Cc1cccc2ccccc12
+CC(S)C(=O)NCC(=O)O
+CCCCc1oc2ccccc2c1C(=O)c1cc(I)c(OCCN(CC)CC)c(I)c1
+CC(CN1c2ccccc2Sc2ccccc21)N(C)C
+CC(=O)Nc1nnc(S(N)(=O)=O)s1
+O=C(O)Cc1ccccc1Nc1c(Cl)cccc1Cl
+OCCOCCN1CCN(C(c2ccccc2)c2ccc(Cl)cc2)CC1
+CCCC(CCC)C(=O)O
+NC(N)=Nc1nc(CSCC/C(N)=N/S(N)(=O)=O)cs1
+COc1ccc2[nH]c([S+]([O-])Cc3ncc(C)c(OC)c3C)nc2c1
+O=C1CN(/N=C/c2ccc([N+](=O)[O-])o2)C(=O)N1
+CC[C@H]1[C@@H]2C[C@H]3[C@@H]4N(C)c5ccccc5[C@]45C[C@@H]([C@@H]2[C@H]5O)N3[C@@H]1O
+COc1ccc(Cl)cc1C(=O)NCCc1ccc(S(=O)(=O)NC(=O)NC2CCCCC2)cc1
+CC(=O)Oc1ccccc1C(=O)O
+CC1=C(C(=CC=C1)NC2=CC(=NC(=N2)SCC(=O)O)Cl)C
+CC1=C(C(CCC1)(C)C)/C=C/C(=C/C=C/C(=C/CO)/C)/C
+CC(=N)S
+O=C(OC[C@H]1O[C@@H](OC(=O)c2cc(O)c(O)c(OC(=O)c3cc(O)c(O)c(O)c3)c2)[C@H](OC(=O)c2cc(O)c(O)c(OC(=O)c3cc(O)c(O)c(O)c3)c2)[C@@H](OC(=O)c2cc(O)c(O)c(OC(=O)c3cc(O)c(O)c(O)c3)c2)[C@@H]1OC(=O)c1cc(O)c(O)c(OC(=O)c2cc(O)c(O)c(O)c2)c1)c1cc(O)c(O)c(OC(=O)c2cc(O)c(O)c(O)c2)c1
+O=C(O)c1ccccc1Nc1ccccc1
+NC1=NC(=O)C(c2ccccc2)O1
+NC(=O)N/N=C/c1ccc([N+](=O)[O-])o1
+CCN(CC)N=O
+O=C(O)c1cccnc1
+S=C=Nc1cccc2ccccc12
+C[C@H]1C(=O)O[C@@H]2CCN3CC=C(COC(=O)[C@](C)(O)[C@]1(C)O)[C@H]23
+Clc1c(Cl)c(Cl)c(Cl)c(Cl)c1Cl
+CCSCC[C@H](N)C(=O)O
+CCOC(=O)CCC(=O)O[C@H]1[C@H](O[C@@H]2[C@@H](C)[C@H](O[C@H]3C[C@@](C)(OC)[C@@H](O)[C@H](C)O3)[C@@H](C)C(=O)O[C@H](CC)[C@@](C)(O)[C@H](O)[C@@H](C)C(=O)[C@H](C)C[C@@]2(C)O)O[C@H](C)C[C@@H]1N(C)C
+ClC(Cl)(Cl)Cl
+CCOc1ccc(NC(=O)CC(C)O)cc1
+Brc1ccccc1
+CC(=O)Nc1ccc2c(c1)Cc1ccccc1-2
+C=CCO
+CN(C)CCC=C1c2ccccc2COc2ccccc21

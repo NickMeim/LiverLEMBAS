@@ -1,0 +1,27 @@
+{
+    "id": "4F276E5C",
+    "path": "~/LiverModeling/LiverLEMBAS/preprocessing/projectHepatocytes_in_MPSextraLVs.R",
+    "project_path": "projectHepatocytes_in_MPSextraLVs.R",
+    "type": "r_source",
+    "hash": "402949065",
+    "contents": "",
+    "dirty": false,
+    "created": 1728862191973.0,
+    "source_on_save": false,
+    "relative_order": 2,
+    "properties": {
+        "tempName": "Untitled1",
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "110,54",
+        "scrollLine": "89"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1728865002,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1728865002192,
+    "read_only": false,
+    "read_only_alternatives": []
+}

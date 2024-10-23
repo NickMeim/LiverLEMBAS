@@ -1,0 +1,26 @@
+{
+    "id": "2348E8F7",
+    "path": "~/LiverModeling/LiverLEMBAS/preprocessing/preprocessRawMicroarray.R",
+    "project_path": "preprocessRawMicroarray.R",
+    "type": "r_source",
+    "hash": "4206964307",
+    "contents": "",
+    "dirty": true,
+    "created": 1728929841178.0,
+    "source_on_save": false,
+    "relative_order": 2,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "61,83",
+        "scrollLine": "61"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1728755905,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1728929868064,
+    "read_only": false,
+    "read_only_alternatives": []
+}
