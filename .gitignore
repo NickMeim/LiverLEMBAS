@@ -1,3 +1,4 @@
+learning/__pycache__
 data/omnipath_webservice_interactions__recent.tsv
 data/archs4_regulatory_model.pt
 data/chembl_part1.tsv
@@ -5,6 +6,7 @@ data/chembl_part2.tsv
 data/trained_archs4_genes.npy
 data/trained_archs4_TFs.npy
 postprocessing/omnipathr-log
+postprocessing/.Rproj.user
 preprocessing/omnipathr-log
 preprocessing/preprocessed_data/GeneExpressionHepatocytes.csv
 preprocessing/preprocessed_data/GeneExpressionHepatocytesMPS.csv
@@ -14,6 +16,7 @@ preprocessing/preprocessed_data/gex_normalized_aggregated_microarray.rds
 preprocessing/preprocessed_data/TF_activities/TFs_random_variances_all_microarray.rds
 preprocessing/preprocessed_data/TF_activities/TFs_random_variances_all.rds
 preprocessing/preprocessed_data/ChemicalSims/all_similarities.csv
+preprocessing/.Rproj.user
 results/*.pt
 results/*.npy
 results/*.pkl
