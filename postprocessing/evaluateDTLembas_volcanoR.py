@@ -61,11 +61,11 @@ def compare_target_vs_reference(df,target_name, reference_name, feature_col='TF'
     colors = [color_highlight if feat in features2show else color_default for feat in results_df['feature']]
     
     # Plot avg_r vs -log10(p_adjusted)
-    fig, ax = plt.subplots(figsize=(8, 6))
-    ax.scatter(results_df['avg_r'], -np.log10(results_df['p_adjusted']), color=colors, alpha=alpha,s=15)
-    ax.set_xlabel('Average r across folds')
-    ax.set_ylabel('-log10(p-adjusted)')
-    ax.set_title('Per feature performance')
+    fig, ax = plt.subplots(figsize=(6, 4))
+    ax.scatter(results_df['avg_r'], -np.log10(results_df['p_adjusted']), color=colors, alpha=alpha,s=25)
+    ax.set_xlabel('Average r across folds', fontsize=16)
+    ax.set_ylabel('-log10(p-adjusted)', fontsize=16)
+    ax.set_title('Per feature performance', fontsize=16)
     ax.axhline(y=-np.log10(0.05), color='black', linestyle='--', linewidth=1.5)
     plt.tight_layout()
 
@@ -74,5 +74,6 @@ def compare_target_vs_reference(df,target_name, reference_name, feature_col='TF'
 ### Load data
 res_df = pd.read_csv('../results/CV_with_random_long.csv')
 res_df=res_df.iloc[:,:-1]
-results, scatterplot_fig = compare_target_vs_reference(res_df,'shuffled Y','test',alpha = 0.4)
+results, scatterplot_fig = compare_target_vs_reference(res_df,'shuffled Y','test',alpha = 0.6)
 scatterplot_fig.savefig('../figures/dtlembas_per_TF_performance_scatterplot.pdf')
+scatterplot_fig.savefig('../figures/dtlembas_per_TF_performance_scatterplot.png',dpi=600)

@@ -36,3 +36,4 @@ results/Middle
 results/High/*
 results/High
 results/CV/*.pth
+.Rproj.user

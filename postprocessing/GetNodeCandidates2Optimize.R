@@ -269,8 +269,8 @@ Yinsilico_samesign <- Yinsilico_samesign %>% gather('phenotype','score',-model_n
   group_by(phenotype,IFNAR1) %>% mutate(mu = mean(score)) %>% mutate(se=sd(score)/sqrt(50))
 
 ### Visualize simulation
-Yall <- rbind(Yinsilico %>% mutate(stimulation = 'IFNAR1+ and TGFBR1-'),
-              Yinsilico_samesign %>% mutate(stimulation = 'IFNAR1+ and TGFBR1+'))%>%
+Yall <- rbind(Yinsilico %>% mutate(stimulation = 'IFNAR1*TGFBR1<0'),
+              Yinsilico_samesign %>% mutate(stimulation = 'IFNAR1*TGFBR1>0'))%>%
   mutate(phenotype = ifelse(phenotype=='NAS','MAS','Fibrosis stage'))
 mas_plot <- ggplot(Yall %>% filter(phenotype=='MAS') %>% select(IFNAR1,mu,se,stimulation,phenotype) %>% unique(),
        aes(x=IFNAR1,y=mu,color=stimulation))+
