@@ -56,7 +56,7 @@ parser.add_argument('--spectralFactor', action='store', default=1e-3)
 parser.add_argument('--maxIter', action='store',type = int, default=1000)
 parser.add_argument('--noiseLevel', action='store',type = float, default=10)
 parser.add_argument('--L2', action='store', default=1e-6)
-parser.add_argument('--lamda', action='store',type = float, default=1e-7)
+parser.add_argument('--lamda', action='store',type = float, default=1e-9)
 parser.add_argument('--ConvertToEmpProb', action='store',type = bool, default=False)
 parser.add_argument('--inputAmplitude', action='store',type = float, default=3)
 parser.add_argument('--projectionAmplitude', action='store',type = float, default=1.2)
@@ -169,8 +169,8 @@ lr_params = {'max_iter': args.maxIter,
 other_params = {'batch_size': args.batchSize, 'noise_level': args.noiseLevel, 'gradient_noise_level': 1e-9}
 regularization_params = {'param_lambda_L2': args.L2, 'moa_lambda_L1': args.MoAFactor, 
                          'ligand_lambda_L2': 1e-5, 'uniform_lambda_L2': 1e-5, 
-                   'uniform_max': 1/projection_amplitude_out, 'spectral_loss_factor': args.spectralFactor}
-spectral_radius_params = {'n_probes_spectral': 5, 'power_steps_spectral': 50, 'subset_n_spectral': 10}
+                   'uniform_max': 1/projection_amplitude_out, 'spectral_loss_factor': args.spectralFactor,'lamda':lamda}
+spectral_radius_params = {'n_probes_spectral': 5, 'power_steps_spectral': 5, 'subset_n_spectral': 10}
 target_spectral_radius = 0.8
 hyper_params = {**lr_params, **other_params, **regularization_params, **spectral_radius_params} # fed into training function
 

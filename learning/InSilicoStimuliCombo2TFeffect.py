@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import torch
 import sys 
-gpu_lembas_path = '/nobackup/users/meimetis/LEMBAS-main'
+gpu_lembas_path = 'C:/Users/nmeim/Documents/Artificial-Signaling-Network/LEMBAS-main'
 sys.path.insert(1,os.path.join(gpu_lembas_path))
 import argparse
 import logging
@@ -24,7 +24,7 @@ parser.add_argument('--ChemicalSims', action='store',type = str, default='../pre
 parser.add_argument('--PKN', action='store',type = str, default='../preprocessing/preprocessed_data/PKN/Hepatocytes-PKN-Model.tsv')
 parser.add_argument('--PknAnnotation', action='store',type = str, default='../preprocessing/preprocessed_data/PKN/Hepatocytes-PKN-Annotation.tsv')
 parser.add_argument('--infoPath', action='store',type = str, default='../preprocessing/preprocessed_data/TrainingValidationData/Hepatocytes_inputdataInfo.tsv')
-parser.add_argument('--res_dir', action='store',type = str, default='../results/allmodels/')
+parser.add_argument('--res_dir', action='store',type = str, default='../results/allmodels/') #'../results/2 hour/allmodels/'
 parser.add_argument('--number_DTLEMBAS_models', action='store',type = int, default=50)
 parser.add_argument('--modelPattern', action='store',type = str, default='hepatocytes_dtlembas')
 parser.add_argument('--ConvertToEmpProb', action='store',type = bool, default=False)
@@ -37,7 +37,7 @@ parser.add_argument('--drug_bn', action='store', default=0.2)
 parser.add_argument('--drug_drop', action='store', default=0.1)
 parser.add_argument('--timepoint', action='store',type=str, default='8 hour')
 parser.add_argument('--annotation_file_for_visualization', action='store',type=str, default='../data/annotation.csv')
-parser.add_argument('--stimulation_strength', action='store',type=float, default=500)
+parser.add_argument('--stimulation_strength', action='store',type=float, default=3000)
 parser.add_argument('--selected_signaling_nodes', metavar='N', type=str, nargs='*', action='store', 
                     help='Selected signaling nodes to predict and save their activity',
                     default=['P36897','P17181'])
@@ -66,7 +66,7 @@ number_DTLEMBAS_models = args.number_DTLEMBAS_models
 stimulation_strength=args.stimulation_strength
 selected_signaling_nodes = np.array(args.selected_signaling_nodes)
 annotation_file_for_visualization = args.annotation_file_for_visualization
-
+#res_dir = res_dir+ timepoint
 n_cores = 12
 utils.set_cores(n_cores)
 # seed = int(args.no) * (int(args.maxIter) + 1)
@@ -152,15 +152,15 @@ subset_nodes_inds = np.array(list(subset_nodes.values()))
 subset_nodes = np.array(list(subset_nodes.keys()))
 
 Xin = torch.eye(len(all_nodes),dtype=torch.double).to(device)
-Xin_1 = -1 * Xin[subset_nodes_inds[0],:].unsqueeze(0)
+Xin_1 = Xin[subset_nodes_inds[0],:].unsqueeze(0)
 Xin_2 = Xin[subset_nodes_inds[1],:].unsqueeze(0)
 
 # Define the number of interpolation steps you want
-num_steps = 51  # Adjust this to control the number of interpolated points
+num_steps = 201  # Adjust this to control the number of interpolated points
 # Create linearly spaced values between -500 and 500
 interpolated_values = torch.linspace(-stimulation_strength, stimulation_strength, num_steps).view(-1, 1)
 interpolated_values = interpolated_values.repeat(1, Xin.shape[1])
-Xin_1 = Xin_1 * torch.tensor(interpolated_values).double().to(device)
+Xin_1 = Xin_1 * torch.tensor(interpolated_values).double().to(device) # this that get a minus ( - ) sign
 Xin_2 = Xin_2 * torch.tensor(interpolated_values).double().to(device)
 
 TF_all = torch.zeros(number_DTLEMBAS_models,num_steps,num_tfs, dtype=torch.double)
@@ -168,7 +168,7 @@ TF_all_empty = torch.zeros(number_DTLEMBAS_models,1,num_tfs, dtype=torch.double)
 
 
 print2log('Begin combination stimuli simulation...')
-name_stimulation = 'combo_simulation'
+name_stimulation = 'combo_simulation_samesign' #samesign
 Path(res_dir+name_stimulation).mkdir(parents=True, exist_ok=True)
 
 results_tf = pd.DataFrame({})
@@ -176,8 +176,8 @@ results_singaling_nodes = pd.DataFrame({})
 start_time = time.time()
 for i in range(number_DTLEMBAS_models):
     print2log('Run DT-LEMBAS model '+str(i+1)+' to simulate KOs')
-    mod.load_state_dict(torch.load(os.path.join(data_path, modelPattern + str(i+1)+'_alldata_signal_state_dict_%s.pth'%(i+1))))
-    drugLayer.load_state_dict(torch.load(os.path.join(data_path,modelPattern + str(i+1) + '_alldata_drugLayer_state_dict_%s.pth'%(i+1))))
+    mod.load_state_dict(torch.load(os.path.join(data_path, modelPattern + str(i+1)+'signal_state_dict_%s.pth'%(i+1))))
+    drugLayer.load_state_dict(torch.load(os.path.join(data_path,modelPattern + str(i+1) + 'drugLayer_state_dict_%s.pth'%(i+1))))
     mod.eval()
     drugLayer.eval()
     # print2log('Node stimuli simulation...')
@@ -186,7 +186,7 @@ for i in range(number_DTLEMBAS_models):
     TF_all[i,:,:] = Yhat.detach().cpu()
     df = pd.DataFrame(Yhat.detach().cpu().numpy())
     df.columns = all_tfs
-    df['condition'] = interpolated_values[:,0].numpy() # IFN stimuli quanity, the tgfb has the opposite sign
+    df['condition'] = interpolated_values[:,0].numpy() # IFN stimuli quanity
     df['type'] = 'stimuli'
     df['model_no'] = i
     results_tf = pd.concat([results_tf, df], ignore_index=True).reset_index(drop=True)

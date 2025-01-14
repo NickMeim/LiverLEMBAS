@@ -1,0 +1,477 @@
+import os
+
+import numpy as np
+import pandas as pd
+
+from scipy.stats import pearsonr
+import torch
+import torch.nn as nn
+
+import plotnine as p9
+
+
+# In[45]:
+
+
+
+
+# In[46]:
+
+
+import sys 
+gpu_lembas_path = '/nobackup/users/meimetis/LEMBAS-main'
+sys.path.insert(1,os.path.join(gpu_lembas_path))
+from LEMBAS.model.bionetwork import format_network, SignalingModel
+from LEMBAS.model.train import train_signaling_model
+import LEMBAS.utilities as utils
+from LEMBAS import plotting, io
+
+
+# In[47]:
+
+
+import time
+import argparse
+import logging
+from pathlib import Path
+from utility import *
+
+logging.basicConfig(level=logging.INFO, format='%(message)s')
+logger = logging.getLogger()
+print2log = logger.info
+
+parser = argparse.ArgumentParser(prog='Cell-line simulation')
+parser.add_argument('--DrugsIn', action='store',type = str, default='../preprocessing/preprocessed_data/TrainingValidationData/Hepatocytes_input_conditions.tsv')
+parser.add_argument('--TargetsIn', action='store',type = str, default='../preprocessing/preprocessed_data/PKN/Hepatocytes_DTI_mask.tsv')
+parser.add_argument('--TFsOut', action='store',type = str, default='../preprocessing/preprocessed_data/TF_activities/Trimmed_TFacitivities_hepatocytes_microarray.tsv')
+parser.add_argument('--ChemicalSims', action='store',type = str, default='../preprocessing/preprocessed_data/ChemicalSims/microarray_similarities.csv')
+parser.add_argument('--PKN', action='store',type = str, default='../preprocessing/preprocessed_data/PKN/Hepatocytes-PKN-Model.tsv')
+parser.add_argument('--PknAnnotation', action='store',type = str, default='../preprocessing/preprocessed_data/PKN/Hepatocytes-PKN-Annotation.tsv')
+parser.add_argument('--infoPath', action='store',type = str, default='../preprocessing/preprocessed_data/TrainingValidationData/Hepatocytes_inputdataInfo.tsv')
+parser.add_argument('--res_dir', action='store',type = str, default='../results/')
+parser.add_argument('--model_type', action='store',type = int, default=4)
+parser.add_argument('--outPattern', action='store',type = str, default='hepatocytes_dtlembas')
+parser.add_argument('--no', action='store',type = int, default=0)
+parser.add_argument('--batchSize', action='store',type = int, default=35)
+parser.add_argument('--MoAFactor', action='store',type = float, default=0.1)
+parser.add_argument('--spectralFactor', action='store', default=1e-3)
+parser.add_argument('--maxIter', action='store',type = int, default=1000)
+parser.add_argument('--noiseLevel', action='store',type = float, default=10)
+parser.add_argument('--L2', action='store', default=1e-6)
+parser.add_argument('--lamda', action='store',type = float, default=1e-9)
+parser.add_argument('--ConvertToEmpProb', action='store',type = bool, default=False)
+parser.add_argument('--inputAmplitude', action='store',type = float, default=3)
+parser.add_argument('--projectionAmplitude', action='store',type = float, default=1.2)
+parser.add_argument('--max_LEMBAS_iterations', action='store',type = int, default=90)
+parser.add_argument('--LEMBAS_leak', action='store',type = float, default=0.01)
+parser.add_argument('--LEMBAS_tolerance', action='store', default=1e-5)
+parser.add_argument('--drug_bn', action='store', default=0.2)
+parser.add_argument('--drug_drop', action='store', default=0.1)
+parser.add_argument('--timepoint', action='store',type=str, default='8 hour')
+parser.add_argument('--test_dose', action='store',type=str, default='allmodels')
+args = parser.parse_args()
+DrugsIn = args.DrugsIn
+TargetsIn = args.TargetsIn
+TFsOut = args.TFsOut
+ChemicalSims = args.ChemicalSims
+PknAnnotation = args.PknAnnotation
+PKN = args.PKN
+res_dir = args.res_dir
+infoPath = args.infoPath
+outPattern = args.outPattern
+outPattern = outPattern + str(args.no)
+timepoint = args.timepoint
+test_dose = args.test_dose
+res_dir = res_dir + test_dose
+
+
+# In[51]:
+
+
+n_cores = 12
+utils.set_cores(n_cores)
+
+seed = int(args.no) * (int(args.maxIter) + 1)
+if seed:
+    torch.use_deterministic_algorithms(True)
+    os.environ['CUBLAS_WORKSPACE_CONFIG'] = ':4096:8'
+    utils.set_seeds(seed = seed)
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+data_path = res_dir
+if not os.path.isdir(data_path):
+    os.mkdir(data_path)
+
+projection_amplitude_in = args.inputAmplitude
+projection_amplitude_out = args.projectionAmplitude
+ConvertToEmpProb = args.ConvertToEmpProb
+
+#Setup optimizer
+batchSize = args.batchSize
+MoAFactor = args.MoAFactor
+spectralFactor = args.spectralFactor
+maxIter = args.maxIter
+L2 = args.L2
+lamda = args.lamda
+
+Path(res_dir).mkdir(parents=True, exist_ok=True)
+
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+
+def getSamples(N, batchSize):
+    order = np.random.permutation(N)
+    outList = []
+    while len(order)>0:
+        outList.append(order[0:batchSize])
+        order = order[batchSize:]
+    return outList
+
+
+def pearson_r(y_true, y_pred):
+    x = y_true
+    y = y_pred
+    mx = torch.mean(x, dim=0)
+    my = torch.mean(y, dim=0)
+    xm, ym = x - mx, y - my
+    r_num = torch.sum(xm * ym,dim=0)
+    x_square_sum = torch.sum(xm * xm,dim=0)
+    y_square_sum = torch.sum(ym * ym,dim=0)
+    r_den = torch.sqrt(x_square_sum * y_square_sum)
+    r = r_num / r_den
+    return r #torch.mean(r)
+
+def numpy_pearson_r(y_true, y_pred):
+    x = y_true
+    y = y_pred
+    # Compute means for each column
+    mx = np.mean(x, axis=0)
+    my = np.mean(y, axis=0)
+    # Subtract means (centering)
+    xm = x - mx
+    ym = y - my
+    # Numerator: sum of element-wise products of centered vectors
+    r_num = np.sum(xm * ym, axis=0)
+    # Denominator: square root of the product of sum of squares of centered vectors
+    r_den = np.sqrt(np.sum(xm * xm, axis=0) * np.sum(ym * ym, axis=0))
+    # Pearson correlation for each column
+    r = r_num / r_den
+    return r
+
+
+class DrugstoSignal(nn.Module):
+    def __init__(self,mask, size1,size2,drugSim,momentum=0.6,drop=0.1,
+                 device = 'cuda' if torch.cuda.is_available() else 'cpu'):
+
+        super().__init__()
+
+        self.size_in = size1 ### drugs number
+        self.size_out = size2 ### targets/signal size
+        self.mask = mask.double().to(device)
+        self.drugSim = drugSim.to(device)
+        self.leak = 0.01
+
+        # initialize weights and biases
+        weights = torch.Tensor(size2,size1).double()
+        nn.init.uniform_(weights, -0.3, 0.01) # weight init
+        weights = torch.mul(weights.to(device),self.mask)
+        ecfp4_weights = torch.Tensor(size1,size1).double()
+        nn.init.uniform_(ecfp4_weights, 0., 1.)
+        self.Wsim = nn.Parameter(ecfp4_weights, requires_grad=True)
+        self.bn = nn.BatchNorm1d(num_features=size1, momentum=momentum, dtype=torch.double)
+        self.dropout = nn.Dropout(drop)
+
+        self.A = nn.Parameter(weights, requires_grad = True)
+
+    def forward(self, x):
+        W = torch.mul(self.drugSim, self.Wsim)
+        A = torch.mul(self.A,self.mask)
+        xhat = torch.mm(x,W)
+        xhat = self.bn(xhat)
+        xhat = self.dropout(xhat)
+        xhat=xhat.transpose(0, 1)
+        xhat = torch.mm(A, xhat)
+        output = xhat.transpose(0, 1)
+        return output
+
+
+# prior knowledge signaling network
+net = pd.read_csv(PKN, sep = '\t', index_col = False).loc[:,['source','target','stimulation','inhibition']]
+
+# ligand input and TF output
+drugInput = pd.read_csv(DrugsIn, sep = '\t', index_col = 0)
+drugSmiles = drugInput.columns.values
+TFOutput = pd.read_csv(TFsOut, sep='\t', low_memory=False, index_col=0)
+TFOutput = TFOutput.loc[drugInput.index,:]
+
+# Load drugs information
+drugTargets = pd.read_csv(TargetsIn, sep='\t', low_memory=False, index_col=0)
+inputInfo = pd.read_csv(infoPath, sep='\t', low_memory=False, index_col=0)
+inputInfo = inputInfo[inputInfo['time']==timepoint]
+TFOutput = TFOutput.loc[inputInfo.index,:]
+drugInput = drugInput.loc[inputInfo.index,:]
+
+
+
+stimulation_label = 'stimulation'
+inhibition_label = 'inhibition'
+weight_label = 'mode_of_action'
+source_label = 'source'
+target_label = 'target'
+
+
+# Let's format it to fit with the necessary inputs to the SignalingModel:
+
+# In[62]:
+
+
+net = format_network(net, weight_label = weight_label, stimulation_label = stimulation_label, inhibition_label = inhibition_label)
+
+
+# In[63]:
+
+
+nodeNames = np.union1d(net.source.values,net.target.values)
+
+
+# In[64]:
+
+
+#Subset input and output to intersecting nodes
+druginName = drugInput.columns.values
+inName = drugTargets.columns.values
+outconds = drugInput.index.values
+outName = TFOutput.columns.values
+inName = np.intersect1d(nodeNames, inName)
+outName = np.intersect1d(nodeNames, outName)
+TFOutput = TFOutput.loc[outconds,outName]
+drugTargets = drugTargets.loc[:,inName]
+if ConvertToEmpProb==True:
+    print2log('Convereted to Emprirical probabilities')
+    TFOutput = 1/(1+np.exp(-TFOutput))
+
+drugTargets = drugTargets.loc[drugInput.columns.values,:]
+drugSim = pd.read_csv(ChemicalSims,index_col=0)
+drugSim = drugSim.loc[drugInput.columns.values,drugInput.columns.values]
+drugSim = torch.tensor(drugSim.values.copy(), dtype=torch.double)
+
+
+# In[65]:
+
+
+### Split train and test set
+X = torch.tensor(drugInput.values.copy(), dtype=torch.double).to(device)
+Y = torch.tensor(TFOutput.values, dtype=torch.double).to(device)
+mask_dt =torch.tensor(np.array(drugTargets)).transpose(0,1)
+
+
+# ### Define Parameters to Build and Train Model
+
+# In[67]:
+
+
+# other parameters
+bionet_params = {'target_steps': 100, 'max_steps': args.max_LEMBAS_iterations, 
+                 'exp_factor':50, 'tolerance': args.LEMBAS_tolerance, 
+                 'leak':args.LEMBAS_leak} # fed directly to model
+
+# training parameters
+lr_params = {'max_iter': args.maxIter, 
+             'learning_rate': 2e-3}
+other_params = {'batch_size': args.batchSize, 'noise_level': args.noiseLevel, 'gradient_noise_level': 1e-9}
+regularization_params = {'param_lambda_L2': args.L2, 'moa_lambda_L1': args.MoAFactor, 
+                         'ligand_lambda_L2': 1e-5, 'uniform_lambda_L2': 1e-5, 
+                   'uniform_max': 1/projection_amplitude_out, 'spectral_loss_factor': args.spectralFactor,'lamda':lamda}
+spectral_radius_params = {'n_probes_spectral': 5, 'power_steps_spectral': 5, 'subset_n_spectral': 10}
+target_spectral_radius = 0.8
+hyper_params = {**lr_params, **other_params, **regularization_params, **spectral_radius_params} # fed into training function
+
+
+# ### Initialize Model
+# Next, let's initialize the model and format the inputs/outputs for running the model:
+
+# In[68]:
+
+
+mod = SignalingModel(net = net,
+                     X_in = drugTargets,
+                     y_out = TFOutput, 
+                     projection_amplitude_in = projection_amplitude_in, projection_amplitude_out = projection_amplitude_out,
+                     weight_label = weight_label, source_label = source_label, target_label = target_label,
+                     bionet_params = bionet_params, 
+                     dtype = torch.double, device = device, seed = seed)
+
+
+# In[72]:
+
+
+drugLayer = DrugstoSignal(mask_dt, 
+                          mask_dt.shape[1],mask_dt.shape[0],
+                          drugSim,momentum=args.drug_bn,drop=args.drug_drop,
+                          device = device)
+drugLayer = drugLayer.to(device)
+
+stats = utils.initialize_progress(hyper_params['max_iter'])
+# model setup
+mod.input_layer.weights.requires_grad = False # don't learn scaling factors for the ligand input concentrations
+mod.signaling_network.prescale_weights(target_radius = target_spectral_radius) # spectral radius
+
+# loss and optimizer
+criterion = torch.nn.MSELoss(reduction='mean')
+optimizer = torch.optim.Adam(list(mod.parameters())+list(drugLayer.parameters()), 
+                             lr=1,weight_decay=0)
+resetState = optimizer.state.copy()
+
+
+# In[76]:
+
+
+mLoss = criterion(torch.mean(Y, dim=0) * torch.ones(Y.shape, device = Y.device), Y)
+N = X.shape[0]
+
+
+# In[ ]:
+
+
+print2log('Begin training...')
+print2log(mLoss.item())
+start_time = time.time()
+reset_epoch = 200
+reset_state = optimizer.state.copy()
+for e in range(hyper_params['max_iter']):
+    # set learning rate
+    cur_lr = utils.get_lr(e, hyper_params['max_iter'], max_height = hyper_params['learning_rate'],
+                          start_height=hyper_params['learning_rate']/10, end_height=1e-4, peak = 500)
+    optimizer.param_groups[0]['lr'] = cur_lr
+        
+    cur_loss = []
+    cur_eig = []
+    
+    trainloader = getSamples(N, batchSize)
+    for dataIndex in trainloader:
+        mod.train()
+        drugLayer.train()
+        #mod.signaling_network.weights = mod.signaling_network.weights + 1e-8 * torch.randn(mod.signaling_network.weights.shape) #breaks potential symmetries
+        optimizer.zero_grad()
+
+        dataIn = X[dataIndex, :].view(len(dataIndex), X.shape[1])
+        dataOut = Y[dataIndex, :].view(len(dataIndex), Y.shape[1])
+        
+        Xin = drugLayer(dataIn)
+        X_full = mod.input_layer(Xin)
+        network_noise = torch.randn(X_full.shape, device = X_full.device)
+        X_full = X_full + hyper_params['noise_level'] * cur_lr * network_noise
+        YhatFull = mod.signaling_network(X_full)
+        Yhat = mod.output_layer(YhatFull)
+        
+        # get prediction loss
+        fit_loss = criterion(dataOut, Yhat)
+            
+        # get regularization losses
+        sign_reg = mod.signaling_network.sign_regularization(lambda_L1 = hyper_params['moa_lambda_L1']) # incorrect MoA
+        ligand_reg = mod.ligand_regularization(lambda_L2 = hyper_params['ligand_lambda_L2']) # ligand biases
+        stability_loss, spectral_radius = mod.signaling_network.get_SS_loss(Y_full = YhatFull.detach(), spectral_loss_factor = hyper_params['spectral_loss_factor'],
+                                                                                subset_n = hyper_params['subset_n_spectral'], n_probes = hyper_params['n_probes_spectral'], 
+                                                                                power_steps = hyper_params['power_steps_spectral'])
+        uniform_reg = mod.uniform_regularization(lambda_L2 = hyper_params['uniform_lambda_L2']*cur_lr, Y_full = YhatFull, 
+                                                     target_min = 0, target_max = hyper_params['uniform_max']) # uniform distribution
+        param_reg = mod.L2_reg(hyper_params['param_lambda_L2']) # all model weights and signaling network biases
+        #DTregularization = lamda * torch.sum(torch.square(drugLayer.Wsim-torch.eye(drugLayer.Wsim.shape[0],device=device)))
+        DTweightLoss = 1e-6 * torch.sum(torch.square(drugLayer.A)) #+ 1e-8*(torch.sum(1 / (torch.square(drugLayer.A) + 0.5)))
+            
+        total_loss = fit_loss + sign_reg + ligand_reg + param_reg + stability_loss + uniform_reg + DTweightLoss # + DTregularization
+    
+        # gradient
+        total_loss.backward()
+        mod.add_gradient_noise(noise_level = hyper_params['gradient_noise_level'])
+        optimizer.step()
+    
+        # store
+        cur_eig.append(spectral_radius)
+        cur_loss.append(fit_loss.item())
+    
+    stats = utils.update_progress(stats, iter = e, loss = cur_loss, eig = cur_eig, learning_rate = cur_lr, 
+                                     n_sign_mismatches = mod.signaling_network.count_sign_mismatch())
+        
+    if e % 100 == 0:
+        utils.print_stats(stats, iter = e)
+        # store results
+        io.write_pickled_object(stats, os.path.join(data_path,outPattern + 'training_stats_%s.pickle'%args.no))
+        
+    if np.logical_and(e % reset_epoch == 0, e>0):
+        optimizer.state = reset_state.copy()
+
+mins, secs = divmod(time.time() - start_time, 60)
+print("Training ran in: {:.0f} min {:.2f} sec".format(mins, secs))
+    
+# store results
+io.write_pickled_object(stats, os.path.join(data_path,outPattern + 'training_stats_%s.pickle'%args.no))
+torch.save(obj=mod.state_dict(), f=os.path.join(data_path,outPattern + 'signal_state_dict_%s.pth'%args.no))
+torch.save(obj=drugLayer.state_dict(), f=os.path.join(data_path,outPattern + 'drugLayer_state_dict_%s.pth'%args.no))
+
+
+# ## Predict using the model:
+
+# In[ ]:
+
+
+mod.load_state_dict(torch.load(os.path.join(data_path, outPattern +'signal_state_dict_%s.pth'%args.no)))
+drugLayer.load_state_dict(torch.load(os.path.join(data_path,outPattern + 'drugLayer_state_dict_%s.pth'%args.no)))
+stats = io.read_pickled_object(os.path.join(data_path,outPattern + 'training_stats_%s.pickle'%args.no))
+
+
+# In[ ]:
+
+
+mod.eval()
+drugLayer.eval()
+Xin  = drugLayer(X)
+Y_hat, Y_full = mod(Xin)
+
+### save performance
+r_train = pearson_r(Y, Y_hat).detach().cpu().numpy()
+df_res = pd.DataFrame({'TF':TFOutput.columns,'r': r_train})
+df_res['fold'] = test_dose
+df_res['time'] = timepoint
+df_res['model_no'] = int(args.no) # args.no
+df_res.to_csv(res_dir+'/performance_'+outPattern +'.csv')
+
+
+# ## Visualize
+loss_smooth = utils.get_moving_average(values = stats['loss_mean'], n_steps = 5)
+loss_sigma_smooth = utils.get_moving_average(values = stats['loss_sigma'], n_steps = 10)
+epochs = np.array(range(stats['loss_mean'].shape[0]))
+
+p1A = plotting.shade_plot(X = epochs, Y = loss_smooth, sigma = loss_sigma_smooth, x_label = 'Epoch', y_label = 'Loss')
+p1A += p9.scale_y_log10()
+p1A += p9.geom_hline(yintercept = mLoss.item(), linetype="dashed", color="black")
+p1A.save(filename=res_dir+"/training_loss_%s.png"%args.no, dpi=300) 
+
+eig_smooth = utils.get_moving_average(stats['eig_mean'], 5)
+eig_sigma_smooth = utils.get_moving_average(stats['eig_sigma'], 5)
+p1C = plotting.shade_plot(X = epochs, Y = eig_smooth, sigma = eig_sigma_smooth, x_label = 'Epoch', y_label = 'Spectral Radius')
+p1C += p9.geom_hline(yintercept = mod.signaling_network.training_params['spectral_target'], linetype="dashed", color="black")
+p1C += p9.geom_hline(yintercept = 1, color="black")
+p1C.save(filename=res_dir+"/training_spectral_radius_%s.png"%args.no, dpi=300) 
+
+
+# Next, let's see what the correlation between the predicted and actual transcription factor is:
+
+# In[ ]:
+
+### Print training scatterplot
+y_pred = Y_hat.detach().flatten().cpu().numpy()
+y_actual = Y.detach().flatten().cpu().numpy()
+pr, _ = pearsonr(y_pred, y_actual)
+viz_df = pd.DataFrame(data = {'Predicted': y_pred, 'Actual': y_actual})
+width, height = 3, 3
+p2 = (
+    p9.ggplot() +
+    p9.geom_point(data = viz_df, mapping = p9.aes(x='Predicted', y = 'Actual'), color = '#1E90FF') +
+    p9.geom_line(data = pd.DataFrame(data = {'x': [0,1], 'y': [0, 1]}), mapping = p9.aes(x='x', y = 'y'), color = 'black') +
+    p9.theme_bw() + 
+    p9.theme(figure_size=(width, height)) +
+    p9.annotate(geom = 'text', x=0.25, y = 0.95, label = 'Pearson r: {:.2f}'.format(pr), size = 10)
+)
+p2.save(filename=res_dir+"/training_scatterplot_%s.png"%args.no, dpi=300) 

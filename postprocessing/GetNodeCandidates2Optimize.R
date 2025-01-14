@@ -11,7 +11,7 @@ source("plotting_functions.R")
 source('functions_translation.R')
 
 ## Load KO data---------------------------
-results_ko <- data.table::fread('../results/allmodels/InSilicoKOs/TFs_all_conditions.csv') %>% 
+results_ko <- data.table::fread('../results/2 hour/allmodels/InSilicoKOs/TFs_all_conditions.csv') %>% 
   column_to_rownames('V1')
 results_ko <- results_ko %>% filter(type!="KO+control") %>% filter(type!='control')
 
@@ -136,12 +136,12 @@ candidates_combo <- candidates_combo %>% mutate(rank = 0.5*(rank.x+rank.y))
 ## Get top 100 LV candiates for doing combos
 final_candidates <- lv_ranked %>% filter(rank<=100) 
 final_candidates <- left_join(final_candidates,annot)
-saveRDS(final_candidates,'../results/allmodels/final_node_candidates.rds')
+saveRDS(final_candidates,'../results/2 hour/allmodels/final_node_candidates.rds')
 
 ## Simulate combination of TGFBR1 and IFNAR1---------------
-simulation <- data.table::fread('../results/allmodels/combo_simulation/TFs_all_conditions.csv') %>% 
+simulation <- data.table::fread('../results/2 hour/allmodels/combo_simulation/TFs_all_conditions.csv') %>% 
   select(-V1)
-simulation_samesign <- data.table::fread('../results/allmodels/combo_simulation_samesign/TFs_all_conditions.csv') %>% 
+simulation_samesign <- data.table::fread('../results/2 hour/allmodels/combo_simulation_samesign/TFs_all_conditions.csv') %>% 
   select(-V1)
 #Load annotation file to replace with gene names
 annot <- read.delim('../../../Artificial-Signaling-Network/DrugsANNSignaling/data/uniprot-reviewed_yes+AND+organism__Homo+sapiens+(Human)+[9606]_.tab')
@@ -273,50 +273,52 @@ Yall <- rbind(Yinsilico %>% mutate(stimulation = 'IFNAR1*TGFBR1<0'),
               Yinsilico_samesign %>% mutate(stimulation = 'IFNAR1*TGFBR1>0'))%>%
   mutate(phenotype = ifelse(phenotype=='NAS','MAS','Fibrosis stage'))
 mas_plot <- ggplot(Yall %>% filter(phenotype=='MAS') %>% select(IFNAR1,mu,se,stimulation,phenotype) %>% unique(),
-       aes(x=IFNAR1,y=mu,color=stimulation))+
+       aes(x=IFNAR1,y=mu,color=stimulation,fill=stimulation))+
   xlab('stimulation strength') + ylab('score') + 
-  scale_y_continuous(limits = c(0,8))+
-  geom_point()+
+  scale_y_continuous(limits = c(min(0,min(Yall$score[Yall$phenotype=='MAS'])),8))+
+  # geom_point(size=1)+
   geom_line()+
-  geom_errorbar(aes(ymax=mu+se,ymin=mu))+
+  # geom_errorbar(aes(ymax=mu+se,ymin=mu-se),alpha=0.5)+
+  geom_ribbon(aes(ymax=mu+se,ymin=mu-se),alpha=0.5,color=NA)+
   geom_ribbon(aes(x=IFNAR1,
                   ymin = mean_control_mas - se_control_mas, 
                   ymax = mean_control_mas + se_control_mas), 
               fill = "#619CFF",color='#619CFF', alpha = 0.2,
               linetype = "dashed", show.legend = FALSE) +
-  annotate('text',x=-450,
-           y=4.2,color= '#619CFF',fontface ='bold',
+  annotate('text',x=-2000,
+           y=1.5,color= '#619CFF',fontface ='bold',
            label="untreated score", 
            hjust = 0 , 
            size=4)+
   facet_wrap(~phenotype)
 mas_plot <- add_theme(mas_plot) + theme(legend.position = 'top',text = element_text(size=20))
 print(mas_plot)
-ggsave(filename = "../figures/ifna_tgfb_combo_mas_plot.pdf", plot = mas_plot, 
+ggsave(filename = "../figures/2 hour/ifna_tgfb_combo_mas_plot.pdf", plot = mas_plot, 
        device = cairo_pdf,
        units = "cm", width = 12, height = 12)
 
 fib_plot <- ggplot(Yall %>% filter(phenotype!='MAS') %>% select(IFNAR1,mu,se,stimulation,phenotype) %>% unique(),
-                   aes(x=IFNAR1,y=mu,color=stimulation))+
+                   aes(x=IFNAR1,y=mu,color=stimulation,fill=stimulation))+
   xlab('stimulation strength') + ylab('score') + 
-  scale_y_continuous(limits = c(0,5))+
-  geom_point()+
+  scale_y_continuous(limits = c(min(0,min(Yall$score[Yall$phenotype!='MAS'])),5))+
+  # geom_point(size=1)+
   geom_line()+
-  geom_errorbar(aes(ymax=mu+se,ymin=mu))+
+  # geom_errorbar(aes(ymax=mu+se,ymin=mu-se),alpha=0.5)+
+  geom_ribbon(aes(ymax=mu+se,ymin=mu-se),alpha=0.5,color=NA)+
   geom_ribbon(aes(x=IFNAR1,
                   ymin = mean_control_fib - se_control_fib, 
                   ymax = mean_control_fib + se_control_fib), 
               fill = "#619CFF",color='#619CFF', alpha = 0.2,
               linetype = "dashed", show.legend = FALSE) +
-  annotate('text',x=-450,
-           y=2.2,color= '#619CFF',fontface ='bold',
+  annotate('text',x=-2000,
+           y=1.3,color= '#619CFF',fontface ='bold',
            label="untreated score", 
            hjust = 0 , 
            size=4)+
   facet_wrap(~phenotype)
 fib_plot <- add_theme(fib_plot) + theme(legend.position = 'top',text = element_text(size=20))
 print(fib_plot)
-ggsave(filename = "../figures/ifna_tgfb_combo_fibrosis_plot.pdf", plot = fib_plot, 
+ggsave(filename = "../figures/2 hour/ifna_tgfb_combo_fibrosis_plot.pdf", plot = fib_plot, 
        device = cairo_pdf,
        units = "cm", width = 12, height = 12)
 
@@ -324,6 +326,6 @@ p <- (mas_plot + fib_plot) +
   plot_layout(guides = "collect") &
   theme(legend.position = "top")
 print(p)
-ggsave(filename = "../figures/ifn_tgfb_combo.png", plot = p, 
+ggsave(filename = "../figures/2 hour/ifn_tgfb_combo.png", plot = p, 
        units = "cm", width = 24, height = 12)
   

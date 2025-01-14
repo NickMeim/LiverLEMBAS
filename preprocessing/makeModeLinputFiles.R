@@ -14,7 +14,6 @@ TrimmedTFs <- read.delim('preprocessed_data/TF_activities/Trimmed_TFacitivities_
                          sep = '\t') 
 TrimmedTFs <- TrimmedTFs %>% column_to_rownames('X')
 TrimmedTFs <- as.matrix(TrimmedTFs)
-simila
 
 ### Create the 4 important files to train DT-LEMBAS:-------------------
 ### 1) Y : TF_activities (already created)

@@ -37,3 +37,13 @@ results/High/*
 results/High
 results/CV/*.pth
 .Rproj.user
+preprocessing/net_properties
+preprocessing/preprocessed_data/PKN/prior_drug_signaling_net_simplified.csv
+results/2 hour
+results/24 hour
+results/CV/shuffledX_hepatocytes_dtlembas1_fold_results.csv
+results/CV_24hr_with_random_long.csv
+results/CV_2hr_with_random_long.csv
+results/LOOCV_24hr_with_random_long.csv
+results/LOOCV_2hr_with_random_long.csv
+

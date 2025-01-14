@@ -14,12 +14,12 @@ library(ropls)
 library(caret)
 ### Load in silico results-------------------------------------------
 # Load KOs results
-results_ko <- data.table::fread('../results/allmodels/InSilicoKOs/TFs_all_conditions.csv') %>% 
+results_ko <- data.table::fread('../results/2 hour/allmodels/InSilicoKOs/TFs_all_conditions.csv') %>% 
   column_to_rownames('V1')
 results_ko <- results_ko %>% filter(type!="KO+control") %>% filter(type!='control')
 # untreated
 #Load activation results
-results_act <- data.table::fread('../results/allmodels/InSilicoActivations/TFs_all_conditions.csv') %>% 
+results_act <- data.table::fread('../results/2 hour/allmodels/InSilicoActivations/TFs_all_conditions.csv') %>% 
   column_to_rownames('V1')
 results_act <- results_act %>% filter(type!="KO+control") %>% filter(type!='control')
 #Load annotation file to replace with gene names
@@ -219,7 +219,7 @@ phenotypeKO_plot <- ggboxplot(Yko %>% filter(condition %in% c('untreated',
 phenotypeKO_plot <- add_theme(phenotypeKO_plot) + theme(legend.position = 'none',
                                                         element_text(angle=0))
 print(phenotypeKO_plot)
-ggsave(filename = "../figures/phenotypeKO_plot.png", plot = phenotypeKO_plot, units = "cm", width = 16, height = 12)
+ggsave(filename = "../figures/2 hour/phenotypeKO_plot.png", plot = phenotypeKO_plot, units = "cm", width = 16, height = 12)
 
 phenotypeACT_plot <- ggboxplot(Yact %>% filter(condition %in% c('untreated',
                                                                 'TGFBR1','TGFBR2',
@@ -236,7 +236,7 @@ phenotypeACT_plot <- ggboxplot(Yact %>% filter(condition %in% c('untreated',
 phenotypeACT_plot <- add_theme(phenotypeACT_plot) + theme(legend.position = 'none',
                                                           element_text(angle=0))
 print(phenotypeACT_plot)
-ggsave(filename = "../figures/phenotypeACT_plot.png", plot = phenotypeACT_plot, units = "cm", width = 16, height = 12)
+ggsave(filename = "../figures/2 hour/phenotypeACT_plot.png", plot = phenotypeACT_plot, units = "cm", width = 16, height = 12)
 
 Yall <- rbind(Yact %>% mutate(stimuli='activation'),
               Yko %>% mutate(stimuli='inhibition'))
@@ -269,7 +269,7 @@ phenotype_plot <- ggboxplot(Yall %>% filter(condition %in% c('untreated','TGFBR1
              linetype = "dashed",
              lwd = 1)
 print(phenotype_plot)
-ggsave(filename = "../figures/phenotype_plot.png", plot = phenotype_plot, 
+ggsave(filename = "../figures/2 hour/phenotype_plot.png", plot = phenotype_plot, 
        units = "cm", width = 16, height = 12,
        dpi = 600)
 
@@ -323,7 +323,7 @@ phenotype_plot <- ggboxplot(Yall_diff %>% filter(condition %in% c('untreated','T
                      tip.length = 0,
                      size = 4)
 print(phenotype_plot)
-ggsave(filename = "../figures/differetial_phenotype_plot.png", plot = phenotype_plot, 
+ggsave(filename = "../figures/2 hour/differetial_phenotype_plot.png", plot = phenotype_plot, 
        units = "cm", width = 16, height = 12,
        dpi = 600)
 
@@ -424,7 +424,7 @@ scatterplot <- ggplot(Yko_filt %>% spread('phenotype','score') %>%
 scatterplot <- add_theme(scatterplot) + theme(legend.position = 'right',
                                               text = element_text(size=22))
 print(scatterplot)
-ggsave(filename = "../figures/phenotype_change_scatterplot.png", plot = scatterplot, units = "cm", width = 28, height = 16)
+ggsave(filename = "../figures/2 hour/phenotype_change_scatterplot.png", plot = scatterplot, units = "cm", width = 28, height = 16)
 
 ### Show change in:
 ### IRF1, IRF3, IRF7, IRF9, STAT1, STAT2, JAK1, JAK2 for IFNg after KO of IFNGR1/2
@@ -447,21 +447,22 @@ XKO_diff_filt <- XKO_diff %>% dplyr::select(node,model_no,
                                             all_of(c('IRF1','IRF9', 'STAT1', 'STAT2',
                                                      'SMAD3', 'SMAD4',
                                                      "NFKB1","NFKB2")))
-XKO_diff_filt <- XKO_diff_filt %>% filter(node %in% c('JAK1', 'JAK2','TYK2', 'SMAD1', 'SMAD2',
-                                                      'TGFB1','TGFBR1','TGFBR2',
+XKO_diff_filt <- XKO_diff_filt %>% filter(node %in% c('JAK1','JAK2',
+                                                      'TGFBR1','TGFBR2',
                                                       'IFNAR1','IFNAR2',
                                                       'IFNGR1','IFNGR2'))
 
 
 ifng_plot <- ggboxplot(XKO_diff_filt %>% filter(node %in% c('IRF1', 'IRF3', 'IRF7','IRF9', 
-                                                            'STAT1', 'STAT2', 'JAK1', 'JAK2',
+                                                            'STAT1', 'STAT2', #'JAK1', 'JAK2',
                                                'IFNGR1','IFNGR2')) %>%
             dplyr::select(node,model_no,all_of(c('IRF1', 'IRF9', 'STAT2'))) %>% #, 'STAT1'
             gather('TF','activity',-node,-model_no),
           x = 'node',y='activity',add='jitter')+
   ggtitle('IFNg response') + xlab('KO of signaling node')+
   geom_hline(yintercept = 0,linetype = 'dashed',lwd=0.8,color='black')+
-  scale_y_break(c(-4, -8))+
+  # scale_y_break(c(-4, -8))+
+  scale_y_continuous(limits = c(-3,NA))+
   facet_wrap(~TF)
 ifng_plot <- add_theme(ifng_plot) + theme(panel.border = element_blank(),
                                           axis.line.y = element_line(color = "black"),
@@ -470,19 +471,19 @@ ifng_plot <- add_theme(ifng_plot) + theme(panel.border = element_blank(),
                                           axis.text.x = element_text(angle=45,vjust = 0.5),
                                           axis.title.x = element_blank())
 print(ifng_plot)
-ggsave(filename = "../figures/ifng_effect_plot.pdf", plot = ifng_plot, 
+ggsave(filename = "../figures/2 hour/ifng_effect_plot.pdf", plot = ifng_plot, 
        device = cairo_pdf,
        units = "cm", width = 12, height = 12)
 
 
-ifna_plot <- ggboxplot(XKO_diff_filt %>% filter(node %in% c('IRF9', 'STAT1', 'STAT2', 'TYK2', 'JAK1',
+ifna_plot <- ggboxplot(XKO_diff_filt %>% filter(node %in% c('IRF9', 'STAT1', 'STAT2', #'TYK2', 'JAK1',
                                                             'IFNAR1','IFNAR2')) %>%
                          dplyr::select(node,model_no,all_of(c('IRF1', 'IRF9', 'STAT2'))) %>% #, 'STAT1'
                          gather('TF','activity',-node,-model_no),
                        x = 'node',y='activity',add='jitter')+
   ggtitle('IFNa response') + xlab('KO of signaling node')+
   geom_hline(yintercept = 0,linetype = 'dashed',lwd=0.8,color='black')+
-  # scale_y_break(c(-4, -8))+
+  scale_y_break(c(-2.5, -14))+
   facet_wrap(~TF)
 ifna_plot <- add_theme(ifna_plot) + theme(panel.border = element_blank(),
                                           axis.line.y = element_line(color = "black"),
@@ -491,19 +492,17 @@ ifna_plot <- add_theme(ifna_plot) + theme(panel.border = element_blank(),
                                           axis.text.x = element_text(angle=45,vjust = 0.5),
                                           axis.title.x = element_blank())
 print(ifna_plot)
-ggsave(filename = "../figures/ifna_effect_plot.pdf", plot = ifna_plot, 
+ggsave(filename = "../figures/2 hour/ifna_effect_plot.pdf", plot = ifna_plot, 
        device = cairo_pdf,
        units = "cm", width = 12, height = 12)
 
-tgfb_plot <- ggboxplot(XKO_diff_filt %>% filter(node %in% c('TGFB1',
-                                                            'TGFBR1','TGFBR2')) %>%
-                         dplyr::select(node,model_no,all_of(c('STAT2', 'SMAD3', 'SMAD4',
-                                                              "NFKB1","NFKB2"))) %>%
+tgfb_plot <- ggboxplot(XKO_diff_filt %>% filter(node %in% c('TGFBR1','TGFBR2')) %>%
+                         dplyr::select(node,model_no,all_of(c('SMAD3', 'SMAD4'))) %>%
                          gather('TF','activity',-node,-model_no),
                        x = 'node',y='activity',add='jitter')+
   ggtitle('TGFb response') + xlab('KO of signaling node')+
   geom_hline(yintercept = 0,linetype = 'dashed',lwd=0.8,color='black')+
-  scale_y_break(c(-4, -8))+
+  scale_y_break(c(-3.5, -11))+
   facet_wrap(~TF,ncol = 5)
 tgfb_plot <- add_theme(tgfb_plot) + theme(panel.border = element_blank(),
                                           axis.line.y = element_line(color = "black"),
@@ -512,6 +511,6 @@ tgfb_plot <- add_theme(tgfb_plot) + theme(panel.border = element_blank(),
                                           axis.text.x = element_text(angle=45,vjust = 0.5),
                                           axis.title.x = element_blank())
 print(tgfb_plot)
-ggsave(filename = "../figures/tgfb_effect_plot.pdf", plot = tgfb_plot, 
+ggsave(filename = "../figures/2 hour/tgfb_effect_plot.pdf", plot = tgfb_plot, 
        device = cairo_pdf,
        units = "cm", width = 20, height = 10)

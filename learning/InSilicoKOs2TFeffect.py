@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import torch
 import sys 
-gpu_lembas_path = '/nobackup/users/meimetis/LEMBAS-main'
+gpu_lembas_path = 'C:/Users/nmeim/Documents/Artificial-Signaling-Network/LEMBAS-main'
 sys.path.insert(1,os.path.join(gpu_lembas_path))
 import argparse
 import logging
@@ -24,7 +24,7 @@ parser.add_argument('--ChemicalSims', action='store',type = str, default='../pre
 parser.add_argument('--PKN', action='store',type = str, default='../preprocessing/preprocessed_data/PKN/Hepatocytes-PKN-Model.tsv')
 parser.add_argument('--PknAnnotation', action='store',type = str, default='../preprocessing/preprocessed_data/PKN/Hepatocytes-PKN-Annotation.tsv')
 parser.add_argument('--infoPath', action='store',type = str, default='../preprocessing/preprocessed_data/TrainingValidationData/Hepatocytes_inputdataInfo.tsv')
-parser.add_argument('--res_dir', action='store',type = str, default='../results/allmodels/')
+parser.add_argument('--res_dir', action='store',type = str, default='../results/allmodels/') #'../results/2 hour/allmodels/'
 parser.add_argument('--number_DTLEMBAS_models', action='store',type = int, default=50)
 parser.add_argument('--modelPattern', action='store',type = str, default='hepatocytes_dtlembas')
 parser.add_argument('--ConvertToEmpProb', action='store',type = bool, default=False)
@@ -37,7 +37,7 @@ parser.add_argument('--drug_bn', action='store', default=0.2)
 parser.add_argument('--drug_drop', action='store', default=0.1)
 parser.add_argument('--timepoint', action='store',type=str, default='8 hour')
 parser.add_argument('--annotation_file_for_visualization', action='store',type=str, default='../data/annotation.csv')
-parser.add_argument('--stimulation_strength', action='store',type=float, default=500)
+parser.add_argument('--stimulation_strength', action='store',type=float, default=3000)
 parser.add_argument('--stimulation_sign', action='store',type = float, default=-1)
 parser.add_argument('--selected_signaling_nodes', metavar='N', type=str, nargs='*', action='store', 
                     help='Selected signaling nodes to predict and save their activity',
@@ -183,8 +183,8 @@ results_singaling_nodes = pd.DataFrame({})
 start_time = time.time()
 for i in range(number_DTLEMBAS_models):
     print2log('Run DT-LEMBAS model '+str(i+1)+' to simulate KOs')
-    mod.load_state_dict(torch.load(os.path.join(data_path, modelPattern + str(i+1)+'_alldata_signal_state_dict_%s.pth'%(i+1))))
-    drugLayer.load_state_dict(torch.load(os.path.join(data_path,modelPattern + str(i+1) + '_alldata_drugLayer_state_dict_%s.pth'%(i+1))))
+    mod.load_state_dict(torch.load(os.path.join(data_path, modelPattern + str(i+1)+'signal_state_dict_%s.pth'%(i+1))))
+    drugLayer.load_state_dict(torch.load(os.path.join(data_path,modelPattern + str(i+1) + 'drugLayer_state_dict_%s.pth'%(i+1))))
     mod.eval()
     drugLayer.eval()
     # print2log('Node stimuli simulation...')

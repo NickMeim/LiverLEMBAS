@@ -1,11 +1,12 @@
 library(tidyverse)
 library(ggplot2)
 library(ggpubr)
+source('plotting_functions.R')
 
 ### First compare one model in 10-fold validation with random model-------
-res_model <- data.table::fread('../results/CV/hepatocytes_dtlembas8_fold_results.csv') %>% select(-V1)
+res_model <- data.table::fread('../results/2 hour/CV/hepatocytes_dtlembas1_fold_results.csv') %>% select(-V1)
 colnames(res_model)[3:4] <- c('train','test')
-shuffled_model <- data.table::fread('../results/CV/shuffledX_hepatocytes_dtlembas8_fold_results.csv')%>%
+shuffled_model <- data.table::fread('../results/2 hour/CV/shuffledX_hepatocytes_dtlembas1_fold_results.csv')%>%
   select(fold,TF,c('shuffled Y'='r_test'))
 res_all <- left_join(res_model,shuffled_model)
 res_all <- res_all %>% gather('set','r',-fold,-TF)
@@ -31,24 +32,24 @@ random_comparison <- add_theme(random_comparison) + theme_pubr() +
         axis.line.x=element_blank(),
         legend.position = 'top')
 print(random_comparison)
-ggsave(filename = "../figures/dtlembas_performance_random_comparison.pdf", plot = random_comparison, units = "cm", width = 12, height = 12)
-data.table::fwrite(res_all,'../results/CV_with_random_long.csv')
+ggsave(filename = "../figures/2 hour/dtlembas_2hr_performance_random_comparison.pdf", plot = random_comparison, units = "cm", width = 12, height = 12)
+data.table::fwrite(res_all,'../results/CV_2hr_with_random_long.csv')
 
 ### Load CV ensemble predictions----------------
 ## to do
 
 ### First compare one model in LOOCV validation with random model-------
-res_model <- rbind(data.table::fread('../results/High/performance_hepatocytes_dtlembas1.csv') %>% 
+res_model <- rbind(data.table::fread('../results/2 hour/High/performance_hepatocytes_dtlembas1.csv') %>% 
   select(-V1,-time,-model_no),
-  data.table::fread('../results/Middle/performance_hepatocytes_dtlembas1.csv') %>% 
+  data.table::fread('../results/2 hour/Middle/performance_hepatocytes_dtlembas1.csv') %>% 
     select(-V1,-time,-model_no),
-  data.table::fread('../results/Low/performance_hepatocytes_dtlembas1.csv') %>% 
+  data.table::fread('../results/2 hour/Low/performance_hepatocytes_dtlembas1.csv') %>% 
     select(-V1,-time,-model_no))
-shuffled_model <- rbind(data.table::fread('../results/High/performance_hepatocytes_random_dtlembas1.csv') %>% 
+shuffled_model <- rbind(data.table::fread('../results/2 hour/High/performance_hepatocytes_random_dtlembas1.csv') %>% 
   select(TF,c('shuffled Y'='test'),fold),
-  data.table::fread('../results/Middle/performance_hepatocytes_random_dtlembas1.csv') %>% 
+  data.table::fread('../results/2 hour/Middle/performance_hepatocytes_random_dtlembas1.csv') %>% 
     select(TF,c('shuffled Y'='test'),fold),
-  data.table::fread('../results/Low/performance_hepatocytes_random_dtlembas1.csv') %>% 
+  data.table::fread('../results/2 hour/Low/performance_hepatocytes_random_dtlembas1.csv') %>% 
     select(TF,c('shuffled Y'='test'),fold))
 
 res_all <- left_join(res_model,shuffled_model)
@@ -77,6 +78,6 @@ random_comparison <- add_theme(random_comparison) + theme_pubr() +
         axis.line.x=element_blank(),
         legend.position = 'top')
 print(random_comparison)
-ggsave(filename = "../figures/dtlembas_performance_random_comparison_LOOCV.pdf", plot = random_comparison, units = "cm", width = 12, height = 12)
-data.table::fwrite(res_all,'../results/LOOCV_with_random_long.csv')
+ggsave(filename = "../figures/2 hour/dtlembas_2hr_performance_random_comparison_LOOCV.pdf", plot = random_comparison, units = "cm", width = 12, height = 12)
+data.table::fwrite(res_all,'../results/LOOCV_2hr_with_random_long.csv')
 

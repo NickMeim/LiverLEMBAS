@@ -232,8 +232,10 @@ def perform_cross_validation(valid_splits, X, Y,net,drugTargets,TFOutput,
                                                          Y_full=YhatFull, target_min=0,
                                                          target_max=hyper_params['uniform_max'])
                 param_reg = mod.L2_reg(hyper_params['param_lambda_L2'])
+                #DTregularization = hyper_params["lamda"] * torch.sum(torch.square(drugLayer.Wsim-torch.eye(drugLayer.Wsim.shape[0],device=device)))
+                DTweightLoss = 1e-6 * torch.sum(torch.square(drugLayer.A)) #+ 1e-8*(torch.sum(1 / (torch.square(drugLayer.A) + 0.5)))
 
-                total_loss = fit_loss + sign_reg + ligand_reg + param_reg + stability_loss + uniform_reg
+                total_loss = fit_loss + sign_reg + ligand_reg + param_reg + stability_loss + uniform_reg + DTweightLoss # + DTregularization
 
                 total_loss.backward()
                 mod.add_gradient_noise(noise_level=hyper_params['gradient_noise_level'])
@@ -245,7 +247,7 @@ def perform_cross_validation(valid_splits, X, Y,net,drugTargets,TFOutput,
             stats = utils.update_progress(stats, iter=e, loss=cur_loss, eig=cur_eig, learning_rate=cur_lr,
                                           n_sign_mismatches=mod.signaling_network.count_sign_mismatch())
 
-            if e % 100 == 0:
+            if e % 100 == 0 or (e+1)==hyper_params['max_iter']:
                 utils.print_stats(stats, iter = e)
                 # store results
                 io.write_pickled_object(stats, os.path.join(data_path,outPattern + '_training_stats_fold%s.pickle'%fold_idx))
