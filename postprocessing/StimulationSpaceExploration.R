@@ -457,4 +457,75 @@ print(p_tgfbr2)
 #        units = "cm", width = 16, height = 12)
 
 
+# ### Check how similar the disconnection looks to the KO-----------------------
+# disconnect_resutls_tfs <- data.table::fread('../results/allmodels/signal_exploration/TFs_disconnected_node_conditions.csv') %>%
+#   select(-V1)
+# disconnect_resutls_outs <- data.table::fread('../results/allmodels/signal_exploration/Nodes_output_disconnected_node_conditions.csv') %>%
+#   select(-V1)
+# #Load annotation file to replace with gene names
+# annot <- read.delim('../../../Artificial-Signaling-Network/DrugsANNSignaling/data/uniprot-reviewed_yes+AND+organism__Homo+sapiens+(Human)+[9606]_.tab')
+# annot <- annot %>% select(c('uniprot'='Entry'),c('name'='Gene.names...primary..')) %>% unique()
+# annot <- annot %>% mutate(name = ifelse(name=='' | name==' ' | is.na(name),uniprot,name))
+# ### Get input for plsr
+# x <- disconnect_resutls_tfs %>% spread('TF','activity')
+# x <- x[,4:107]
+# x[x>1] <- 1
+# x[x<0] <- 0
+# x <- log((x+1e-6)/(1 - x + 1e-6))
+# x <- x[,colnames(TF_human)]
+# hist(as.matrix(x))
+# 
+# ## re-annotate data
+# disconnect_resutls_tfs <- left_join(disconnect_resutls_tfs,annot,by=c('disconnected node'='uniprot')) %>% select(-`disconnected node`) %>% 
+#   select(model_no,c('disconnected node'='name'),stimuli,TF,activity)
+# disconnect_resutls_tfs <- left_join(disconnect_resutls_tfs,annot,by=c('TF'='uniprot')) %>% select(-TF) %>% 
+#   select(model_no,`disconnected node`,stimuli,c('TF'='name'),activity)
+# 
+# disconnect_resutls_outs <- left_join(disconnect_resutls_outs,annot,by=c('disconnected node'='uniprot')) %>% select(-`disconnected node`) %>% 
+#   select(model_no,c('disconnected node'='name'),stimuli,outlet,activity)
+# disconnect_resutls_outs <- left_join(disconnect_resutls_outs,annot,by=c('outlet'='uniprot')) %>% select(-outlet) %>% 
+#  select(model_no,`disconnected node`,stimuli,c('outlet'='name'),activity)
+# 
+# ## phenotype
+# Ydisconnected <- predict(plsr_model,x)
+# Ydisconnected <- as.data.frame(Ydisconnected)
+# Ydisconnected <- cbind(disconnect_resutls_tfs %>% spread('TF','activity') %>%
+#                          select(model_no,`disconnected node`,stimuli),
+#                        Ydisconnected)
+# 
+# # from results_tfs and results_outs keep only condition == -3000
+# results_tfs_filt <- results_tfs %>% filter(condition == (-3040) | condition ==0)
+# results_tfs_filt <- distinct(results_tfs_filt %>% 
+#   select(model_no,c('disconnected node'='node'),c('stimuli'='condition'),TF,activity)) %>%
+#   mutate(stimuli=ifelse(stimuli==0,'pure untreated','computational KO'))
+# 
+# results_outs_filt <- results_outs %>% filter(condition == (-3040) | condition ==0)
+# results_outs_filt <- distinct(results_outs_filt %>% 
+#                                select(model_no,c('disconnected node'='node'),c('stimuli'='condition'),outlet,activity)) %>%
+#   mutate(stimuli=ifelse(stimuli==0,'pure untreated','computational KO'))
+# 
+# Ysimulation_filt <- distinct(Ysimulation %>% filter(condition == (-3040) | condition ==0) %>%
+#   select(model_no,c('disconnected node'='name'),c('stimuli'='condition'),NAS,fibrosis)) %>%
+#   mutate(stimuli=ifelse(stimuli==0,'pure untreated','computational KO'))
+# 
+# ## Visualize predicted phenotype
+# p_pheno <- ggboxplot(distinct(rbind(Ysimulation_filt,Ydisconnected)),
+#                        x='stimuli',y='NAS',color='stimuli',
+#                      add='jitter')+
+#   ylab('activity') +
+#   facet_wrap(~`disconnected node`)
+# p_pheno <- add_theme(p_pheno) + theme(axis.title.x = element_blank(),
+#                                           axis.text.x = element_blank())
+# print(p_pheno)
 
+# ## visualize outlets
+# pout_disc <- ggboxplot(rbind(results_outs_filt,disconnect_resutls_outs) %>%
+#                          filter(stimuli!='computational KO') %>%
+#                          filter(`disconnected node`=='TGFBR1'),
+#                        x='stimuli',y='activity',color='stimuli')+
+#   ylab('activity') + labs(color='outlet')+
+#   scale_y_continuous(c(NA,1.1),breaks = seq(0,1,0.1))+
+#   facet_wrap(~outlet,scales='free_x')
+# pout_disc <- add_theme(pout_disc) + theme(axis.title.x = element_blank(),
+#                                           axis.text.x = element_blank())
+# print(pout_disc)

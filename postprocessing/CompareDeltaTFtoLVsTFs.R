@@ -17,13 +17,13 @@ source("plotting_functions.R")
 TFs_to_keep <- c('STAT2','STAT1','IRF9','IRF1')
 
 #Load KOs results
-results_ko <- data.table::fread('../results/2 hour/allmodels/InSilicoKOs/TFs_all_conditions.csv') %>% 
+results_ko <- data.table::fread('../results/allmodels/InSilicoKOs/TFs_all_conditions.csv') %>% 
   column_to_rownames('V1')
 results_ko <- results_ko %>% filter(type!="KO+control") %>% filter(type!='control')
 # untreated
 # results_ko <- results_ko %>% gather('node','activity',-type,-condition,-model_no)
 #Load activation results
-results_act <- data.table::fread('../results/2 hour/allmodels/InSilicoActivations/TFs_all_conditions.csv') %>% 
+results_act <- data.table::fread('../results/allmodels/InSilicoActivations/TFs_all_conditions.csv') %>% 
   column_to_rownames('V1')
 results_act <- results_act %>% filter(type!="KO+control") %>% filter(type!='control')
 # results_act <- results_act %>% gather('node','activity',-type,-condition,-model_no)
@@ -159,7 +159,7 @@ plt_LV1_extra_KOs <- ggplot(plotting_LV1_extra_KOs,aes(x=as.numeric(reorder(cond
   labs(x = 'Rank', y = 'average cosine similarity')
 plt_LV1_extra_KOs <- add_theme(plt_LV1_extra_KOs)
 print(plt_LV1_extra_KOs)
-ggsave(filename = "../figures/2 hour/KOs_cosine_with_LV1.pdf", plot = plt_LV1_extra_KOs, units = "cm", width = 12, height = 12)
+ggsave(filename = "../figures/KOs_cosine_with_LV1.pdf", plot = plt_LV1_extra_KOs, units = "cm", width = 12, height = 12)
 #### Repeat for LV2
 plotting_LV2_extra_KOs <- extraLV_sim %>% gather('LV','cosine similarity',-condition,-model_no) %>% 
   filter(LV == "extraLV2") %>% group_by(condition) %>%
@@ -188,7 +188,7 @@ plt_LV2_extra_KOs <- ggplot(plotting_LV2_extra_KOs,aes(x=as.numeric(reorder(cond
   labs(x = 'Rank', y = 'average cosine similarity')
 plt_LV2_extra_KOs <- add_theme(plt_LV2_extra_KOs)
 print(plt_LV2_extra_KOs)
-ggsave(filename = "../figures/2 hour/KOs_cosine_with_LV2.pdf", plot = plt_LV2_extra_KOs, units = "cm", width = 12, height = 12)
+ggsave(filename = "../figures/KOs_cosine_with_LV2.pdf", plot = plt_LV2_extra_KOs, units = "cm", width = 12, height = 12)
 
 #### Repeat for activation---------------------------------------------
 extraLV_sim_act <- foreach(i = seq(0,49)) %dopar% {
@@ -275,7 +275,7 @@ plt_LV1_extra_acts <- ggplot(plotting_LV1_extra_acts,aes(x=as.numeric(reorder(co
   labs(x = 'Rank', y = 'average cosine similarity')
 plt_LV1_extra_acts <- add_theme(plt_LV1_extra_acts)
 print(plt_LV1_extra_acts)
-ggsave(filename = "../figures/2 hour/Acts_cosine_with_LV1.pdf", plot = plt_LV1_extra_acts, units = "cm", width = 12, height = 12)
+ggsave(filename = "../figures/Acts_cosine_with_LV1.pdf", plot = plt_LV1_extra_acts, units = "cm", width = 12, height = 12)
 
 #### Repeat for LV2
 plotting_LV2_extra_acts <- extraLV_sim_act %>% gather('LV','cosine similarity',-condition,-model_no) %>% 
@@ -305,7 +305,7 @@ plt_LV2_extra_atcs <- ggplot(plotting_LV2_extra_acts,aes(x=as.numeric(reorder(co
   labs(x = 'Rank', y = 'average cosine similarity')
 plt_LV2_extra_atcs <- add_theme(plt_LV2_extra_atcs)
 print(plt_LV2_extra_atcs)
-ggsave(filename = "../figures/2 hour/Acts_cosine_with_LV2.pdf", plot = plt_LV2_extra_atcs, units = "cm", width = 12, height = 12)
+ggsave(filename = "../figures/Acts_cosine_with_LV2.pdf", plot = plt_LV2_extra_atcs, units = "cm", width = 12, height = 12)
 
 ## Calculate the cosine similarity at each model for TCs------------------------
 annot <- read.delim('../../../Artificial-Signaling-Network/DrugsANNSignaling/data/uniprot-reviewed_yes+AND+organism__Homo+sapiens+(Human)+[9606]_.tab')
@@ -397,7 +397,7 @@ plt_TC1_extra_KOs <- ggplot(plotting_TC1_extra_KOs,aes(x=as.numeric(reorder(cond
   labs(x = 'Rank', y = 'average cosine similarity')
 plt_TC1_extra_KOs <- add_theme(plt_TC1_extra_KOs)
 print(plt_TC1_extra_KOs)
-ggsave(filename = "../figures/2 hour/KOs_cosine_with_TC1.pdf", plot = plt_TC1_extra_KOs, units = "cm", width = 12, height = 12)
+ggsave(filename = "../figures/KOs_cosine_with_TC1.pdf", plot = plt_TC1_extra_KOs, units = "cm", width = 12, height = 12)
 
 #### Repeat for LV2
 plotting_TC2_extra_KOs <- TC_sim %>% gather('LV','cosine similarity',-condition,-model_no) %>% 
@@ -427,7 +427,7 @@ plt_TC2_extra_KOs <- ggplot(plotting_TC2_extra_KOs,aes(x=as.numeric(reorder(cond
   labs(x = 'Rank', y = 'average cosine similarity')
 plt_TC2_extra_KOs <- add_theme(plt_TC2_extra_KOs)
 print(plt_TC2_extra_KOs)
-ggsave(filename = "../figures/2 hour/KOs_cosine_with_TC2.pdf", plot = plt_TC2_extra_KOs, units = "cm", width = 12, height = 12)
+ggsave(filename = "../figures/KOs_cosine_with_TC2.pdf", plot = plt_TC2_extra_KOs, units = "cm", width = 12, height = 12)
 
 
 
@@ -517,7 +517,7 @@ plt_TC1_extra_acts <- ggplot(plotting_TC1_extra_acts,aes(x=as.numeric(reorder(co
   labs(x = 'Rank', y = 'average cosine similarity')
 plt_TC1_extra_acts <- add_theme(plt_TC1_extra_acts)
 print(plt_TC1_extra_acts)
-ggsave(filename = "../figures/2 hour/Acts_cosine_with_TC1.pdf", plot = plt_TC1_extra_acts, units = "cm", width = 12, height = 12)
+ggsave(filename = "../figures/Acts_cosine_with_TC1.pdf", plot = plt_TC1_extra_acts, units = "cm", width = 12, height = 12)
 
 #### Repeat for LV2
 plotting_TC2_extra_acts <- TC_sim_act %>% gather('LV','cosine similarity',-condition,-model_no) %>% 
@@ -547,7 +547,7 @@ plt_TC2_extra_acts <- ggplot(plotting_TC2_extra_acts,aes(x=as.numeric(reorder(co
   labs(x = 'Rank', y = 'average cosine similarity')
 plt_TC2_extra_acts <- add_theme(plt_TC2_extra_acts)
 print(plt_TC2_extra_acts)
-ggsave(filename = "../figures/2 hour/Acts_cosine_with_TC2.pdf", plot = plt_TC2_extra_acts, units = "cm", width = 12, height = 12)
+ggsave(filename = "../figures/Acts_cosine_with_TC2.pdf", plot = plt_TC2_extra_acts, units = "cm", width = 12, height = 12)
 
 
 
@@ -586,7 +586,7 @@ boxplotLV1 <- add_theme(boxplotLV1) + theme_pubr() + theme(axis.text.x = element
                                                            axis.title.x = element_blank(),
                                                            legend.position = 'bottom')
 print(boxplotLV1)
-ggsave(filename = "../figures/2 hour/compare_tgfb_ifn.pdf", plot = boxplotLV1, units = "cm", width = 16, height = 12)
+ggsave(filename = "../figures/compare_tgfb_ifn.pdf", plot = boxplotLV1, units = "cm", width = 16, height = 12)
 
 ### repeat for TC1
 plotting_df <- TC_sim %>%
@@ -622,7 +622,7 @@ boxplotTC1 <- add_theme(boxplotTC1) + theme_pubr() + theme(axis.text.x = element
                                                            axis.title.x = element_blank(),
                                                            legend.position = 'bottom')
 print(boxplotTC1)
-ggsave(filename = "../figures/2 hour/compare_tgfb_ifn_TCs.pdf", plot = boxplotTC1, units = "cm", width = 16, height = 12)
+ggsave(filename = "../figures/compare_tgfb_ifn_TCs.pdf", plot = boxplotTC1, units = "cm", width = 16, height = 12)
 
 ### compare similarity between LV1 and TC1
 plotting_df_lv <- extraLV_sim %>%
@@ -653,7 +653,7 @@ ggboxplot(plotting_df_all,
         axis.text.x = element_text(angle = 45),
         axis.line.x = element_blank(),
         axis.ticks.x = element_blank())
-ggsave('../figures/2 hour/TC1_vs_LV1.png',
+ggsave('../figures/TC1_vs_LV1.png',
        units = "cm", width = 16, height = 12,
        dpi = 600)
 

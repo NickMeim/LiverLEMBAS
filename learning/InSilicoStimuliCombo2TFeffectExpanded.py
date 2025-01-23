@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import torch
 import sys 
-gpu_lembas_path = '/nobackup/users/meimetis/LEMBAS-main'
+gpu_lembas_path = 'C:/Users/nmeim/Documents/Artificial-Signaling-Network/LEMBAS-main'
 sys.path.insert(1,os.path.join(gpu_lembas_path))
 import argparse
 import logging
@@ -24,7 +24,7 @@ parser.add_argument('--ChemicalSims', action='store',type = str, default='../pre
 parser.add_argument('--PKN', action='store',type = str, default='../preprocessing/preprocessed_data/PKN/Hepatocytes-PKN-Model.tsv')
 parser.add_argument('--PknAnnotation', action='store',type = str, default='../preprocessing/preprocessed_data/PKN/Hepatocytes-PKN-Annotation.tsv')
 parser.add_argument('--infoPath', action='store',type = str, default='../preprocessing/preprocessed_data/TrainingValidationData/Hepatocytes_inputdataInfo.tsv')
-parser.add_argument('--res_dir', action='store',type = str, default='../results/2 hour/allmodels/')
+parser.add_argument('--res_dir', action='store',type = str, default='../results/allmodels/') #'../results/2 hour/allmodels/'
 parser.add_argument('--number_DTLEMBAS_models', action='store',type = int, default=50)
 parser.add_argument('--modelPattern', action='store',type = str, default='hepatocytes_dtlembas')
 parser.add_argument('--ConvertToEmpProb', action='store',type = bool, default=False)
@@ -35,9 +35,10 @@ parser.add_argument('--LEMBAS_leak', action='store',type = float, default=0.01)
 parser.add_argument('--LEMBAS_tolerance', action='store', default=1e-5)
 parser.add_argument('--drug_bn', action='store', default=0.2)
 parser.add_argument('--drug_drop', action='store', default=0.1)
-parser.add_argument('--timepoint', action='store',type=str, default='2 hour')
+parser.add_argument('--timepoint', action='store',type=str, default='8 hour')
 parser.add_argument('--annotation_file_for_visualization', action='store',type=str, default='../data/annotation.csv')
-parser.add_argument('--stimulation_strength', action='store',type=float, default=500)
+parser.add_argument('--stimulation_strength', action='store',type=float, default=3000)
+parser.add_argument('--num_steps', action='store',type = float, default=201)
 parser.add_argument('--selected_signaling_nodes', metavar='N', type=str, nargs='*', action='store', 
                     help='Selected signaling nodes to predict and save their activity',
                     default=['P36897','P17181'])
@@ -66,6 +67,7 @@ number_DTLEMBAS_models = args.number_DTLEMBAS_models
 stimulation_strength=args.stimulation_strength
 selected_signaling_nodes = np.array(args.selected_signaling_nodes)
 annotation_file_for_visualization = args.annotation_file_for_visualization
+num_steps = args.num_steps
 #res_dir = res_dir+ timepoint
 n_cores = 12
 utils.set_cores(n_cores)
@@ -156,19 +158,32 @@ Xin_1 = Xin[subset_nodes_inds[0],:].unsqueeze(0)
 Xin_2 = Xin[subset_nodes_inds[1],:].unsqueeze(0)
 
 # Define the number of interpolation steps you want
-num_steps = 51  # Adjust this to control the number of interpolated points
-# Create linearly spaced values between -500 and 500
-interpolated_values = torch.linspace(-stimulation_strength, stimulation_strength, num_steps).view(-1, 1)
-interpolated_values = interpolated_values.repeat(1, Xin.shape[1])
-Xin_1 = -Xin_1 * torch.tensor(interpolated_values).double().to(device) # this that get a minus ( - ) sign
-Xin_2 = Xin_2 * torch.tensor(interpolated_values).double().to(device)
+# Create linearly spaced values between -3000 and 3000
+stim_range = torch.linspace(-stimulation_strength, stimulation_strength, num_steps)
+# Create a grid of all combinations of stimulations
+grid_Xin1, grid_Xin2 = torch.meshgrid(stim_range, stim_range, indexing='ij')
+# Flatten the grid for batch processing
+grid_Xin1 = grid_Xin1.flatten().view(-1, 1)
+grid_Xin2 = grid_Xin2.flatten().view(-1, 1)
+# Expand the grids to match input dimensions
+grid_Xin1 = grid_Xin1.repeat(1, Xin_1.shape[1])
+grid_Xin2 = grid_Xin2.repeat(1, Xin_2.shape[1])
+# Multiply inputs with the grid values
+Xin_1_grid = Xin_1 * grid_Xin1.to(device).double()
+Xin_2_grid = Xin_2 * grid_Xin2.to(device).double()
+# Combine the two inputs for the model
+Xin_combined = Xin_1_grid + Xin_2_grid
+# interpolated_values = torch.linspace(-stimulation_strength, stimulation_strength, num_steps).view(-1, 1)
+# interpolated_values = interpolated_values.repeat(1, Xin.shape[1])
+# Xin_1 = Xin_1 * torch.tensor(interpolated_values).double().to(device) # this that get a minus ( - ) sign
+# Xin_2 = Xin_2 * torch.tensor(interpolated_values).double().to(device)
 
-TF_all = torch.zeros(number_DTLEMBAS_models,num_steps,num_tfs, dtype=torch.double)
-TF_all_empty = torch.zeros(number_DTLEMBAS_models,1,num_tfs, dtype=torch.double)
+# TF_all = torch.zeros(number_DTLEMBAS_models,num_steps,num_tfs, dtype=torch.double)
+# TF_all_empty = torch.zeros(number_DTLEMBAS_models,1,num_tfs, dtype=torch.double)
 
 
 print2log('Begin combination stimuli simulation...')
-name_stimulation = 'combo_simulation'
+name_stimulation = 'combo_simulation_expanded'
 Path(res_dir+name_stimulation).mkdir(parents=True, exist_ok=True)
 
 results_tf = pd.DataFrame({})
@@ -181,12 +196,14 @@ for i in range(number_DTLEMBAS_models):
     mod.eval()
     drugLayer.eval()
     # print2log('Node stimuli simulation...')
-    YhatFull = mod.signaling_network(Xin_1 + Xin_2)
-    Yhat = mod.output_layer(YhatFull)
-    TF_all[i,:,:] = Yhat.detach().cpu()
+    with torch.no_grad():
+        YhatFull = mod.signaling_network(Xin_combined)
+        Yhat = mod.output_layer(YhatFull)
+    # TF_all[i,:,:] = Yhat.detach().cpu()
     df = pd.DataFrame(Yhat.detach().cpu().numpy())
     df.columns = all_tfs
-    df['condition'] = interpolated_values[:,0].numpy() # IFN stimuli quanity
+    df['TGFb'] = grid_Xin1[:,0] # TGFb stimuli quanity
+    df['IFNa'] = grid_Xin2[:,0] # IFNa stimuli quanity
     df['type'] = 'stimuli'
     df['model_no'] = i
     results_tf = pd.concat([results_tf, df], ignore_index=True).reset_index(drop=True)
@@ -194,10 +211,11 @@ for i in range(number_DTLEMBAS_models):
     ## repeat by passing zero argument
     # print2log('Untreated simulation...')
     TF, NetFull = mod(torch.zeros(1,drugTargets.shape[1],dtype=torch.double).to(device))
-    TF_all_empty[i,:,:] = TF.detach().cpu()
+    # TF_all_empty[i,:,:] = TF.detach().cpu()
     df_empty = pd.DataFrame(TF.detach().cpu().numpy())
     df_empty.columns = all_tfs
-    df_empty['condition'] = 'untreated'
+    df_empty['IFNa'] = 'untreated'
+    df_empty['TGFb'] = 'untreated'
     df_empty['type'] = 'untreated'
     df_empty['model_no'] = i
     results_tf = pd.concat([results_tf, df_empty], ignore_index=True).reset_index(drop=True)
@@ -205,22 +223,20 @@ for i in range(number_DTLEMBAS_models):
 mins, secs = divmod(time.time() - start_time, 60)
 print2log("Simulation ran in: {:.0f} min {:.2f} sec".format(mins, secs))
 print2log('Saving results...')
-results_tf.to_csv(res_dir+name_stimulation+'/TFs_all_conditions.csv')
-results_tf = results_tf.melt(id_vars=['condition','type','model_no'],var_name='TF',value_name='activity')
-print2log('Saving TF and selected nodesactivities...')
-torch.save(TF_all, res_dir+name_stimulation+'/TFs_all.pt')
-torch.save(TF_all_empty, res_dir+name_stimulation+'/TFs_all_empty.pt')
-print2log('Saving averaged results...')
-TF = torch.mean(TF_all, dim=0)
-TF = pd.DataFrame(TF.detach().cpu().numpy())
-TF.columns = all_tfs
-TF.to_csv(res_dir+name_stimulation+'/TF_avg.csv')
-## Repeat saving for empty
-print2log('Repeat saving for no input!!!')
-TF = torch.mean(TF_all_empty, dim=0)
-TF = pd.DataFrame(TF.detach().cpu().numpy())
-TF.columns = all_tfs
-TF.index = ['control']
-TF.to_csv(res_dir+name_stimulation+'/TF_avg_empty.csv')
+results_tf.to_csv(res_dir+name_stimulation+'/TFs_all_conditions_expanded.csv')
+# results_tf = results_tf.melt(id_vars=['IFNa','TGFb','type','model_no'],var_name='TF',value_name='activity')
+
+# print2log('Saving averaged results...')
+# TF = torch.mean(TF_all, dim=0)
+# TF = pd.DataFrame(TF.detach().cpu().numpy())
+# TF.columns = all_tfs
+# TF.to_csv(res_dir+name_stimulation+'/TF_avg_expanded.csv')
+# ## Repeat saving for empty
+# print2log('Repeat saving for no input!!!')
+# TF = torch.mean(TF_all_empty, dim=0)
+# TF = pd.DataFrame(TF.detach().cpu().numpy())
+# TF.columns = all_tfs
+# TF.index = ['control']
+# TF.to_csv(res_dir+name_stimulation+'/TF_avg_empty_expanded.csv')
 
 print2log("Finished!")
