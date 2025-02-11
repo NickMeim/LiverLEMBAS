@@ -214,12 +214,15 @@ phenotypeKO_plot <- ggboxplot(Yko %>% filter(condition %in% c('untreated',
   stat_compare_means(ref.group = 'untreated',
                      label = 'p.signif',
                      method='wilcox.test',
-                     paired = FALSE)+
+                     paired = FALSE,
+                     hide.ns = TRUE)+
   facet_wrap(~phenotype,scales = 'free_y')
 phenotypeKO_plot <- add_theme(phenotypeKO_plot) + theme(legend.position = 'none',
-                                                        element_text(angle=0))
+                                                        element_text(angle=0),
+                                                        strip.text = element_text(size=20),
+                                                        text = element_text(size=14))
 print(phenotypeKO_plot)
-ggsave(filename = "../figures/phenotypeKO_plot.png", plot = phenotypeKO_plot, units = "cm", width = 16, height = 12)
+ggsave(filename = "../figures/phenotypeKO_plot.png", plot = phenotypeKO_plot, units = "cm", width = 20, height = 15)
 
 phenotypeACT_plot <- ggboxplot(Yact %>% filter(condition %in% c('untreated',
                                                                 'TGFBR1','TGFBR2',

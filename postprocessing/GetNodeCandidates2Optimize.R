@@ -283,10 +283,10 @@ mas_plot <- ggplot(Yall %>% filter(phenotype=='MAS') %>% select(IFNAR1,mu,se,sti
   geom_ribbon(aes(x=IFNAR1,
                   ymin = mean_control_mas - se_control_mas, 
                   ymax = mean_control_mas + se_control_mas), 
-              fill = "#619CFF",color='#619CFF', alpha = 0.2,
+              fill = "grey",color='grey', alpha = 0.2,
               linetype = "dashed", show.legend = FALSE) +
   annotate('text',x=-3000,
-           y=3.8,color= '#619CFF',fontface ='bold',
+           y=3.8,color= 'grey',fontface ='bold',
            label="untreated score", 
            hjust = 0 , 
            size=4)+
@@ -308,10 +308,10 @@ fib_plot <- ggplot(Yall %>% filter(phenotype!='MAS') %>% select(IFNAR1,mu,se,sti
   geom_ribbon(aes(x=IFNAR1,
                   ymin = mean_control_fib - se_control_fib, 
                   ymax = mean_control_fib + se_control_fib), 
-              fill = "#619CFF",color='#619CFF', alpha = 0.2,
+              fill = "grey",color='grey', alpha = 0.2,
               linetype = "dashed", show.legend = FALSE) +
   annotate('text',x=-3000,
-           y=1.8,color= '#619CFF',fontface ='bold',
+           y=1.8,color= 'grey',fontface ='bold',
            label="untreated score", 
            hjust = 0 , 
            size=4)+
