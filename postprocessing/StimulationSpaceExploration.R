@@ -379,11 +379,11 @@ p_ifnar1 <- ggboxplot(results_drugs_outs %>% filter(condition==(-3040) | conditi
                x='condition',y='activity',color = 'outlet',add='jitter')+
   ylab('activity') + labs(color='outlet')+
   facet_wrap(~outlet,scales = 'free_y')
-p_ifnar1 <- add_theme(p_ifnar1) + theme(legend.position = 'none')
+p_ifnar1 <- add_theme(p_ifnar1) + theme(legend.position = 'none',axis.text.x = element_text(angle = 20))
 print(p_ifnar1)
-# ggsave(filename = "../figures/drug_ifnar1_ko.png", 
-#        plot = p_ifnar1, 
-#        units = "cm", width = 16, height = 12)
+ggsave(filename = "../figures/drug_ifnar1_ko.png",
+       plot = p_ifnar1,
+       units = "cm", width = 16, height = 12)
 
 # IFNAR2
 p_ifnar2 <- ggboxplot(results_drugs_outs %>% filter(condition==(-3040) | condition==0)  %>%
@@ -393,11 +393,11 @@ p_ifnar2 <- ggboxplot(results_drugs_outs %>% filter(condition==(-3040) | conditi
                       x='condition',y='activity',color = 'outlet',add='jitter')+
   ylab('activity') + labs(color='outlet')+
   facet_wrap(~outlet,scales = 'free_y')
-p_ifnar2 <- add_theme(p_ifnar2) + theme(legend.position = 'none')
+p_ifnar2 <- add_theme(p_ifnar2) + theme(legend.position = 'none',axis.text.x = element_text(angle = 20))
 print(p_ifnar2)
-# ggsave(filename = "../figures/drug_ifnar2_ko.png", 
-#        plot = p_ifnar2, 
-#        units = "cm", width = 16, height = 12)
+ggsave(filename = "../figures/drug_ifnar2_ko.png",
+       plot = p_ifnar2,
+       units = "cm", width = 16, height = 12)
 
 
 # IFNGR1
@@ -430,17 +430,17 @@ print(p_ifngr2)
 
 # TGFBR1
 p_tgfbr1 <- ggboxplot(results_drugs_outs %>% filter(condition==(-3040) | condition==0)  %>%
-                        mutate(condition=ifelse(condition==0,drug,paste0('KO ',node,'+',drug))) %>%
+                        mutate(condition=ifelse(condition==0,'drug','KO+drug')) %>%
                         filter(node=='TGFBR1')%>%
                         select(condition,node,outlet,activity,model_no) %>% unique(),
                       x='condition',y='activity',color = 'outlet',add='jitter')+
   ylab('activity') + labs(color='outlet')+
   facet_wrap(~outlet,scales = 'free_y')
-p_tgfbr1 <- add_theme(p_tgfbr1) + theme(legend.position = 'none')
+p_tgfbr1 <- add_theme(p_tgfbr1) + theme(legend.position = 'none',axis.text.x = element_text(angle = 0))
 print(p_tgfbr1)
-# ggsave(filename = "../figures/drug_tgfbr1_ko.png", 
-#        plot = p_tgfbr1, 
-#        units = "cm", width = 16, height = 12)
+ggsave(filename = "../figures/drug_tgfbr1_ko.png",
+       plot = p_tgfbr1,
+       units = "cm", width = 16, height = 12)
 
 # TGFBR2
 p_tgfbr2 <- ggboxplot(results_drugs_outs %>% filter(condition==(-3040) | condition==0)  %>%

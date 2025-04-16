@@ -152,12 +152,12 @@ plt_LV1_extra_KOs <- ggplot(plotting_LV1_extra_KOs,aes(x=as.numeric(reorder(cond
   geom_point(size=0.5,color = '#CD5C5C') +
   geom_ribbon(aes(ymax = mu+se,ymin=mu-se,x = as.numeric(reorder(condition, mu))),
               fill = '#CD5C5C',alpha=0.4)+
-  geom_text_repel(aes(label=significant),size=0.75*size_annotation, max.overlaps=80,
+  geom_text_repel(aes(label=significant),size=3.5, max.overlaps=80,
                   box.padding = 0.5, nudge_x = 1, nudge_y = 0.1)+
   scale_y_continuous(breaks = seq(-0.5,0.5,0.1),limits = c(-0.5,0.5))+
   geom_hline(yintercept = 0,linetype='dashed',lwd=1,color='black')+
   labs(x = 'Rank', y = 'average cosine similarity')
-plt_LV1_extra_KOs <- add_theme(plt_LV1_extra_KOs)
+plt_LV1_extra_KOs <- add_theme(plt_LV1_extra_KOs) + theme(text = element_text(size=20))
 print(plt_LV1_extra_KOs)
 ggsave(filename = "../figures/KOs_cosine_with_LV1.pdf", plot = plt_LV1_extra_KOs, units = "cm", width = 12, height = 12)
 #### Repeat for LV2
@@ -582,11 +582,14 @@ boxplotLV1 <- ggboxplot(plotting_df %>% filter(LV=='extraLV1'),
         axis.text.x = element_blank(),
         axis.line.x = element_blank(),
         axis.ticks.x = element_blank())
-boxplotLV1 <- add_theme(boxplotLV1) + theme_pubr() + theme(axis.text.x = element_blank(),
-                                                           axis.title.x = element_blank(),
-                                                           legend.position = 'bottom')
+boxplotLV1 <- add_theme(boxplotLV1) + 
+  theme_pubr() + 
+  theme(text = element_text(size=20),
+        axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        legend.position = 'bottom')
 print(boxplotLV1)
-ggsave(filename = "../figures/compare_tgfb_ifn.pdf", plot = boxplotLV1, units = "cm", width = 16, height = 12)
+ggsave(filename = "../figures/compare_tgfb_ifn.pdf", plot = boxplotLV1, units = "cm", width = 18, height = 14)
 
 ### repeat for TC1
 plotting_df <- TC_sim %>%
