@@ -1,6 +1,7 @@
 library(tidyverse)
 library(ggplot2)
 library(ggpubr)
+library(viridis)
 source('plotting_functions.R')
 
 ### First compare one model in 10-fold validation with random model-------
@@ -121,31 +122,47 @@ linear_baseline$time <- factor(linear_baseline$time,levels = c('2 hours','8 hour
 ### Load DT-LEMBAS results for all time points
 res_all_times <- data.frame()
 for (time in c('2 hour','8 hour','24 hour')){
-  if (time=='8 hour'){
-    res_model <- rbind(data.table::fread('../results/High/performance_hepatocytes_dtlembas1.csv') %>% 
-                         select(-V1,-time,-model_no),
-                       data.table::fread('../results/Middle/performance_hepatocytes_dtlembas1.csv') %>% 
-                         select(-V1,-time,-model_no),
-                       data.table::fread('../results/Low/performance_hepatocytes_dtlembas1.csv') %>% 
-                         select(-V1,-time,-model_no))
-  }else{
-    res_model <- rbind(data.table::fread(paste0('../results/',time,'/High/performance_hepatocytes_dtlembas1.csv')) %>% 
-                         select(-V1,-time,-model_no),
-                       data.table::fread(paste0('../results/',time,'/Middle/performance_hepatocytes_dtlembas1.csv')) %>% 
-                         select(-V1,-time,-model_no),
-                       data.table::fread(paste0('../results/',time,'/Low/performance_hepatocytes_dtlembas1.csv')) %>% 
-                         select(-V1,-time,-model_no))
+  for (i in 1:10){
+    if (time=='8 hour'){
+      res_model <- rbind(data.table::fread(paste0('../results/High/performance_hepatocytes_dtlembas',i,'.csv')) %>% 
+                           select(-V1,-time),
+                         data.table::fread(paste0('../results/Middle/performance_hepatocytes_dtlembas',i,'.csv')) %>% 
+                           select(-V1,-time),
+                         data.table::fread(paste0('../results/Low/performance_hepatocytes_dtlembas',i,'.csv')) %>% 
+                           select(-V1,-time))
+    }else{
+      res_model <- rbind(data.table::fread(paste0('../results/',time,'/High/performance_hepatocytes_dtlembas',i,'.csv')) %>% 
+                           select(-V1,-time,),
+                         data.table::fread(paste0('../results/',time,'/Middle/performance_hepatocytes_dtlembas',i,'.csv')) %>% 
+                           select(-V1,-time),
+                         data.table::fread(paste0('../results/',time,'/Low/performance_hepatocytes_dtlembas',i,'.csv')) %>% 
+                           select(-V1,-time))
+    }
+    res_model <- res_model %>% gather('set','r',-fold,-TF,-model_no)
+    res_model <- res_model %>% mutate(subject_id = paste0(TF,'_',fold))
+    res_model <- res_model %>% select(TF,fold,set,r,subject_id,model_no) %>% mutate(time = paste0(time,'s'))
+    res_all_times <- rbind(res_all_times,res_model)
   }
-  res_model <- res_model %>% gather('set','r',-fold,-TF)
-  res_model <- res_model %>% mutate(subject_id = paste0(TF,'_',fold))
-  res_model <- res_model %>% select(TF,fold,set,r,subject_id) %>% mutate(time = paste0(time,'s'))
-  res_all_times <- rbind(res_all_times,res_model)
 }
+joined_df <- left_join(linear_baseline %>% select(-subject_id),
+                                   res_all_times %>% select(-subject_id),
+                                   by = c('TF','fold','time')) %>% filter(!is.na(r.y)) %>%
+  mutate(dr= r.y-r.x)
+statistical_comparion <- joined_df %>% 
+  group_by(TF,fold,time,set.y) %>%
+  rstatix::t_test(dr ~ 1, mu = 0) %>% ungroup() %>%
+  select(TF,fold,time,c('set'='set.y'),p)
+statistical_comparion <- left_join(statistical_comparion,
+                                   joined_df %>% 
+                                     select(TF,fold,time,c('set'='set.y'),model_no,dr) %>%
+                                     group_by(TF,fold,time,set) %>% summarise(Dr=mean(dr)))
+
 res_all_times$fold <- factor(res_all_times$fold,levels = c('Low','Middle','High'))
 res_all_times$time <- factor(res_all_times$time,levels = c('2 hours','8 hours','24 hours'))
 
 # Plot
-baseline_comparison <- ggboxplot(rbind(res_all_times,linear_baseline),
+baseline_comparison <- ggboxplot(rbind(res_all_times %>% filter(model_no==1) %>% select(-model_no),
+                                       linear_baseline),
                                  x='set',y='r',color = 'set',outlier.shape = NA) +
   geom_jitter(aes(x=set,y=r,color = set),width = 0.1)+
   geom_hline(yintercept = 0,linetype='solid',lwd=0.5,color='black')+
@@ -166,3 +183,176 @@ baseline_comparison <- add_theme(baseline_comparison) + theme_pubr() +
         axis.line.x=element_blank(),
         legend.position = 'top')
 print(baseline_comparison)
+ggsave('../figures/boxplot_comparison_linear.png',
+       plot = baseline_comparison,
+       scale = 1,
+       width = 9,
+       height = 9,
+       units = "in",
+       dpi = 600)
+ggsave('../figures/boxplot_comparison_linear.pdf',
+       plot = baseline_comparison,
+       device = cairo_pdf,
+       scale = 1,
+       width = 9,
+       height = 9,
+       units = "in",
+       dpi = 600)
+
+### make volcano-like plot
+statistical_comparion <- statistical_comparion %>% 
+  mutate(p_trans=-log10(p))
+# statistical_comparion_summary <- statistical_comparion  %>%
+#   mutate(flag = ifelse(Dr>0,ifelse(p<=0.01,TRUE,FALSE),FALSE)) %>% group_by(fold,time,set) %>% 
+#   mutate(no_tfs = sum(flag)) %>% 
+#   ungroup() %>%
+#   select(fold,time,set,flag,no_tfs) %>% unique() %>%
+#   mutate(percentage_success = no_tfs/104)
+# statistical_comparion <- left_join(statistical_comparion,statistical_comparion_summary)
+# ggplot(statistical_comparion_summary,aes(x=percentage_success)) +
+#   geom_histogram() +
+#   geom_vline(xintercept = 0.5,linetype='dashed',lwd=1)
+
+## LABEL WITH THEIR NAMES THE IMPORTANT TFs
+important_tfs <- c('P10914','Q00978','P42226','P42229','P51692',
+                     'P40763','P52630','P42224','Q14765','P84022',
+                   'P01106','P05412','O00716','Q14209','Q01094',
+                   'Q16254','P04637')
+annot <- read.delim('../../../Artificial-Signaling-Network/DrugsANNSignaling/data/uniprot-reviewed_yes+AND+organism__Homo+sapiens+(Human)+[9606]_.tab')
+annot <- annot %>% select(c('label'='Entry'),c('label_symbol'='Gene.names...primary..')) %>% unique()
+annot <- annot %>% filter(label %in% important_tfs)
+statistical_comparion <- statistical_comparion %>% 
+  mutate(label = ifelse(TF %in% important_tfs,TF,NA))
+statistical_comparion <- left_join(statistical_comparion,annot)
+
+### Volcano-like plots ###
+#Test set
+ggscatter(statistical_comparion %>%
+            mutate(flag1 = ifelse(Dr>0,TRUE,FALSE))%>%
+            mutate(flag2 = ifelse(p<=0.01,TRUE,FALSE)) %>%
+            mutate(flag = flag1&flag2) %>% filter(set=='test'),
+          x='Dr',y='p_trans',color = 'flag') +
+  geom_label_repel(aes(label=label_symbol,color=flag),max.overlaps = 40)+
+  ylab(expression(-log10('p-value')))+
+  geom_hline(yintercept = -log10(0.01),linetype='dashed',lwd=1)+
+  geom_vline(xintercept = 0,linetype='dashed',lwd=1)+
+  facet_wrap(vars(time,fold),scales = 'free_y')
+ggsave('../figures/volcano_test_comparison_linear.png',
+       scale = 1,
+       width = 9,
+       height = 9,
+       units = "in",
+       dpi = 600)
+#Train set
+ggscatter(statistical_comparion %>%
+            mutate(flag1 = ifelse(Dr>0,TRUE,FALSE))%>%
+            mutate(flag2 = ifelse(p<=0.01,TRUE,FALSE)) %>%
+            mutate(flag = flag1&flag2) %>% filter(set=='train'),
+          x='Dr',y='p_trans',color = 'flag') +
+  geom_label_repel(aes(label=label_symbol,color=flag),max.overlaps = 40)+
+  ylab(expression(-log10('p-value')))+
+  geom_hline(yintercept = -log10(0.01),linetype='dashed',lwd=1)+
+  geom_vline(xintercept = 0,linetype='dashed',lwd=1)+
+  facet_wrap(vars(time,fold),scales = 'free_y')
+ggsave('../figures/volcano_train_comparison_linear.png',
+       scale = 1,
+       width = 9,
+       height = 9,
+       units = "in",
+       dpi = 600)
+
+### Confusion-like matrix with percentages of imporant better than random ###
+#Important
+confusion_important <- statistical_comparion %>%
+  mutate(flag1 = ifelse(Dr>0,TRUE,FALSE))%>%
+  mutate(flag2 = ifelse(p<=0.01,TRUE,FALSE)) %>%
+  mutate(flag = flag1&flag2) %>% 
+  filter(TF %in% important_tfs) %>%
+  group_by(set,time,fold) %>%
+  mutate(better_than_random = 100*sum(flag)/length(important_tfs)) %>%
+  ungroup() %>%
+  select(set,time,fold,better_than_random) %>%
+  unique()
+confusion_important$set <- factor(confusion_important$set,levels = c('train','test'))
+confusion_important$fold <- factor(confusion_important$fold,levels = c('Low','Middle','High'))
+confusion_important$time <- factor(confusion_important$time,levels = c('2 hours','8 hours','24 hours'))
+plot_confusion_important <- ggplot(confusion_important, 
+                         aes(x = fold, y = time, fill = better_than_random)) +
+  geom_tile() +
+  scale_fill_viridis(limits = c(0,100)) +
+  geom_text(aes(label = paste0('~',round(better_than_random,1),'%')), size = 14) +
+  labs(title = '% of TFs predicted better than linear baseline',
+       x = "Dose",
+       y = "Timepoint") +
+  theme_minimal() +
+  theme(text = element_text(family = 'Arial',size=24),
+        axis.text = element_text(family = 'Arial',size = 28),
+        axis.title = element_text(family = 'Arial',size = 28, face = "bold"),
+        legend.text = element_text(family = 'Arial',size = 23),
+        legend.position = 'none',
+        plot.title = element_text(family = 'Arial',size = 24, hjust = 0.5))+
+  facet_wrap(~set)
+print(plot_confusion_important)
+ggsave('../figures/confusion_better_than_linear_important.png',
+       plot = plot_confusion_important,
+       scale = 1,
+       width = 16,
+       height = 9,
+       units = "in",
+       dpi = 600)
+ggsave('../figures/confusion_better_than_linear_important.pdf',
+       device = cairo_pdf,
+       plot = plot_confusion_important,
+       scale = 1,
+       width = 16,
+       height = 9,
+       units = "in",
+       dpi = 600)
+
+## All tfs
+confusion_all <- statistical_comparion %>%
+  mutate(flag1 = ifelse(Dr>0,TRUE,FALSE))%>%
+  mutate(flag2 = ifelse(p<=0.01,TRUE,FALSE)) %>%
+  mutate(flag = flag1&flag2) %>% 
+  group_by(set,time,fold) %>%
+  mutate(better_than_random = 100*sum(flag)/104) %>%
+  ungroup() %>%
+  select(set,time,fold,better_than_random) %>%
+  unique()
+confusion_all$set <- factor(confusion_all$set,levels = c('train','test'))
+confusion_all$fold <- factor(confusion_all$fold,levels = c('Low','Middle','High'))
+confusion_all$time <- factor(confusion_all$time,levels = c('2 hours','8 hours','24 hours'))
+plot_confusion_all <- ggplot(confusion_all, 
+                         aes(x = fold, y = time, fill = better_than_random)) +
+  geom_tile() +
+  scale_fill_viridis(limits = c(0,100)) +
+  geom_text(aes(label = paste0('~',round(better_than_random,1),'%')), size = 14) +
+  labs(title = '% of TFs predicted better than linear baseline',
+       x = "Dose",
+       y = "Timepoint") +
+  theme_minimal() +
+  theme(text = element_text(family = 'Arial',size=24),
+        axis.text = element_text(family = 'Arial',size = 28),
+        axis.title = element_text(family = 'Arial',size = 28, face = "bold"),
+        legend.text = element_text(family = 'Arial',size = 23),
+        legend.position = 'none',
+        plot.title = element_text(family = 'Arial',size = 24, hjust = 0.5))+
+  facet_wrap(~set)
+print(plot_confusion_all)
+ggsave('../figures/confusion_better_than_linear_all.png',
+       plot = plot_confusion_all,
+       scale = 1,
+       width = 16,
+       height = 9,
+       units = "in",
+       dpi = 600)
+ggsave('../figures/confusion_better_than_linear_all.pdf',
+       device = cairo_pdf,
+       plot = plot_confusion_all,
+       scale = 1,
+       width = 16,
+       height = 9,
+       units = "in",
+       dpi = 600)
+  
+
