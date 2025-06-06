@@ -2,24 +2,25 @@ library(tidyverse)
 library(dbparser)
 library(XML)
 
-dvobj <- parseDrugBank(db_path= "../../../Artificial-Signaling-Network/DrugsANNSignaling/data/full database.xml",
-                       drug_options= drug_node_options(),
-                       parse_salts= TRUE,
-                       parse_products= TRUE,
-                       references_options= references_node_options(),
-                       cett_options= cett_nodes_options())
-snp_effects <- dvobj$drugs$snp_effects
-drug_interactions <- dvobj$drugs$drug_interactions
-snp_effects <- snp_effects %>% select(`protein-name`,`gene-symbol`,`uniprot-id`,`pubmed-id`,parent_key)
-drug_interactions <- drug_interactions %>% select(-description)
-drug_interactions <- left_join(drug_interactions,snp_effects)
-df_drugbank <- dvobj$drugs$general_information
-df_drugbank <- left_join(df_drugbank,drug_interactions,by=c('primary_key'='drugbank-id','name'='name'))
-df_drugbank$name <- tolower(df_drugbank$name)
-df_drugbank <- df_drugbank %>%
-  select(c('drugbank_id'='primary_key'),'name','cas_number',
-         c('target_symbol'='gene-symbol'),c('target_uniprot'='uniprot-id')) %>%
-  filter(!is.na(target_symbol) | !is.na(target_uniprot)) %>% unique()
+# dvobj <- parseDrugBank(db_path= "../../../Artificial-Signaling-Network/DrugsANNSignaling/data/full database.xml",
+#                        drug_options= drug_node_options(),
+#                        parse_salts= TRUE,
+#                        parse_products= TRUE,
+#                        references_options= references_node_options(),
+#                        cett_options= cett_nodes_options())
+# # saveRDS(dvobj,'dvobj.rds')
+# snp_effects <- dvobj$drugs$snp_effects
+# drug_interactions <- dvobj$drugs$drug_interactions
+# snp_effects <- snp_effects %>% select(`protein-name`,`gene-symbol`,`uniprot-id`,`pubmed-id`,parent_key)
+# drug_interactions <- drug_interactions %>% select(-description)
+# drug_interactions <- left_join(drug_interactions,snp_effects)
+# df_drugbank <- dvobj$drugs$general_information
+# df_drugbank <- left_join(df_drugbank,drug_interactions,by=c('primary_key'='drugbank-id','name'='name'))
+# df_drugbank$name <- tolower(df_drugbank$name)
+# df_drugbank <- df_drugbank %>%
+#   select(c('drugbank_id'='primary_key'),'name','cas_number',
+#          c('target_symbol'='gene-symbol'),c('target_uniprot'='uniprot-id')) %>%
+#   filter(!is.na(target_symbol) | !is.na(target_uniprot)) %>% unique()
 
 
 ### PharmacoGenomics
