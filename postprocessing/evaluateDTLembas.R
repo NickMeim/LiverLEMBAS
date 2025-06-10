@@ -36,9 +36,6 @@ print(random_comparison)
 ggsave(filename = "../figures/2 hour/dtlembas_2hr_performance_random_comparison.pdf", plot = random_comparison, units = "cm", width = 12, height = 12)
 data.table::fwrite(res_all,'../results/CV_2hr_with_random_long.csv')
 
-### Load CV ensemble predictions----------------
-## to do
-
 ### First compare one model in LOOCV validation with random model-------
 res_model <- rbind(data.table::fread('../results/2 hour/High/performance_hepatocytes_dtlembas1.csv') %>% 
   select(-V1,-time,-model_no),
@@ -593,6 +590,180 @@ ggsave('../figures/confusion_better_than_linear_all_CV.pdf',
        plot = plot_confusion_all,
        scale = 1,
        width = 16,
+       height = 9,
+       units = "in",
+       dpi = 600)
+
+
+## Ensemble performance VS single VS linear----------------
+res_model <- data.frame()
+ensemble_results <- data.frame()
+for (time in c('2 hour','8 hour','24 hour')){
+  if (time=='8 hour'){
+    tmp_ensemble <- rbind(
+      data.table::fread(paste0('../results/High/ensemble_performance_High_8 hour.csv')) %>%
+        select(-V1),
+      data.table::fread(paste0('../results/Middle/ensemble_performance_Middle_8 hour.csv')) %>%
+        select(-V1),
+      data.table::fread(paste0('../results/Low/ensemble_performance_Low_8 hour.csv')) %>%
+        select(-V1))
+  }else{
+    tmp_ensemble <- rbind(
+      data.table::fread(paste0('../results/',time,'/High/ensemble_performance_High_',time,'.csv')) %>%
+        select(-V1),
+      data.table::fread(paste0('../results/',time,'/Middle/ensemble_performance_Middle_',time,'.csv')) %>%
+        select(-V1),
+      data.table::fread(paste0('../results/',time,'/Low/ensemble_performance_Low_',time,'.csv')) %>%
+        select(-V1))
+  }
+  ensemble_results <- rbind(ensemble_results,tmp_ensemble)
+  for (i in 1:10){
+    if (time!='8 hour'){
+      tmp <- rbind(
+        data.table::fread(paste0('../results/',time,'/High/performance_hepatocytes_dtlembas',i,'.csv')) %>% 
+          select(-V1),
+        data.table::fread(paste0('../results/',time,'/Middle/performance_hepatocytes_dtlembas',i,'.csv')) %>% 
+          select(-V1),
+        data.table::fread(paste0('../results/',time,'/Low/performance_hepatocytes_dtlembas',i,'.csv')) %>% 
+          select(-V1))
+    }else{
+      tmp <- rbind(
+        data.table::fread(paste0('../results/High/performance_hepatocytes_dtlembas',i,'.csv')) %>% 
+          select(-V1),
+        data.table::fread(paste0('../results/Middle/performance_hepatocytes_dtlembas',i,'.csv')) %>% 
+          select(-V1),
+        data.table::fread(paste0('../results/Low/performance_hepatocytes_dtlembas',i,'.csv')) %>% 
+          select(-V1))
+    }
+    res_model <- rbind(res_model,tmp)
+  }
+}
+res_model <- res_model %>% gather('set','r',-TF,-time,-fold,-model_no) %>% mutate(type='Single model')
+ensemble_results <- ensemble_results %>% mutate(model_no=-1) %>% mutate(type='Ensemble') %>%
+  select(all_of(colnames(res_model))) %>% mutate(set = 'Ensemble test')
+all_results <- rbind(ensemble_results,res_model)
+all_results$set <- factor(all_results$set,levels = c('train','test','Ensemble test'))
+all_results$time <- factor(all_results$time,levels = c('2 hour','8 hour','24 hour'))
+all_results$fold <- factor(all_results$fold,levels = c('Low','Middle','High'))
+## Visualize
+p <- ggviolin(all_results,x='set',y='r',fill = 'set',add='boxplot')+
+  geom_hline(yintercept = 0,linetype='solid',lwd=0.5,color='black')+
+  facet_wrap(vars(time,fold))+
+  stat_compare_means(comparisons = list(c('test','Ensemble test')),
+                     label.y = c(1,0.95),
+                     method = 'wilcox')
+p <- add_theme(p) + theme_pubr() + 
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.line.x=element_blank(),
+        legend.position = 'top')
+print(p)
+
+## Load linear results and combine with ensemble
+linear_baseline <- rbind(
+  rbind(
+    data.table::fread('../results/High/tf_pearson_correlations.csv') %>%
+      select(TF,c('fold'='dose'),c('set'='method'),c('r'='pearson_r')) %>%
+      mutate(subject_id=NA) %>% mutate(set='linear'),
+    data.table::fread('../results/Middle/tf_pearson_correlations.csv') %>%
+      select(TF,c('fold'='dose'),c('set'='method'),c('r'='pearson_r')) %>%
+      mutate(subject_id=NA) %>% mutate(set='linear'),
+    data.table::fread('../results/Low/tf_pearson_correlations.csv') %>%
+      select(TF,c('fold'='dose'),c('set'='method'),c('r'='pearson_r')) %>%
+      mutate(subject_id=NA) %>% mutate(set='linear')) %>% mutate(time = '8 hours'),
+  rbind(
+    data.table::fread('../results/2 hour/High/tf_pearson_correlations.csv') %>%
+      select(TF,c('fold'='dose'),c('set'='method'),c('r'='pearson_r')) %>%
+      mutate(subject_id=NA) %>% mutate(set='linear'),
+    data.table::fread('../results/2 hour/Middle/tf_pearson_correlations.csv') %>%
+      select(TF,c('fold'='dose'),c('set'='method'),c('r'='pearson_r')) %>%
+      mutate(subject_id=NA) %>% mutate(set='linear'),
+    data.table::fread('../results/2 hour/Low/tf_pearson_correlations.csv') %>%
+      select(TF,c('fold'='dose'),c('set'='method'),c('r'='pearson_r')) %>%
+      mutate(subject_id=NA) %>% mutate(set='linear')) %>% mutate(time = '2 hours'),
+  rbind(
+    data.table::fread('../results/24 hour/High/tf_pearson_correlations.csv') %>%
+      select(TF,c('fold'='dose'),c('set'='method'),c('r'='pearson_r')) %>%
+      mutate(subject_id=NA) %>% mutate(set='linear'),
+    data.table::fread('../results/24 hour/Middle/tf_pearson_correlations.csv') %>%
+      select(TF,c('fold'='dose'),c('set'='method'),c('r'='pearson_r')) %>%
+      mutate(subject_id=NA) %>% mutate(set='linear'),
+    data.table::fread('../results/24 hour/Low/tf_pearson_correlations.csv') %>%
+      select(TF,c('fold'='dose'),c('set'='method'),c('r'='pearson_r')) %>%
+      mutate(subject_id=NA) %>% mutate(set='linear')) %>% mutate(time = '24 hours')
+)
+
+linear_vs_ensemble <- rbind(linear_baseline %>% select(-subject_id)  %>% select(TF,fold,time,r,set),
+                       ensemble_results %>% select(TF,fold,time,r,set) %>%
+                         mutate(time=paste0(time,'s')))
+# linear_vs_ensemble <- linear_vs_ensemble %>% mutate(type = set)
+linear_vs_ensemble$set <- factor(linear_vs_ensemble$set,levels = c('Ensemble test','linear'))
+linear_vs_ensemble$time <- factor(linear_vs_ensemble$time,levels = c('2 hours','8 hours','24 hours'))
+linear_vs_ensemble$fold <- factor(linear_vs_ensemble$fold,levels = c('Low','Middle','High'))
+# p_lin <- ggpaired(linear_vs_ensemble %>% spread('set','r'),
+#                   cond1 = 'Ensemble test',
+#                   cond2 = 'linear',
+#                   line.color = "gray", line.size = 0.1)+
+#   geom_hline(yintercept = 0,linetype='dashed',lwd=1,color='black')+
+#   facet_wrap(vars(time,fold))+
+#   stat_compare_means(comparisons = list(c('Ensemble test','linear')),
+#                      label.y = 0.9,
+#                      method = 'wilcox',
+#                      paired = TRUE)
+# p_lin <- add_theme(p_lin) + theme_pubr() + 
+#   theme(axis.title.x = element_blank())
+# print(p_lin)
+
+p_lin <- ggboxplot(linear_vs_ensemble,
+                  x = 'set',
+                  y = 'r',
+                  outlier.shape = NA,
+                  add = 'jitter',
+                  add.params = list(size=1))+
+  scale_y_continuous(breaks = seq(-0.5,1,0.2),limits = c(NA,1))+
+  geom_hline(yintercept = 0,linetype='dashed',lwd=1,color='black')+
+  facet_wrap(vars(time,fold))+
+  stat_compare_means(comparisons = list(c('Ensemble test','linear')),
+                     label.y = 0.9,
+                     method = 'wilcox',
+                     paired = TRUE)
+p_lin <- add_theme(p_lin) + theme_pubr() + 
+  theme(axis.title.x = element_blank())
+print(p_lin)
+ggsave('../figures/ensemble_vs_linear_LOOCV.png',
+       plot = p_lin,
+       scale = 1,
+       width = 9,
+       height = 9,
+       units = "in",
+       dpi = 600)
+
+# Only important
+important_tfs <- c('P10914','Q00978','P42226','P42229','P51692',
+                   'P40763','P52630','P42224','Q14765','P84022',
+                   'P01106','P05412','O00716','Q14209','Q01094',
+                   'Q16254','P04637')
+p_lin_important <- ggboxplot(linear_vs_ensemble %>% filter(TF %in% important_tfs),
+                   x = 'set',
+                   y = 'r',
+                   outlier.shape = NA,
+                   add = 'jitter',
+                   add.params = list(size=1))+
+  scale_y_continuous(breaks = seq(-0.5,1,0.2),limits = c(NA,1))+
+  geom_hline(yintercept = 0,linetype='dashed',lwd=1,color='black')+
+  facet_wrap(vars(time,fold))+
+  stat_compare_means(comparisons = list(c('Ensemble test','linear')),
+                     label.y = 0.9,
+                     method = 'wilcox',
+                     paired = TRUE)
+p_lin_important <- add_theme(p_lin_important) + theme_pubr() + 
+  theme(axis.title.x = element_blank())
+print(p_lin_important)
+ggsave('../figures/ensemble_vs_linear_important_LOOCV.png',
+       plot = p_lin_important,
+       scale = 1,
+       width = 9,
        height = 9,
        units = "in",
        dpi = 600)
