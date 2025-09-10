@@ -260,145 +260,75 @@ def custom_ensemble_step_mean(tp: str, X_in_nodes: torch.Tensor, number_DTLEMBAS
 # ─────────────────────────────────────────────────────────────
 @torch.no_grad()
 def create_stimulation_plan(steps, tgfb_grid, ifna_grid):
-    """
-    Pre-calculates all stimulus combinations for an experiment.
-    Returns a dictionary of stimulation tensors, one for each timepoint,
-    and a DataFrame for tracking the parameters of each path.
-    """
     stim_events = {}
     for tp, t_amp, i_amp, _ in steps:
-        if t_amp != 0.0:
-            stim_events.setdefault(tp, []).append('T')
-        if i_amp != 0.0:
-            stim_events.setdefault(tp, []).append('I')
+        if t_amp != 0.0: stim_events.setdefault(tp, []).append('T')
+        if i_amp != 0.0: stim_events.setdefault(tp, []).append('I')
 
-    # Determine which grids to use for the product
-    active_grids = []
-    # Use a dictionary to map stimulus type to its grid and timepoint for bookkeeping
-    stim_map = {}
-    for tp, stim_types in stim_events.items():
-        if 'T' in stim_types and 'I' in stim_types: # T and I applied together
-            active_grids.append(list(zip(tgfb_grid.cpu().numpy(), ifna_grid.cpu().numpy())))
-            stim_map[len(active_grids)-1] = {'T': tp, 'I': tp}
-        else:
-            if 'T' in stim_types:
-                active_grids.append(tgfb_grid)
-                stim_map[len(active_grids)-1] = {'T': tp}
-            if 'I' in stim_types:
-                active_grids.append(ifna_grid)
-                stim_map[len(active_grids)-1] = {'I': tp}
+    grid_map = []
+    # Identify which stimuli are applied at which timepoint
+    for tp in TIME_ORDER:
+        if tp in stim_events:
+            stim_types = stim_events[tp]
+            if 'T' in stim_types and 'I' in stim_types:
+                grid_map.append({'tp': tp, 'type': 'both', 'grids': (tgfb_grid, ifna_grid)})
+            elif 'T' in stim_types:
+                grid_map.append({'tp': tp, 'type': 'T_only', 'grids': (tgfb_grid,)})
+            elif 'I' in stim_types:
+                grid_map.append({'tp': tp, 'type': 'I_only', 'grids': (ifna_grid,)})
 
-    if not active_grids: # No stimulation in this experiment
-        path_combinations = [(0.0,)] # Dummy combination
-        num_paths = 1
+    if not grid_map:
+        path_combinations = [(0.0,)]
     else:
-        path_combinations = list(itertools.product(*active_grids))
-        num_paths = len(path_combinations)
+        all_grids = [itertools.product(*g['grids']) if g['type'] == 'both' else g['grids'][0] for g in grid_map]
+        path_combinations = list(itertools.product(*all_grids))
 
-    # Create bookkeeping dataframe and stimulation plan tensors
+    num_paths = len(path_combinations)
     path_info = pd.DataFrame(index=range(num_paths), columns=['T_at_0h', 'I_at_0h', 'T_at_2h', 'I_at_2h', 'T_at_8h', 'I_at_8h']).fillna(0.0)
     stim_plan = {tp: torch.zeros(num_paths, num_nodes, device=device, dtype=torch.double) for tp in TIME_ORDER}
 
-    for path_idx, combo in enumerate(path_combinations):
-        for grid_idx, value in enumerate(combo):
-            event_info = stim_map.get(grid_idx, {})
-            if 'T' in event_info and 'I' in event_info: # Combined T+I grid
-                t_val, i_val = value
-                tp = event_info['T']
-                # FIX: Squeeze the 2D result to 1D before adding
-                stim_plan[tp][path_idx, :] += (e_T * t_val + e_I * i_val).squeeze(0)
-                path_info.loc[path_idx, f'T_at_{tp.split(" ")[0]}h'] = t_val
-                path_info.loc[path_idx, f'I_at_{tp.split(" ")[0]}h'] = i_val
-            elif 'T' in event_info:
-                tp = event_info['T']
-                # FIX: Squeeze the 2D result to 1D before adding
-                stim_plan[tp][path_idx, :] += (e_T * value.item()).squeeze(0)
-                path_info.loc[path_idx, f'T_at_{tp.split(" ")[0]}h'] = value.item()
-            elif 'I' in event_info:
-                tp = event_info['I']
-                # FIX: Squeeze the 2D result to 1D before adding
-                stim_plan[tp][path_idx, :] += (e_I * value.item()).squeeze(0)
-                path_info.loc[path_idx, f'I_at_{tp.split(" ")[0]}h'] = value.item()
-    
-    # Fill in the "added_now" columns for clarity in final output
-    for tp in TIME_ORDER:
-        key = ""
-        if tp.startswith("2"): key = "0h"
-        elif tp.startswith("8"): key = "2h"
-        elif tp.startswith("24"): key = "8h"
+    combo_idx = 0
+    for path_idx, combo_tuple in enumerate(path_combinations):
+        flat_combo = []
+        for item in combo_tuple:
+            if isinstance(item, tuple): flat_combo.extend(item)
+            else: flat_combo.append(item)
         
-        if key:
-            # Check if the column exists before trying to access it
-            if f'T_at_{key}' in path_info.columns:
-                 path_info[f'TGFb_added_at_{key}'] = path_info[f'T_at_{key}']
-            if f'I_at_{key}' in path_info.columns:
-                 path_info[f'IFNa_added_at_{key}'] = path_info[f'I_at_{key}']
-
+        val_idx = 0
+        for event in grid_map:
+            tp = event['tp']
+            key_2h = tp.split(" ")[0]
+            if event['type'] == 'both':
+                t_val = flat_combo[val_idx]; i_val = flat_combo[val_idx + 1]
+                stim_plan[tp][path_idx, :] += (e_T * t_val + e_I * i_val).squeeze(0)
+                path_info.loc[path_idx, f'T_at_{key_2h}h'] = t_val.item(); path_info.loc[path_idx, f'I_at_{key_2h}h'] = i_val.item()
+                val_idx += 2
+            elif event['type'] == 'T_only':
+                t_val = flat_combo[val_idx]
+                stim_plan[tp][path_idx, :] += (e_T * t_val).squeeze(0)
+                path_info.loc[path_idx, f'T_at_{key_2h}h'] = t_val.item()
+                val_idx += 1
+            elif event['type'] == 'I_only':
+                i_val = flat_combo[val_idx]
+                stim_plan[tp][path_idx, :] += (e_I * i_val).squeeze(0)
+                path_info.loc[path_idx, f'I_at_{key_2h}h'] = i_val.item()
+                val_idx += 1
+    
     return stim_plan, path_info, num_paths
 
-# ─────────────────────────────────────────────────────────────
-# Define the experiments as desired
-# ─────────────────────────────────────────────────────────────
+
 def exp_definitions(amp):
-    """
-    Returns list of experiments; each experiment is a list of steps.
-    Step = (timepoint, tgfb_to_add_now, ifna_to_add_now, description_str)
-    """
     T, I = amp, amp
     return [
-        # 1) TGFb+IFNa at 0h → run 2h, then 8h, then 24h
-        ("Exp1", [
-            ("2 hour",  T, I,  "apply TGFb & IFNa at 0h (first step)"),
-            ("8 hour",  0, 0,  "carry only"),
-            ("24 hour", 0, 0,  "carry only"),
-        ]),
-        # 2) empty → 2h; then add TGFb+IFNa → run 8h, then 24h
-        ("Exp2", [
-            ("2 hour",  0, 0,  "empty through 2h"),
-            ("8 hour",  T, I,  "add TGFb & IFNa after 2h"),
-            ("24 hour", 0, 0,  "carry only"),
-        ]),
-        # 3) empty → 8h; then add TGFb+IFNa → run 24h
-        ("Exp3", [
-            # skip 2h
-            ("8 hour",  0, 0,  "empty through 8h"),
-            ("24 hour", T, I,  "add TGFb & IFNa after 8h"),
-        ]),
-        # 4) TGFb at 0h → run 2h; then add IFNa → run 8h, then 24h
-        ("Exp4", [
-            ("2 hour",  T, 0,  "apply TGFb at 0h"),
-            ("8 hour",  0, I,  "add IFNa after 2h"),
-            ("24 hour", 0, 0,  "carry only"),
-        ]),
-        # 5) TGFb at 0h → run 8h; then add IFNa → run 24h
-        ("Exp5", [
-            # skip 2h
-            ("8 hour",  T, 0,  "apply TGFb at 0h"),
-            ("24 hour", 0, I,  "add IFNa after 8h"),
-        ]),
-        # 6) empty → 2h; add TGFb → run 8h; add IFNa → run 24h
-        ("Exp6", [
-            ("2 hour",  0, 0,  "empty through 2h"),
-            ("8 hour",  T, 0,  "add TGFb after 2h"),
-            ("24 hour", 0, I,  "add IFNa after 8h"),
-        ]),
-        # 7) IFNa at 0h → run 2h; then add TGFb → run 8h, then 24h
-        ("Exp7", [
-            ("2 hour",  0, I,  "apply IFNa at 0h"),
-            ("8 hour",  T, 0,  "add TGFb after 2h"),
-            ("24 hour", 0, 0,  "carry only"),
-        ]),
-        # 8) IFNa at 0h → run 8h; then add TGFb → run 24h
-        ("Exp8", [
-            ("8 hour",  0, I,  "apply IFNa at 0h"),
-            ("24 hour", T, 0,  "add TGFb after 8h"),
-        ]),
-        # 9) empty → 2h; add IFNa → run 8h; add TGFb → run 24h
-        ("Exp9", [
-            ("2 hour",  0, 0,  "empty through 2h"),
-            ("8 hour",  0, I,  "add IFNa after 2h"),
-            ("24 hour", T, 0,  "add TGFb after 8h"),
-        ]),
+        ("Exp1", [("2 hour", T, I, "apply TGFb & IFNa at 0h"), ("8 hour", 0, 0, "carry"), ("24 hour", 0, 0, "carry")]),
+        ("Exp2", [("2 hour", 0, 0, "empty"), ("8 hour", T, I, "add TGFb & IFNa at 2h"), ("24 hour", 0, 0, "carry")]),
+        ("Exp3", [("8 hour", 0, 0, "empty"), ("24 hour", T, I, "add TGFb & IFNa at 8h")]),
+        ("Exp4", [("2 hour", T, 0, "apply TGFb at 0h"), ("8 hour", 0, I, "add IFNa at 2h"), ("24 hour", 0, 0, "carry")]),
+        ("Exp5", [("8 hour", T, 0, "apply TGFb at 0h"), ("24 hour", 0, I, "add IFNa at 8h")]),
+        ("Exp6", [("2 hour", 0, 0, "empty"), ("8 hour", T, 0, "add TGFb at 2h"), ("24 hour", 0, I, "add IFNa at 8h")]),
+        ("Exp7", [("2 hour", 0, I, "apply IFNa at 0h"), ("8 hour", T, 0, "add TGFb at 2h"), ("24 hour", 0, 0, "carry")]),
+        ("Exp8", [("8 hour", 0, I, "apply IFNa at 0h"), ("24 hour", T, 0, "add TGFb at 8h")]),
+        ("Exp9", [("2 hour", 0, 0, "empty"), ("8 hour", 0, I, "add IFNa at 2h"), ("24 hour", T, 0, "add TGFb at 8h")]),
     ]
 
 
@@ -407,7 +337,7 @@ def exp_definitions(amp):
 # Execute experiments
 # ─────────────────────────────────────────────────────────────
 print2log(f"Begin asynchronous experiments ({args.ensemble_mode})…")
-out_dir = os.path.join(res_dir, "chained_async_static_batch")
+out_dir = os.path.join(res_dir, "chained_async")
 Path(out_dir).mkdir(parents=True, exist_ok=True)
 
 all_results = []
@@ -467,7 +397,7 @@ for exp_name, steps in experiments:
 
 # --- Finalize and Save ---
 final_df = pd.concat(all_results, ignore_index=True)
-out_csv = os.path.join(out_dir, f'TFs_chained_async_static_{args.ensemble_mode}.csv')
+out_csv = os.path.join(out_dir, f'TFs_chained_async_{args.ensemble_mode}.csv')
 final_df.to_csv(out_csv, index=False)
 
 elapsed = time.time() - start_time
