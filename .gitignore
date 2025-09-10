@@ -1,3 +1,5 @@
+relevent_papers
+relevent_papers/*
 learning/__pycache__
 data/omnipath_webservice_interactions__recent.tsv
 data/archs4_regulatory_model.pt
