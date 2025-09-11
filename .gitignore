@@ -1,3 +1,5 @@
+postprocessing/__pycache__
+postprocessing/ValidateCarryOnOperation_forDrugs.py
 results/chained_async/plots
 relevent_papers
 relevent_papers/*

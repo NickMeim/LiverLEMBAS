@@ -5,208 +5,170 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import argparse
 from pathlib import Path
+from matplotlib.colors import ListedColormap
+import matplotlib.patches as mpatches
+# Note: The 3D plot requires scipy. You likely have it, but if not:
+# conda install -c conda-forge scipy
+from scipy.interpolate import griddata
 
-def plot_tf_heatmaps(df: pd.DataFrame, tf: str, out_dir: str):
+def plot_tf_visualizations(df: pd.DataFrame, tf: str, out_dir: str):
     """
-    Creates a faceted heatmap for a single TF, showing its activity across all experiments and timepoints.
+    Creates a faceted plot for a single TF, choosing between a 2D heatmap,
+    a 1D line plot, or text depending on the data for each experimental phase.
     """
-    print(f"Plotting heatmaps for {tf}...")
+    print(f"Generating dose-response visualizations for {tf}...")
     
     tf_df = df[df["variable_id"] == tf]
     if tf_df.empty:
         print(f"  > Warning: No data found for TF {tf}. Skipping.")
         return
 
-    # More robustly find the varying stimulation columns for each experiment
-    stim_cols = ['T_at_0h', 'I_at_0h', 'T_at_2h', 'I_at_2h', 'T_at_8h', 'I_at_8h']
-    exp_stim_map = {}
-    for exp in tf_df['experiment'].unique():
-        exp_df = tf_df[tf_df['experiment'] == exp]
-        # An active column is one that has more than one unique value (i.e., it was varied across the grid)
-        active_stim_cols = [col for col in stim_cols if exp_df[col].nunique() > 1]
-        
-        active_t_cols = [c for c in active_stim_cols if c.startswith('T_')]
-        active_i_cols = [c for c in active_stim_cols if c.startswith('I_')]
-
-        # We can only make a 2D heatmap if there is at least one varying TGFb and one varying IFNa stim across the whole experiment
-        if active_t_cols and active_i_cols:
-            exp_stim_map[exp] = (active_t_cols[0], active_i_cols[0])
-
-    # Create the grid of subplots
     g = sns.FacetGrid(
-        tf_df,
-        col="experiment",
-        row="timepoint",
-        col_order=sorted(tf_df['experiment'].unique()),
-        row_order=['2 hour', '8 hour', '24 hour'],
-        height=3,
-        aspect=1.1,
-        margin_titles=True
+        tf_df, col="experiment", row="measured_at",
+        col_order=[f"Exp{i}" for i in range(1, 10)], row_order=['2h', '8h', '24h'],
+        height=3, aspect=1.1, margin_titles=True
     )
 
-    # This function is applied to each subplot in the grid
-    def draw_heatmap(*args, **kwargs):
+    def smart_draw(*args, **kwargs):
         data_subset = kwargs.pop('data')
-        exp = data_subset['experiment'].iloc[0]
-        tp = data_subset['timepoint'].iloc[0]
         ax = plt.gca()
+        tgfb_is_varying = data_subset['TGFb_strength'].nunique() > 1
+        ifna_is_varying = data_subset['IFNa_strength'].nunique() > 1
 
-        # Determine the experiment's overall varying axes
-        tgfb_ax, ifna_ax = exp_stim_map.get(exp, (None, None))
-
-        # Check for variance within this specific facet's data
-        tgfb_is_varying_now = tgfb_ax and data_subset[tgfb_ax].nunique() > 1
-        ifna_is_varying_now = ifna_ax and data_subset[ifna_ax].nunique() > 1
-
-        if tgfb_is_varying_now and ifna_is_varying_now:
-            # --- CASE 1: Both stimuli are varying -> 2D Heatmap ---
+        if tgfb_is_varying and ifna_is_varying:
             try:
-                heatmap_data = data_subset.pivot_table(index=ifna_ax, columns=tgfb_ax, values='activity')
+                heatmap_data = data_subset.pivot_table(index='IFNa_strength', columns='TGFb_strength', values='activity')
                 heatmap_data = heatmap_data.sort_index(ascending=True).sort_index(axis=1, ascending=True)
                 sns.heatmap(heatmap_data, ax=ax, cmap="viridis", **kwargs)
-                ax.set_xlabel(f"TGFb ({tgfb_ax.split('_')[1]})")
-                ax.set_ylabel(f"IFNa ({ifna_ax.split('_')[1]})")
-            except Exception as e:
-                ax.text(0.5, 0.5, 'Plotting Error', ha='center', va='center', color='red')
-                print(f"  > Could not generate heatmap for {exp} at {tp}: {e}")
-
-        elif tgfb_is_varying_now or ifna_is_varying_now:
-            # --- CASE 2: Only one stimulus is varying -> 1D Line Plot ---
-            varying_ax = tgfb_ax if tgfb_is_varying_now else ifna_ax
-            stim_type = "TGFb" if tgfb_is_varying_now else "IFNa"
-            
+                ax.set_xlabel("TGFb Strength"); ax.set_ylabel("IFNa Strength")
+            except Exception:
+                ax.text(0.5, 0.5, 'Plot Error', ha='center', va='center', color='red')
+        elif tgfb_is_varying or ifna_is_varying:
+            varying_ax = 'TGFb_strength' if tgfb_is_varying else 'IFNa_strength'
+            stim_type = "TGFb" if tgfb_is_varying else "IFNa"
             sorted_data = data_subset.sort_values(varying_ax)
             sns.lineplot(data=sorted_data, x=varying_ax, y='activity', ax=ax, color='navy', marker='o', markersize=4)
-            ax.set_xlabel(f"{stim_type} Stim. ({varying_ax.split('_')[1]})")
-            ax.set_ylabel("Activity")
+            ax.set_xlabel(f"{stim_type} Strength"); ax.set_ylabel("Activity")
             ax.grid(True, linestyle='--', alpha=0.6)
-
         else:
-            # --- CASE 3: Neither stimulus is varying -> "Carry Only" step ---
             activity_val = data_subset['activity'].mean()
             ax.set_facecolor('#f0f0f0')
-            ax.text(0.5, 0.5, f'Carry Only\n(Avg Activity: {activity_val:.3f})',
-                    ha='center', va='center', fontsize=9, color='black')
-            ax.set_xticks([])
-            ax.set_yticks([])
-            ax.set_xlabel('')
-            ax.set_ylabel('')
+            ax.text(0.5, 0.5, f'Carry-Only\n(Avg: {activity_val:.3f})',
+                    ha='center', va='center', fontsize=9, color='black', wrap=True)
+            ax.set_xticks([]); ax.set_yticks([])
 
-    # Map the drawing function to the grid
-    g.map_dataframe(draw_heatmap)
-    
-    # Finalize plot details
-    g.fig.suptitle(f"Activity of TF: {tf}", y=1.03)
+    g.map_dataframe(smart_draw)
+    g.fig.suptitle(f"Dose-Response Activity of TF: {tf}", y=1.03, fontsize=16)
     g.set_titles(col_template="{col_name}", row_template="{row_name}")
-    # Remove the generic axis labels as they are now set per-subplot
     g.set_axis_labels("", "")
-    plt.tight_layout(rect=[0, 0, 1, 0.98])
-    
-    out_path = os.path.join(out_dir, f"heatmap_summary_{tf}.png")
+    plt.tight_layout(rect=[0, 0, 1, 0.97])
+    out_path = os.path.join(out_dir, f"summary_plot_dose_response_{tf}.png")
     plt.savefig(out_path, dpi=300)
-    print(f"  > Saved plot to {out_path}")
+    print(f"  > Saved dose-response plot to {out_path}")
     plt.close()
 
-# --- Function to create the temporal heatmap ---
-def plot_temporal_heatmaps(df: pd.DataFrame, tf: str, stim_strength: float, out_dir: str):
+# --- MODIFIED: Function to create the 3D surface plots with aesthetic changes ---
+def plot_temporal_3d_surface(df: pd.DataFrame, tf: str, stim_strength: float, out_dir: str):
     """
-    Creates a faceted heatmap for a single TF, showing its activity based on the TIMING of stimulation.
-    This plot only uses the min (-3000) and max (+3000) stimulation strengths.
+    Creates a faceted 3D surface plot for a single TF based on the TIMING of stimulation
+    at the four extreme (+/-) stimulus strength combinations.
     """
-    print(f"Plotting TEMPORAL heatmaps for {tf}...")
+    print(f"Generating 3D temporal-response visualizations for {tf}...")
     
-    # 1. Filter for the specific TF and the extreme stimulation strengths
-    stim_cols = ['T_at_0h', 'I_at_0h', 'T_at_2h', 'I_at_2h', 'T_at_8h', 'I_at_8h']
+    # 1. Filter data
     extrema = [-stim_strength, stim_strength]
+    surface_df = df[
+        (df["variable_id"] == tf) &
+        (df["TGFb_strength"].isin(extrema)) &
+        (df["IFNa_strength"].isin(extrema))
+    ].copy()
     
-    # Keep rows where at least one stimulation column is an extremum
-    tf_df_full = df[df["variable_id"] == tf]
-    filtered_df = tf_df_full[tf_df_full[stim_cols].isin([0] + extrema).all(axis=1)]
-    
-    if filtered_df.empty:
-        print(f"  > Warning: No data found for TF {tf} at extreme stimulations. Skipping.")
+    if surface_df.empty:
+        print(f"  > Warning: No data for 3D plot for TF {tf}. Skipping.")
         return
 
-    # 2. Engineer features for WHEN each stimulus was applied
-    def get_stim_time(row, stim_char):
-        for t, col_name in zip(['0h', '2h', '8h'], [f'{stim_char}_at_0h', f'{stim_char}_at_2h', f'{stim_char}_at_8h']):
-            if col_name in row and row[col_name] != 0:
-                return t
-        return 'None'
+    # 2. Prepare data for plotting
+    time_map = {'0h': 0, '2h': 2, '8h': 8, 'None': np.nan} 
+    surface_df['TGFb_Time_Num'] = surface_df['TGFb_applied_at'].map(time_map)
+    surface_df['IFNa_Time_Num'] = surface_df['IFNa_applied_at'].map(time_map)
+    
+    # Create a categorical column for the specific combination of signs
+    def get_combo_label(row):
+        t_sign = '+' if row['TGFb_strength'] > 0 else '-'
+        i_sign = '+' if row['IFNa_strength'] > 0 else '-'
+        return f"T({t_sign}), I({i_sign})"
+    surface_df['Stim_Combo'] = surface_df.apply(get_combo_label, axis=1)
+
+    # 3. Manually create the faceted 3D plot
+    fig, axes = plt.subplots(1, 3, figsize=(22, 8), subplot_kw=dict(projection='3d'))
+    
+    measurement_times = ['2h', '8h', '24h']
+    z_min, z_max = surface_df['activity'].min(), surface_df['activity'].max()
+    
+    # Define a distinct categorical color palette and legend
+    combo_order = sorted(surface_df['Stim_Combo'].unique())
+    color_palette = sns.color_palette("tab10", n_colors=len(combo_order))
+    color_map = {combo: color for combo, color in zip(combo_order, color_palette)}
+    legend_patches = [mpatches.Patch(color=color, label=combo) for combo, color in color_map.items()]
+    
+    for i, tp in enumerate(measurement_times):
+        ax = axes[i]
+        ax.set_title(f"Measured at {tp}", y=1.0, pad=-15) # Move title down
         
-    temporal_df = filtered_df.copy()
-    temporal_df['TGFb_Time'] = temporal_df.apply(lambda row: get_stim_time(row, 'T'), axis=1)
-    temporal_df['IFNa_Time'] = temporal_df.apply(lambda row: get_stim_time(row, 'I'), axis=1)
-    
-    # Engineer features for the SIGN of each stimulus
-    def get_stim_sign(row, stim_char):
-        for col_name in [f'{stim_char}_at_0h', f'{stim_char}_at_2h', f'{stim_char}_at_8h']:
-             if col_name in row and row[col_name] > 0: return '+'
-             if col_name in row and row[col_name] < 0: return '-'
-        return '0'
+        # Plot a separate surface for each combination to ensure distinct colors
+        for combo, color in color_map.items():
+            plot_data = surface_df[
+                (surface_df['measured_at'] == tp) & 
+                (surface_df['Stim_Combo'] == combo)
+            ].dropna(subset=['TGFb_Time_Num', 'IFNa_Time_Num'])
 
-    temporal_df['TGFb_Sign'] = temporal_df.apply(lambda row: get_stim_sign(row, 'T'), axis=1)
-    temporal_df['IFNa_Sign'] = temporal_df.apply(lambda row: get_stim_sign(row, 'I'), axis=1)
-    temporal_df['Stim_Combo'] = "TGFb(" + temporal_df['TGFb_Sign'] + "), IFNa(" + temporal_df['IFNa_Sign'] + ")"
-    
-    # 3. Create the faceted plot
-    time_order = ['None', '0h', '2h', '8h']
-    combo_order = sorted(temporal_df['Stim_Combo'].unique())
+            if len(plot_data) < 4: continue
+            
+            try:
+                # Create grid for this specific sign combination
+                X, Y = np.meshgrid(
+                    np.linspace(plot_data.TGFb_Time_Num.min(), plot_data.TGFb_Time_Num.max(), 10),
+                    np.linspace(plot_data.IFNa_Time_Num.min(), plot_data.IFNa_Time_Num.max(), 10)
+                )
+                Z = griddata((plot_data.TGFb_Time_Num, plot_data.IFNa_Time_Num), plot_data.activity, (X, Y), method='cubic')
+                
+                # Plot the surface
+                ax.plot_surface(X, Y, Z, color=color, alpha=0.6, rstride=1, cstride=1, antialiased=True, shade=True)
+                # Plot the actual data points
+                ax.scatter(plot_data.TGFb_Time_Num, plot_data.IFNa_Time_Num, plot_data.activity, 
+                           color=color, s=25, edgecolor='black', depthshade=True)
 
-    g = sns.FacetGrid(
-        temporal_df,
-        col="timepoint",
-        row="Stim_Combo",
-        row_order=combo_order,
-        col_order=['2 hour', '8 hour', '24 hour'],
-        height=2.5,
-        aspect=1.1,
-        margin_titles=True
-    )
+            except Exception as e:
+                print(f"  > Could not generate 3D surface for {tp}, combo {combo}: {e}")
 
-    # Drawing function for each facet
-    def draw_temporal_heatmap(*args, **kwargs):
-        data = kwargs.pop('data')
-        ax = plt.gca()
-        try:
-            heatmap_data = data.pivot_table(index='IFNa_Time', columns='TGFb_Time', values='activity')
-            # Reindex to ensure all timepoints are present and in order
-            heatmap_data = heatmap_data.reindex(index=time_order, columns=time_order)
-            sns.heatmap(heatmap_data, ax=ax, cmap="magma", annot=True, fmt=".2f", **kwargs)
-        except Exception as e:
-            ax.text(0.5, 0.5, 'No Data', ha='center', va='center')
-    
-    g.map_dataframe(draw_temporal_heatmap)
-    g.fig.suptitle(f"Timing-Response Activity of TF: {tf}", y=1.03)
-    g.set_titles(col_template="Measured at {col_name}", row_template="{row_name}")
-    g.set_axis_labels("Time of TGFb Application", "Time of IFNa Application")
-    plt.tight_layout(rect=[0, 0, 1, 0.98])
-    
-    out_path = os.path.join(out_dir, f"heatmap_temporal_summary_{tf}.png")
-    plt.savefig(out_path, dpi=300)
-    print(f"  > Saved temporal plot to {out_path}")
+        ax.set_xlabel("\nTGFb App. Time (h)", linespacing=2.5)
+        ax.set_ylabel("\nIFNa App. Time (h)", linespacing=2.5)
+        ax.set_zlabel("TF Activity", labelpad=10)
+        ax.set_zlim(z_min, z_max)
+        ax.view_init(elev=20, azim=240)
+
+    # Place legend horizontally at the top of the figure
+    fig.legend(handles=legend_patches, loc='upper center', bbox_to_anchor=(0.5, 0.98), ncol=4, title=f"TF: {tf} - Stimulation Combination")
+    plt.tight_layout(rect=[0, 0, 1, 0.9]) # Adjust rect to make space for the legend
+    out_path = os.path.join(out_dir, f"summary_plot_3D_surface_{tf}.png")
+    plt.savefig(out_path, dpi=300, bbox_inches='tight')
+    print(f"  > Saved 3D surface plot to {out_path}")
     plt.close()
+
 
 def main():
     parser = argparse.ArgumentParser(description="Visualize results from asynchronous stimulation simulations.")
     parser.add_argument(
-        '--results_csv',
-        type=str,
-        default='../results/chained_async/TFs_chained_async_avg_then_chain.csv',
-        help="Path to the input CSV file containing simulation results."
+        '--results_csv', type=str,
+        default='../results/async_experiments_tidy/async_stimulation_results_tidy.csv'
     )
     parser.add_argument(
-        '--out_dir',
-        type=str,
-        default='../results/chained_async/plots/',
-        help="Directory to save the output plots."
+        '--out_dir', type=str,
+        default='../results/async_experiments_tidy/plots/'
     )
-    # --- NEW: Add stim strength to parser for filtering ---
     parser.add_argument('--stimulation_strength', action='store', type=float, default=3000.0)
-
     args = parser.parse_args()
 
-    # --- Data Loading and Preparation ---
     print(f"Loading data from {args.results_csv}...")
     try:
         df = pd.read_csv(args.results_csv)
@@ -214,28 +176,22 @@ def main():
         print(f"Error: Results file not found at {args.results_csv}")
         return
 
-    # Create output directory
     Path(args.out_dir).mkdir(parents=True, exist_ok=True)
     
-    # Melt the dataframe from wide to long format
-    id_vars = [c for c in df.columns if not (c.startswith('P') or c.startswith('Q') or c.startswith('O'))]
+    id_vars = ['experiment', 'TGFb_strength', 'IFNa_strength', 'TGFb_applied_at', 'IFNa_applied_at', 'measured_at']
     tf_vars = [c for c in df.columns if c not in id_vars]
     long_df = df.melt(id_vars=id_vars, value_vars=tf_vars, var_name="variable_id", value_name="activity")
 
-    # --- Plotting ---
     tfs_to_plot = [
         'P10914', 'Q00978', 'P52630',
         'P42224', 'P84022', 'Q13485'
     ]
 
     for tf in tfs_to_plot:
-        # Generate the original heatmap
-        plot_tf_heatmaps(long_df, tf, args.out_dir)
-        # Generate the new temporal heatmap
-        plot_temporal_heatmaps(long_df, tf, args.stimulation_strength, args.out_dir)
+        plot_tf_visualizations(long_df, tf, args.out_dir)
+        plot_temporal_3d_surface(long_df, tf, args.stimulation_strength, args.out_dir)
 
     print("\nVisualization complete.")
-
 
 if __name__ == "__main__":
     main()

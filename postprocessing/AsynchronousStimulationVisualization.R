@@ -13,19 +13,16 @@ source('functions_translation.R')
 options(future.globals.maxSize = 2 * 1024^3) # 2 GiB
 
 ## Simulate combination of TGFBR1 and IFNAR1---------------
-results_ko <- data.table::fread('../results/allmodels/InSilicoKOs/TFs_all_conditions.csv') %>% 
-  column_to_rownames('V1')
-results_ko <- results_ko %>% filter(type!="KO+control") %>% filter(type!='control')
-simulation <- data.table::fread('../results/allmodels/combo_simulation_expanded/TFs_all_conditions_expanded.csv') %>% 
-  select(-V1)
+simulation <- data.table::fread('../results/chained_async/TFs_chained_async_avg_then_chain.csv')
+tt <- simulation %>% select(experiment,timepoint,description)
 
 #Load annotation file to replace with gene names
 annot <- read.delim('../../../Artificial-Signaling-Network/DrugsANNSignaling/data/uniprot-reviewed_yes+AND+organism__Homo+sapiens+(Human)+[9606]_.tab')
 annot <- annot %>% select(c('node'='Entry'),c('TF'='Gene.names...primary..')) %>% unique()
 annot <- annot %>% filter(node %in% colnames(simulation))
-annot <- left_join(data.frame(node = colnames(simulation)[1:104]),annot)
-print(all(colnames(simulation)[1:104]==annot$node))
-colnames(simulation)[1:104] <- annot$TF
+annot <- left_join(data.frame(node = colnames(simulation)[7:110]),annot)
+print(all(colnames(simulation)[7:110]==annot$node))
+colnames(simulation)[7:110] <- annot$TF
 
 # Load human data, infer TF activity and train model to predict MAS, Fibrosis from TFs
 ## Load the all the data to be used
@@ -67,7 +64,7 @@ TF_human <- TF_human %>% select(source,condition,score) %>% spread(source,score)
   column_to_rownames('condition')
 TF_human <- as.matrix(TF_human)
 ## keep only TFs in LEMBAS
-TF_human <- TF_human[,colnames(simulation)[1:104]]
+TF_human <- TF_human[,colnames(simulation)[7:110]]
 ## train one model with all the data
 plsr_model <- opls(x = TF_human, 
                    y = Yh,
@@ -79,81 +76,74 @@ plsr_model <- opls(x = TF_human,
 plot(Yh[,1],predict(plsr_model,TF_human)[,1])
 plot(Yh[,2],predict(plsr_model,TF_human)[,2])
 print(diag(cor(Yh,predict(plsr_model,TF_human))))
+
 # Convert them to differential TF activity
-annot <- read.delim('../../../Artificial-Signaling-Network/DrugsANNSignaling/data/uniprot-reviewed_yes+AND+organism__Homo+sapiens+(Human)+[9606]_.tab')
-annot <- annot %>% select(c('node'='Entry'),c('condition'='Gene.names...primary..')) %>% unique()
-annot <- rbind(annot,
-               data.frame(node=c('control','untreated','DMSO'),condition=c('control','untreated','DMSO'))) %>% 
-  filter(node %in% results_ko$condition)
-annot <- annot %>% group_by(condition) %>% mutate(counts = n_distinct(node)) %>% ungroup() %>%
-  mutate(condition = ifelse(counts>1,node,condition)) %>% select(-counts) %>% unique()
-annot <- annot %>% mutate(condition = ifelse(condition=='',node,condition))
 options(future.globals.maxSize = 2 * 1024^3) # 2 GiB
-Yinsilico <- foreach(i = seq(0,49)) %dopar% {
-  stimuli <- simulation %>% filter(model_no==i) %>% filter(type!='untreated') %>% select(IFNa,TGFb)
-  as.numeric(simulation$condition[simulation$model_no==i & simulation$type!='untreated'])
-  expreriment <- as.matrix(simulation %>% filter(model_no==i) %>% filter(type!='untreated') %>%
-                             select(-type,-model_no,-IFNa,-TGFb))
-  expreriment[expreriment>1] <-1
-  expreriment[expreriment<0] <-0
-  expreriment <- log((expreriment+1e-6)/(1 - expreriment + 1e-6))
-  colnames(expreriment) <- colnames(simulation)[1:104]
-  ## predict
-  yhat <- as.data.frame(predict(plsr_model,expreriment)) %>% mutate(model_no=i)
-  yhat <- cbind(yhat,stimuli)
-  yhat
-}
-Yinsilico <- do.call(rbind,Yinsilico)
-control <- as.matrix(simulation %>% filter(type=='untreated') %>%
-                       select(-type,-model_no,-IFNa,-TGFb))
-control[control>1] <-1
-control[control<0] <-0
-control <- log((control+1e-6)/(1 - control + 1e-6))
-colnames(control) <- colnames(simulation)[1:104]
-Ycontrol <- predict(plsr_model,control)
-mean_control_mas <- mean(Ycontrol[,1]) 
-se_control_mas <- sd(Ycontrol[,1])/sqrt(50)
-mean_control_fib <- mean(Ycontrol[,2]) 
-se_control_fib <- mean(Ycontrol[,2]) /sqrt(50)
-Yinsilico <- Yinsilico %>% gather('phenotype','score',-model_no,-IFNa,-TGFb) %>%
-  group_by(phenotype,IFNa,TGFb) %>% mutate(mu = mean(score)) %>% mutate(se=sd(score)/sqrt(50))
+stimuli <- simulation %>% select(-all_of(colnames(TF_human)))
+expreriment <- as.matrix(simulation %>% select(all_of(colnames(TF_human))))
+expreriment[expreriment>1] <-1
+expreriment[expreriment<0] <-0
+expreriment <- log((expreriment+1e-6)/(1 - expreriment + 1e-6))
+yhat <- as.data.frame(predict(plsr_model,expreriment))
+Yinsilico <- cbind(stimuli,yhat)
+
+
+
+# control <- as.matrix(simulation %>% filter(type=='untreated') %>%
+#                        select(-type,-model_no,-IFNa,-TGFb))
+# control[control>1] <-1
+# control[control<0] <-0
+# control <- log((control+1e-6)/(1 - control + 1e-6))
+# colnames(control) <- colnames(simulation)[1:104]
+# Ycontrol <- predict(plsr_model,control)
+# mean_control_mas <- mean(Ycontrol[,1]) 
+# se_control_mas <- sd(Ycontrol[,1])/sqrt(50)
+# mean_control_fib <- mean(Ycontrol[,2]) 
+# se_control_fib <- mean(Ycontrol[,2]) /sqrt(50)
+# Yinsilico <- Yinsilico %>% gather('phenotype','score',-model_no,-IFNa,-TGFb) %>%
+#   group_by(phenotype,IFNa,TGFb) %>% mutate(mu = mean(score)) %>% mutate(se=sd(score)/sqrt(50))
 
 ### Visualize simulation
-Yall <- Yinsilico %>%
-  mutate(phenotype = ifelse(phenotype=='NAS','MAS','Fibrosis stage'))
-Yall <- Yall %>% mutate(IFNa=as.numeric(IFNa)) %>% mutate(TGFb=as.numeric(TGFb))
-mas_plot <- ggplot(Yall %>% filter(phenotype=='MAS') %>% select(IFNa,TGFb,mu,se,phenotype) %>% unique(),
-                   aes(x=IFNa,y=TGFb,fill=mu))+
+Yinsilico <- Yinsilico %>% filter(description!='empty')
+Yall <- distinct(Yinsilico %>% 
+                   mutate(T_at_0h = ifelse(is.na(T_at_0h),0,T_at_0h)) %>%
+                   mutate(T_at_2h = ifelse(is.na(T_at_2h),0,T_at_2h)) %>%
+                   mutate(T_at_8h = ifelse(is.na(T_at_8h),0,T_at_8h)) %>%
+                   mutate(T_at_24h = ifelse(is.na(T_at_24h),0,T_at_24h)) %>%
+                   mutate(I_at_0h = ifelse(is.na(T_at_0h),0,T_at_0h)) %>%
+                   mutate(I_at_2h = ifelse(is.na(T_at_2h),0,T_at_2h)) %>%
+                   mutate(I_at_8h = ifelse(is.na(T_at_8h),0,T_at_8h)) %>%
+                   mutate(I_at_24h = ifelse(is.na(T_at_24h),0,T_at_24h)) %>%
+                   mutate(TGFBR1 = T_at_0h+T_at_2h+T_at_8h+T_at_24h) %>%
+                   mutate(IFNAR1 = I_at_0h+I_at_2h+I_at_8h+I_at_24h) %>%
+                   select(experiment,timepoint,description,IFNAR1,TGFBR1,NAS,fibrosis))
+mas_plot <- ggplot(Yall,aes(x=TGFBR1,y=IFNAR1,fill=NAS))+
   geom_tile()+
-  scale_fill_gradient2(midpoint = mean_control_mas)+
-  labs(fill='MAS',x = 'stimulation of IFNAR1',y='stimulation of TGFBR1')+
+  scale_fill_gradient2(midpoint = 3)+
+   labs(fill='MAS',x = 'stimulation of IFNAR1',y='stimulation of TGFBR1')+
   scale_x_continuous(n.breaks = 10)+
   scale_y_continuous(n.breaks = 10)+
   geom_hline(yintercept = 0,lwd=1,color='black')+
-  geom_vline(xintercept = 0,lwd=1,color='black')
+  geom_vline(xintercept = 0,lwd=1,color='black') + 
+  facet_wrap(vars(experiment,timepoint))
 mas_plot <- add_theme(mas_plot) + 
   theme(legend.position = 'top',text = element_text(size=20),
         panel.border = element_blank(),
         panel.grid = element_blank())
 print(mas_plot)
-ggsave(filename = "../figures/expanded_ifna_tgfb_combo_mas_plot.pdf", plot = mas_plot, 
-       device = cairo_pdf,
-       units = "cm", width = 16, height = 12)
 
-fib_plot <- ggplot(Yall %>% filter(phenotype!='MAS') %>% select(IFNa,TGFb,mu,se,phenotype) %>% unique(),
-                   aes(x=IFNa,y=TGFb,fill=mu))+
+
+fib_plot <-ggplot(Yall,aes(x=TGFBR1,y=IFNAR1,fill=fibrosis))+
   geom_tile()+
-  scale_fill_gradient2(midpoint = mean_control_fib)+
-  labs(fill='Fibrosis stage',x = 'stimulation of IFNAR1',y='stimulation of TGFBR1')+
+  scale_fill_gradient2(midpoint = 3)+
+  labs(fill='MAS',x = 'stimulation of IFNAR1',y='stimulation of TGFBR1')+
   scale_x_continuous(n.breaks = 10)+
   scale_y_continuous(n.breaks = 10)+
   geom_hline(yintercept = 0,lwd=1,color='black')+
-  geom_vline(xintercept = 0,lwd=1,color='black')
+  geom_vline(xintercept = 0,lwd=1,color='black') + 
+  facet_wrap(vars(experiment,timepoint))
 fib_plot <- add_theme(fib_plot) +
   theme(legend.position = 'top',text = element_text(size=20),
         panel.border = element_blank(),
         panel.grid = element_blank())
 print(fib_plot)
-ggsave(filename = "../figures/expanded_ifna_tgfb_combo_fibrosis_plot.pdf", plot = fib_plot, 
-       device = cairo_pdf,
-       units = "cm", width = 16, height = 12)

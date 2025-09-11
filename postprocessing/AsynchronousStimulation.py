@@ -2,405 +2,188 @@ import os
 import numpy as np
 import pandas as pd
 import torch
-import sys 
+import sys
+import itertools
+import time
+from pathlib import Path
+
+# --- Setup: Ensure LEMBAS utilities can be found ---
 gpu_lembas_path = 'C:/Users/nmeim/Documents/Artificial-Signaling-Network/LEMBAS-main'
-sys.path.insert(1,os.path.join(gpu_lembas_path))
+assert os.path.isdir(gpu_lembas_path), f"LEMBAS library path not found. Please check the path: {gpu_lembas_path}"
+sys.path.insert(1, os.path.join(gpu_lembas_path))
+from utility import SignalingModel, format_network, utils
+
 import argparse
 import logging
-from pathlib import Path
-from utility import *
-import time
-import itertools
+
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger()
 print2log = logger.info
 
-parser = argparse.ArgumentParser(description='Chained asynchronous node stimulation across timepoints')
-parser.add_argument('--TargetsIn', action='store', type=str,
-                    default='../preprocessing/preprocessed_data/PKN/Hepatocytes_DTI_mask.tsv')
-parser.add_argument('--DrugsIn', action='store', type=str,
-                    default='../preprocessing/preprocessed_data/TrainingValidationData/Hepatocytes_input_conditions.tsv')
-parser.add_argument('--TFsOut', action='store', type=str,
-                    default='../preprocessing/preprocessed_data/TF_activities/Trimmed_TFacitivities_hepatocytes_microarray.tsv')
-parser.add_argument('--ChemicalSims', action='store', type=str,
-                    default='../preprocessing/preprocessed_data/ChemicalSims/microarray_similarities.csv')
-parser.add_argument('--PknAnnotation', action='store', type=str,
-                    default='../preprocessing/preprocessed_data/PKN/Hepatocytes-PKN-Annotation.tsv')
-parser.add_argument('--PKN', action='store', type=str,
-                    default='../preprocessing/preprocessed_data/PKN/Hepatocytes-PKN-Model.tsv')
+# --- Argument Parsing ---
+parser = argparse.ArgumentParser(description='Run a series of chained, asynchronous node stimulation experiments.')
+# Model/Data Paths
+parser.add_argument('--PKN', action='store', type=str, default='../preprocessing/preprocessed_data/PKN/Hepatocytes-PKN-Model.tsv')
+parser.add_argument('--TargetsIn', action='store', type=str, default='../preprocessing/preprocessed_data/PKN/Hepatocytes_DTI_mask.tsv')
+parser.add_argument('--TFsOut', action='store', type=str, default='../preprocessing/preprocessed_data/TF_activities/Trimmed_TFacitivities_hepatocytes_microarray.tsv')
 parser.add_argument('--res_dir', action='store', type=str, default='../results/')
-parser.add_argument('--infoPath', action='store', type=str,
-                    default='../preprocessing/preprocessed_data/TrainingValidationData/Hepatocytes_inputdataInfo.tsv')
+# Model Hyperparameters
 parser.add_argument('--modelPattern', action='store', type=str, default='hepatocytes_dtlembas')
 parser.add_argument('--inputAmplitude', action='store', type=float, default=1.0)
 parser.add_argument('--projectionAmplitude', action='store', type=float, default=1.2)
 parser.add_argument('--max_LEMBAS_iterations', action='store', type=int, default=90)
 parser.add_argument('--LEMBAS_leak', action='store', type=float, default=0.01)
-parser.add_argument('--LEMBAS_tolerance', action='store', default=1e-5)
-parser.add_argument('--drug_bn', action='store', default=0.2)
-parser.add_argument('--drug_drop', action='store', default=0.1)
-parser.add_argument('--annotation_file_for_visualization', action='store', type=str,
-                    default='../data/annotation.csv')
-parser.add_argument('--stimulation_strength', action='store', type=float, default=3000.0)
-parser.add_argument('--grid_points', type=int, default=11, # it was 201 in the original code
-                    help='Number of interpolation points per cytokine in [-stimulation_strength, +stimulation_strength]')
-parser.add_argument('--num_steps', action='store', type=float, default=201)  # kept, unused here
-parser.add_argument('--selected_stimulation_nodes', metavar='N', type=str, nargs='*', action='store',
-                    help='Selected signaling nodes to stimulate (two nodes: e.g., [TGFb, IFNa])',
-                    default=['P36897', 'P17181'])  # [TGFb, IFNa] by your convention
-parser.add_argument('--ConvertToEmpProb', action='store_true', default=False)
+parser.add_argument('--LEMBAS_tolerance', action='store', type=float, default=1e-5)
 parser.add_argument('--number_DTLEMBAS_models', action='store', type=int, default=50)
-parser.add_argument('--TIME_ORDER', metavar='N', type=str, nargs='*', action='store',
-                    help='Selected time points and order of time points',
-                    default=["2 hour", "8 hour", "24 hour"])
-parser.add_argument('--selected_signaling_nodes', metavar='N', type=str, nargs='*', action='store',
-                    help='Signaling nodes to optionally save / inspect',
-                    default=['P42226','P42229','P51692','P40763','P52630','P42224','Q14765',
-                             'Q15797','Q15796','P84022','Q13485','Q99717','O43541',
-                             'P17181','P48551','P15260','P38484',
-                             'P10914','Q00978','Q14653',
-                             'P05231','Q13651'])
-parser.add_argument(
-    '--ensemble_mode',
-    choices=['avg_then_chain', 'chain_then_avg'],
-    default='avg_then_chain',
-    help=('avg_then_chain: average the ensemble at each timepoint and carry the mean; '
-          'chain_then_avg: propagate each model’s state across time and only average for output')
-)
+# Simulation Parameters
+parser.add_argument('--stimulation_strength', action='store', type=float, default=3000.0)
+parser.add_argument('--grid_points', type=int, default=11, help='Number of points in the stimulation grid for each cytokine.')
+parser.add_argument('--selected_stimulation_nodes', metavar='N', type=str, nargs='*', default=['P36897', 'P17181']) # TGFb, IFNa
+
 args = parser.parse_args()
 
-# --- timepoints & where to find the weights for each time ---
-TIME_ORDER = args.TIME_ORDER
+# --- Basic Setup ---
+TIME_ORDER = ["2 hour", "8 hour", "24 hour"]
+TIME_MAP = {"0h": 0, "2h": 2, "8h": 8, "24h": 24} # For numeric time values
 res_dir = args.res_dir
-# Example folder mapping; adjust to your layout
 TIME_DIRS = {
     "2 hour":  os.path.join(res_dir, "2 hour",  "allmodels"),
-    "8 hour":  os.path.join(res_dir,"allmodels"), # adjust if needed
+    "8 hour":  os.path.join(res_dir, "allmodels"),
     "24 hour": os.path.join(res_dir, "24 hour", "allmodels"),
 }
-
-### Initialize input variables
-TargetsIn = args.TargetsIn
-DrugsIn = args.DrugsIn
-TFsOut = args.TFsOut
-ChemicalSims = args.ChemicalSims
-PknAnnotation = args.PknAnnotation
-PKN = args.PKN
-infoPath = args.infoPath
-modelPattern = args.modelPattern
-projection_amplitude_in = args.inputAmplitude
-projection_amplitude_out = args.projectionAmplitude
-ConvertToEmpProb = args.ConvertToEmpProb
-number_DTLEMBAS_models = args.number_DTLEMBAS_models
-stimulation_strength = args.stimulation_strength
-selected_signaling_nodes = np.array(args.selected_signaling_nodes)
-selected_stimulation_nodes = np.array(args.selected_stimulation_nodes)
-grid_points = args.grid_points
-
-# Initialize cores and device
-n_cores = 12
-utils.set_cores(n_cores)
+utils.set_cores(12)
 device = "cuda" if torch.cuda.is_available() else "cpu"
-print2log('Running on {}'.format(device))
+print2log(f'Running on {device}')
 
-# ensure result dirs
-Path(res_dir).mkdir(parents=True, exist_ok=True)
-data_path = res_dir  # we keep this name since the loader uses it
+# --- Data and Model Loading ---
+print2log("Loading data and initializing models...")
+net = pd.read_csv(args.PKN, sep='\t', usecols=['source', 'target', 'stimulation', 'inhibition'])
+drugTargets = pd.read_csv(args.TargetsIn, sep='\t', index_col=0)
+TFOutput = pd.read_csv(args.TFsOut, sep='\t', index_col=0)
 
-# ─────────────────────────────────────────────────────────────
-# Load PKN, inputs/outputs, annotations — unchanged
-# ─────────────────────────────────────────────────────────────
-net = pd.read_csv(PKN, sep='\t', index_col=False).loc[:, ['source', 'target', 'stimulation', 'inhibition']]
-drugInput = pd.read_csv(DrugsIn, sep='\t', index_col=0)
-TFOutput = pd.read_csv(TFsOut, sep='\t', low_memory=False, index_col=0)
-annot = pd.read_csv(args.annotation_file_for_visualization)
-drugTargets = pd.read_csv(TargetsIn, sep='\t', low_memory=False, index_col=0)
-inputInfo = pd.read_csv(infoPath, sep='\t', low_memory=False, index_col=0)
-
-# labels expected by utility.format_network / model
-weight_label = 'weight'
-source_label = 'source'
-target_label = 'target'
-stimulation_label = 'stimulation'
-inhibition_label = 'inhibition'
-
-# format PKN
-net = format_network(
-    net,
-    weight_label=weight_label,
-    stimulation_label=stimulation_label,
-    inhibition_label=inhibition_label
-)
-
-# Align tables to shared nodes
+# Align dataframes
+weight_label, source_label, target_label = 'weight', 'source', 'target'
+net = format_network(net, weight_label=weight_label, stimulation_label='stimulation', inhibition_label='inhibition')
 nodeNames = np.array(list(set(net[source_label]).union(set(net[target_label]))))
-inName = drugTargets.columns.values
-outconds = TFOutput.index.values
-outName = TFOutput.columns.values
-inName = np.intersect1d(nodeNames, inName)
-outName = np.intersect1d(nodeNames, outName)
-TFOutput = TFOutput.loc[outconds, outName]
+inName = np.intersect1d(nodeNames, drugTargets.columns.values)
+outName = np.intersect1d(nodeNames, TFOutput.columns.values)
+TFOutput = TFOutput.loc[:, outName]
 drugTargets = drugTargets.loc[:, inName]
-if ConvertToEmpProb:
-    print2log('Convereted TF outputs to empirical probabilities')
-    TFOutput = 1.0 / (1.0 + np.exp(-TFOutput))
-drugInput = drugInput.loc[:, drugTargets.index] if 'Control' in drugInput.columns else drugInput
-drugSim = pd.read_csv(ChemicalSims, index_col=0)
-drugSim = drugSim.loc[drugInput.columns.values, drugInput.columns.values]
-drugSim = torch.tensor(drugSim.values.copy(), dtype=torch.double)
 
-# masks / model init
-mask_dt = torch.tensor(np.array(drugTargets)).transpose(0, 1)
-bionet_params = {
-    'target_steps': 100,
-    'max_steps': args.max_LEMBAS_iterations,
-    'exp_factor': 50,
-    'tolerance': args.LEMBAS_tolerance,
-    'leak': args.LEMBAS_leak
-}
+# Initialize model
+bionet_params = {'max_steps': args.max_LEMBAS_iterations, 'leak': args.LEMBAS_leak, 'tolerance': args.LEMBAS_tolerance}
+mod = SignalingModel(net=net, X_in=drugTargets, y_out=TFOutput, projection_amplitude_in=args.inputAmplitude,
+                     projection_amplitude_out=args.projectionAmplitude, bionet_params=bionet_params,
+                     weight_label=weight_label, source_label=source_label, target_label=target_label,
+                     dtype=torch.double, device=device).to(device)
 
-mod = SignalingModel(
-    net=net,
-    X_in=drugTargets,
-    y_out=TFOutput,
-    projection_amplitude_in=projection_amplitude_in,
-    projection_amplitude_out=projection_amplitude_out,
-    weight_label=weight_label,
-    source_label=source_label,
-    target_label=target_label,
-    bionet_params=bionet_params,
-    dtype = torch.double,
-    device=device
-).to(device)
-
-# drugLayer = DrugstoSignal(mask_dt,
-#                           mask_dt.shape[1], mask_dt.shape[0],
-#                           drugSim, momentum=args.drug_bn, drop=args.drug_drop,
-#                           device=device).to(device)
-
-print2log('Initialize node stimulation parameters…')
-all_nodes = np.array(list(mod.node_idx_map.keys()))
 all_tfs = mod.y_out.columns.values
-num_nodes = len(all_nodes)
-num_tfs = mod.y_out.shape[1]
-
-# # Select specific nodes (keep your pattern): e.g., first=TGFb, second=IFNa
-# subset_nodes = {k: mod.node_idx_map[k] for k in selected_stimulation_nodes if k in mod.node_idx_map}
-# subset_nodes_inds = np.array(list(subset_nodes.values()))
-# subset_nodes_names = np.array(list(subset_nodes.keys()))
-# assert len(subset_nodes_inds) == 2, "Please pass exactly two stimulation nodes (e.g., [TGFb, IFNa])."
-
-# Select some signaling nodes to save their activity state for later
-subset_signaling_nodes = {k: mod.node_idx_map[k] for k in selected_signaling_nodes if k in mod.node_idx_map}
-subset_signaling_nodes_inds = np.array(list(subset_signaling_nodes.values()))
-subset_signaling_nodes_names = np.array(list(subset_signaling_nodes.keys()))
-
-# One-hot basis for node stim
-Xin_eye = torch.eye(num_nodes, dtype=torch.double, device=device)
-
-# ---- Explicit, ordered mapping of stimulation nodes (TGFb first, IFNa second) ----
+num_nodes = len(mod.node_idx_map)
 tgfb_name, ifna_name = args.selected_stimulation_nodes[:2]
-if tgfb_name not in mod.node_idx_map or ifna_name not in mod.node_idx_map:
-    raise KeyError(f"Selected nodes not in network: "
-                   f"{tgfb_name in mod.node_idx_map=}, {ifna_name in mod.node_idx_map=}")
-
 idx_tgfb = int(mod.node_idx_map[tgfb_name])
 idx_ifna = int(mod.node_idx_map[ifna_name])
-# Row basis for each stimulation (shape: 1 × n_nodes), double dtype on the correct device
-e_T = Xin_eye[idx_tgfb, :].unsqueeze(0).to(device=device, dtype=torch.double)
-e_I = Xin_eye[idx_ifna, :].unsqueeze(0).to(device=device, dtype=torch.double)
+e_T = torch.eye(num_nodes, dtype=torch.double, device=device)[idx_tgfb, :].unsqueeze(0)
+e_I = torch.eye(num_nodes, dtype=torch.double, device=device)[idx_ifna, :].unsqueeze(0)
 
-print2log(f"Stim nodes: TGFb='{tgfb_name}' @ {idx_tgfb}, IFNa='{ifna_name}' @ {idx_ifna}")
-
-# ─────────────────────────────────────────────────────────────
-# Timepoint handling & ensemble averaging (unchanged pattern)
-# ─────────────────────────────────────────────────────────────
-if not all(os.path.isdir(TIME_DIRS[tp]) for tp in TIME_ORDER):
-    TIME_DIRS = {tp: res_dir for tp in TIME_ORDER}
-    print2log("Timepoint model folders not found under res_dir; using res_dir for all timepoints.")
-
+# --- Core Simulation Functions ---
 def load_timepoint_weights(tp: str, i_model: int):
-    sig_path = os.path.join(TIME_DIRS[tp], f"{modelPattern}{i_model}signal_state_dict_{i_model}.pth")
-    try:
-        sd_sig = torch.load(sig_path, map_location=device, weights_only=True)
-    except TypeError:
-        sd_sig = torch.load(sig_path, map_location=device)
-    mod.load_state_dict(sd_sig)
+    sig_path = os.path.join(TIME_DIRS[tp], f"{args.modelPattern}{i_model}signal_state_dict_{i_model}.pth")
+    mod.load_state_dict(torch.load(sig_path, map_location=device, weights_only=True))
     mod.eval()
-    mod.signaling_network.weights.data.masked_fill_(mask = mod.signaling_network.mask, value = 0.0)
 
 @torch.no_grad()
-def custom_ensemble_step_mean(tp: str, X_in_nodes: torch.Tensor, number_DTLEMBAS_models: int):
-    B = X_in_nodes.size(0)
-    sum_full = torch.zeros_like(X_in_nodes)
-    sum_tf = torch.zeros(B, num_tfs, device=device, dtype=torch.double)
-    for i in range(1, number_DTLEMBAS_models + 1):
+def ensemble_step_mean(tp: str, X_in_nodes: torch.Tensor):
+    """Averages the ensemble predictions for a given input batch at a specific timepoint."""
+    sum_full_state = torch.zeros_like(X_in_nodes)
+    sum_tf = torch.zeros(X_in_nodes.size(0), len(all_tfs), device=device, dtype=torch.double)
+    for i in range(1, args.number_DTLEMBAS_models + 1):
         load_timepoint_weights(tp, i)
-        # Instead of running Yfull = mod.signaling_network(X_in_nodes), customely run Bionet's forward pass
-        X_bias = mod.signaling_network.bias # this is the bias with the projection_amplitude included
-        # As X_new we are going to use initially X_in_nodes
-        X_new = X_in_nodes.T
-        for t in range(mod.signaling_network.training_params['max_steps']): # like an RNN, updating from previous time step
-            X_old = X_new
-            X_new = torch.mm(mod.signaling_network.weights, X_new) # scale matrix by edge weights
-            X_new = X_new + X_bias  # add original values and bias       
-            X_new = mod.signaling_network.activation(X_new, mod.signaling_network.training_params['leak'])
-            if (t % 10 == 0) and (t > 20):
-                diff = torch.max(torch.abs(X_new - X_old))    
-                if diff.lt(mod.signaling_network.training_params['tolerance']):
-                    break
-        Yfull = X_new.T
-        TF = mod.output_layer(Yfull)
-        sum_full += Yfull
-        sum_tf += TF
-    return sum_full / number_DTLEMBAS_models, sum_tf / number_DTLEMBAS_models
+        Y_full_state = mod.signaling_network(X_in_nodes)
+        Y_tf = mod.output_layer(Y_full_state)
+        sum_full_state += Y_full_state
+        sum_tf += Y_tf
+    return sum_full_state / args.number_DTLEMBAS_models, sum_tf / args.number_DTLEMBAS_models
 
-# ─────────────────────────────────────────────────────────────
-# Function to pre-calculate all simulation paths
-# ─────────────────────────────────────────────────────────────
-@torch.no_grad()
-def create_stimulation_plan(steps, tgfb_grid, ifna_grid):
-    stim_events = {}
-    for tp, t_amp, i_amp, _ in steps:
-        if t_amp != 0.0: stim_events.setdefault(tp, []).append('T')
-        if i_amp != 0.0: stim_events.setdefault(tp, []).append('I')
-
-    grid_map = []
-    # Identify which stimuli are applied at which timepoint
-    for tp in TIME_ORDER:
-        if tp in stim_events:
-            stim_types = stim_events[tp]
-            if 'T' in stim_types and 'I' in stim_types:
-                grid_map.append({'tp': tp, 'type': 'both', 'grids': (tgfb_grid, ifna_grid)})
-            elif 'T' in stim_types:
-                grid_map.append({'tp': tp, 'type': 'T_only', 'grids': (tgfb_grid,)})
-            elif 'I' in stim_types:
-                grid_map.append({'tp': tp, 'type': 'I_only', 'grids': (ifna_grid,)})
-
-    if not grid_map:
-        path_combinations = [(0.0,)]
-    else:
-        all_grids = [itertools.product(*g['grids']) if g['type'] == 'both' else g['grids'][0] for g in grid_map]
-        path_combinations = list(itertools.product(*all_grids))
-
-    num_paths = len(path_combinations)
-    path_info = pd.DataFrame(index=range(num_paths), columns=['T_at_0h', 'I_at_0h', 'T_at_2h', 'I_at_2h', 'T_at_8h', 'I_at_8h']).fillna(0.0)
-    stim_plan = {tp: torch.zeros(num_paths, num_nodes, device=device, dtype=torch.double) for tp in TIME_ORDER}
-
-    combo_idx = 0
-    for path_idx, combo_tuple in enumerate(path_combinations):
-        flat_combo = []
-        for item in combo_tuple:
-            if isinstance(item, tuple): flat_combo.extend(item)
-            else: flat_combo.append(item)
-        
-        val_idx = 0
-        for event in grid_map:
-            tp = event['tp']
-            key_2h = tp.split(" ")[0]
-            if event['type'] == 'both':
-                t_val = flat_combo[val_idx]; i_val = flat_combo[val_idx + 1]
-                stim_plan[tp][path_idx, :] += (e_T * t_val + e_I * i_val).squeeze(0)
-                path_info.loc[path_idx, f'T_at_{key_2h}h'] = t_val.item(); path_info.loc[path_idx, f'I_at_{key_2h}h'] = i_val.item()
-                val_idx += 2
-            elif event['type'] == 'T_only':
-                t_val = flat_combo[val_idx]
-                stim_plan[tp][path_idx, :] += (e_T * t_val).squeeze(0)
-                path_info.loc[path_idx, f'T_at_{key_2h}h'] = t_val.item()
-                val_idx += 1
-            elif event['type'] == 'I_only':
-                i_val = flat_combo[val_idx]
-                stim_plan[tp][path_idx, :] += (e_I * i_val).squeeze(0)
-                path_info.loc[path_idx, f'I_at_{key_2h}h'] = i_val.item()
-                val_idx += 1
-    
-    return stim_plan, path_info, num_paths
-
-
-def exp_definitions(amp):
-    T, I = amp, amp
+def define_experiments():
+    """Defines the 9 experimental protocols in a structured way for easy lookup."""
     return [
-        ("Exp1", [("2 hour", T, I, "apply TGFb & IFNa at 0h"), ("8 hour", 0, 0, "carry"), ("24 hour", 0, 0, "carry")]),
-        ("Exp2", [("2 hour", 0, 0, "empty"), ("8 hour", T, I, "add TGFb & IFNa at 2h"), ("24 hour", 0, 0, "carry")]),
-        ("Exp3", [("8 hour", 0, 0, "empty"), ("24 hour", T, I, "add TGFb & IFNa at 8h")]),
-        ("Exp4", [("2 hour", T, 0, "apply TGFb at 0h"), ("8 hour", 0, I, "add IFNa at 2h"), ("24 hour", 0, 0, "carry")]),
-        ("Exp5", [("8 hour", T, 0, "apply TGFb at 0h"), ("24 hour", 0, I, "add IFNa at 8h")]),
-        ("Exp6", [("2 hour", 0, 0, "empty"), ("8 hour", T, 0, "add TGFb at 2h"), ("24 hour", 0, I, "add IFNa at 8h")]),
-        ("Exp7", [("2 hour", 0, I, "apply IFNa at 0h"), ("8 hour", T, 0, "add TGFb at 2h"), ("24 hour", 0, 0, "carry")]),
-        ("Exp8", [("8 hour", 0, I, "apply IFNa at 0h"), ("24 hour", T, 0, "add TGFb at 8h")]),
-        ("Exp9", [("2 hour", 0, 0, "empty"), ("8 hour", 0, I, "add IFNa at 2h"), ("24 hour", T, 0, "add TGFb at 8h")]),
+        ("Exp1", {"TGFb": "0h", "IFNa": "0h"}),
+        ("Exp2", {"TGFb": "2h", "IFNa": "2h"}),
+        ("Exp3", {"TGFb": "8h", "IFNa": "8h"}),
+        ("Exp4", {"TGFb": "0h", "IFNa": "2h"}),
+        ("Exp5", {"TGFb": "0h", "IFNa": "8h"}),
+        ("Exp6", {"TGFb": "2h", "IFNa": "8h"}),
+        ("Exp7", {"TGFb": "2h", "IFNa": "0h"}), # Reversed order from Exp4
+        ("Exp8", {"TGFb": "8h", "IFNa": "0h"}), # Reversed order from Exp5
+        ("Exp9", {"TGFb": "8h", "IFNa": "2h"}), # Reversed order from Exp6
     ]
 
+# --- Main Execution Logic ---
+def main():
+    print2log("Starting asynchronous stimulation experiments...")
+    start_time = time.time()
+    
+    out_dir = os.path.join(res_dir, "async_experiments_tidy")
+    Path(out_dir).mkdir(parents=True, exist_ok=True)
 
+    experiments = define_experiments()
+    tgfb_grid = torch.linspace(-args.stimulation_strength, args.stimulation_strength, args.grid_points, device=device, dtype=torch.double)
+    ifna_grid = torch.linspace(-args.stimulation_strength, args.stimulation_strength, args.grid_points, device=device, dtype=torch.double)
+    
+    all_results_list = []
 
-# ─────────────────────────────────────────────────────────────
-# Execute experiments
-# ─────────────────────────────────────────────────────────────
-print2log(f"Begin asynchronous experiments ({args.ensemble_mode})…")
-out_dir = os.path.join(res_dir, "chained_async")
-Path(out_dir).mkdir(parents=True, exist_ok=True)
-
-all_results = []
-start_time = time.time()
-experiments = exp_definitions(stimulation_strength)
-
-# Define stimulation grids once
-tgfb_grid = torch.linspace(-stimulation_strength, stimulation_strength, grid_points, device=device, dtype=torch.double)
-ifna_grid = torch.linspace(-stimulation_strength, stimulation_strength, grid_points, device=device, dtype=torch.double)
-
-for exp_name, steps in experiments:
-    print2log(f'Begun Experiment: {exp_name}')
-
-    # NEW: Pre-calculate the stimulation plan for all parallel simulation paths
-    active_timepoints = [s[0] for s in steps]
-    stim_plan, path_info, num_paths = create_stimulation_plan(steps, tgfb_grid, ifna_grid)
-
-    # --- Run simulation based on ensemble mode ---
-    if args.ensemble_mode == 'avg_then_chain':
+    for exp_name, stim_protocol in experiments:
+        print2log(f"--- Running Experiment: {exp_name} ---")
+        
+        # 1. Create all combinations of stimulus strengths
+        path_combinations = list(itertools.product(tgfb_grid, ifna_grid))
+        num_paths = len(path_combinations)
+        
+        # 2. Initialize master state for this experiment's simulations
         master_states = torch.zeros(num_paths, num_nodes, device=device, dtype=torch.double)
-        for tp in active_timepoints:
-            X_in = master_states + stim_plan[tp]
-            mean_full, mean_tf = custom_ensemble_step_mean(tp, X_in, number_DTLEMBAS_models)
+
+        # 3. Iterate through the time course (0h -> 2h -> 8h -> 24h)
+        previous_time_h = 0
+        for measurement_tp_str in TIME_ORDER:
+            # --- Construct the dictionary key correctly (e.g., "2h") ---
+            measurement_time_h = TIME_MAP[f"{measurement_tp_str.split(' ')[0]}h"]
             
-            df = pd.DataFrame(mean_tf.detach().cpu().numpy(), columns=all_tfs)
-            df['timepoint'] = tp
-            all_results.append(pd.concat([path_info.reset_index(drop=True), df], axis=1))
-
-            master_states = mean_full.detach()
-
-    elif args.ensemble_mode == 'chain_then_avg':
-        states_per_model = [torch.zeros(num_paths, num_nodes, device=device, dtype=torch.double) for _ in range(number_DTLEMBAS_models)]
-        for tp in active_timepoints:
-            sum_tf = torch.zeros(num_paths, num_tfs, device=device, dtype=torch.double)
-            next_states_per_model = []
+            # Apply any stimulations scheduled for the *start* of this time interval
+            stim_tensor = torch.zeros(num_paths, num_nodes, device=device, dtype=torch.double)
+            for path_idx, (t_val, i_val) in enumerate(path_combinations):
+                if stim_protocol.get("TGFb") == f"{previous_time_h}h":
+                    # Use .squeeze(0) to match tensor dimensions for the in-place addition
+                    stim_tensor[path_idx, :] += e_T.squeeze(0) * t_val
+                if stim_protocol.get("IFNa") == f"{previous_time_h}h":
+                    stim_tensor[path_idx, :] += e_I.squeeze(0) * i_val
             
-            for i in range(number_DTLEMBAS_models):
-                load_timepoint_weights(tp, i + 1)
-                X_in = states_per_model[i] + stim_plan[tp]
-                Yfull = mod.signaling_network(X_in)
-                TF = mod.output_layer(Yfull)
-                sum_tf += TF
-                next_states_per_model.append(Yfull.detach())
+            X_in = master_states + stim_tensor
             
-            mean_tf = sum_tf / number_DTLEMBAS_models
-            df = pd.DataFrame(mean_tf.detach().cpu().numpy(), columns=all_tfs)
-            df['timepoint'] = tp
-            all_results.append(pd.concat([path_info.reset_index(drop=True), df], axis=1))
-            
-            states_per_model = next_states_per_model
+            # Run simulation using the model for the current measurement timepoint
+            mean_full_state, mean_tf = ensemble_step_mean(measurement_tp_str, X_in)
 
-    # Add experiment name to the results collected in this loop
-    for df in all_results[-len(active_timepoints):]:
-        df['experiment'] = exp_name
-        df['description'] = next((s[3] for s in steps if s[0] == df['timepoint'].iloc[0]), "")
+            # Store results in the requested tidy format
+            df = pd.DataFrame(mean_tf.cpu().numpy(), columns=all_tfs)
+            df['experiment'] = exp_name
+            df['TGFb_strength'] = [c[0].item() for c in path_combinations]
+            df['IFNa_strength'] = [c[1].item() for c in path_combinations]
+            df['TGFb_applied_at'] = stim_protocol.get("TGFb", "None")
+            df['IFNa_applied_at'] = stim_protocol.get("IFNa", "None")
+            df['measured_at'] = f"{measurement_time_h}h"
+            all_results_list.append(df)
 
+            # Update state for the next step ("carry-on")
+            master_states = mean_full_state.detach()
+            previous_time_h = measurement_time_h
 
-# --- Finalize and Save ---
-final_df = pd.concat(all_results, ignore_index=True)
-out_csv = os.path.join(out_dir, f'TFs_chained_async_{args.ensemble_mode}.csv')
-final_df.to_csv(out_csv, index=False)
+    # 4. Finalize and save all data
+    final_df = pd.concat(all_results_list, ignore_index=True)
+    out_csv = os.path.join(out_dir, 'async_stimulation_results_tidy.csv')
+    final_df.to_csv(out_csv, index=False)
+    
+    elapsed = time.time() - start_time
+    print2log(f"\nSaved all results to {out_csv}")
+    print2log(f"All experiments finished in {elapsed/60:.1f} min.")
 
-elapsed = time.time() - start_time
-print2log(f"Saved results → {out_csv}")
-print2log(f"Total time: {elapsed/60:.1f} min")
-print2log("Finished!")
+if __name__ == "__main__":
+    main()
