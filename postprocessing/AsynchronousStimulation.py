@@ -37,14 +37,14 @@ parser.add_argument('--LEMBAS_tolerance', action='store', type=float, default=1e
 parser.add_argument('--number_DTLEMBAS_models', action='store', type=int, default=50)
 # Simulation Parameters
 parser.add_argument('--stimulation_strength', action='store', type=float, default=3000.0)
-parser.add_argument('--grid_points', type=int, default=11, help='Number of points in the stimulation grid for each cytokine.')
+parser.add_argument('--grid_points', type=int, default=201, help='Number of points in the stimulation grid for each cytokine.')
 parser.add_argument('--selected_stimulation_nodes', metavar='N', type=str, nargs='*', default=['P36897', 'P17181']) # TGFb, IFNa
 
 args = parser.parse_args()
 
 # --- Basic Setup ---
 TIME_ORDER = ["2 hour", "8 hour", "24 hour"]
-TIME_MAP = {"0h": 0, "2h": 2, "8h": 8, "24h": 24} # For numeric time values
+TIME_MAP = {"0h": 0, "2h": 2, "8h": 8, "24h": 24} 
 res_dir = args.res_dir
 TIME_DIRS = {
     "2 hour":  os.path.join(res_dir, "2 hour",  "allmodels"),
@@ -107,15 +107,11 @@ def ensemble_step_mean(tp: str, X_in_nodes: torch.Tensor):
 def define_experiments():
     """Defines the 9 experimental protocols in a structured way for easy lookup."""
     return [
-        ("Exp1", {"TGFb": "0h", "IFNa": "0h"}),
-        ("Exp2", {"TGFb": "2h", "IFNa": "2h"}),
-        ("Exp3", {"TGFb": "8h", "IFNa": "8h"}),
-        ("Exp4", {"TGFb": "0h", "IFNa": "2h"}),
-        ("Exp5", {"TGFb": "0h", "IFNa": "8h"}),
-        ("Exp6", {"TGFb": "2h", "IFNa": "8h"}),
-        ("Exp7", {"TGFb": "2h", "IFNa": "0h"}), # Reversed order from Exp4
-        ("Exp8", {"TGFb": "8h", "IFNa": "0h"}), # Reversed order from Exp5
-        ("Exp9", {"TGFb": "8h", "IFNa": "2h"}), # Reversed order from Exp6
+        ("Exp1", {"TGFb": "0h", "IFNa": "0h"}), ("Exp2", {"TGFb": "2h", "IFNa": "2h"}),
+        ("Exp3", {"TGFb": "8h", "IFNa": "8h"}), ("Exp4", {"TGFb": "0h", "IFNa": "2h"}),
+        ("Exp5", {"TGFb": "0h", "IFNa": "8h"}), ("Exp6", {"TGFb": "2h", "IFNa": "8h"}),
+        ("Exp7", {"TGFb": "2h", "IFNa": "0h"}), ("Exp8", {"TGFb": "8h", "IFNa": "0h"}),
+        ("Exp9", {"TGFb": "8h", "IFNa": "2h"}),
     ]
 
 # --- Main Execution Logic ---
@@ -123,6 +119,7 @@ def main():
     print2log("Starting asynchronous stimulation experiments...")
     start_time = time.time()
     
+    # --- MODIFIED: New output directory for this version of the script ---
     out_dir = os.path.join(res_dir, "async_experiments_tidy")
     Path(out_dir).mkdir(parents=True, exist_ok=True)
 
@@ -135,34 +132,44 @@ def main():
     for exp_name, stim_protocol in experiments:
         print2log(f"--- Running Experiment: {exp_name} ---")
         
-        # 1. Create all combinations of stimulus strengths
         path_combinations = list(itertools.product(tgfb_grid, ifna_grid))
         num_paths = len(path_combinations)
         
-        # 2. Initialize master state for this experiment's simulations
-        master_states = torch.zeros(num_paths, num_nodes, device=device, dtype=torch.double)
+        # --- Determine if the experiment is 'simultaneous' or 'sequential' ---
+        stim_times = set(stim_protocol.values())
+        is_sequential = len(stim_times) > 1
 
-        # 3. Iterate through the time course (0h -> 2h -> 8h -> 24h)
+        master_states = torch.zeros(num_paths, num_nodes, device=device, dtype=torch.double)
+        initial_input_for_direct_pass = None # Will store the initial state for simultaneous experiments
+
         previous_time_h = 0
         for measurement_tp_str in TIME_ORDER:
-            # --- Construct the dictionary key correctly (e.g., "2h") ---
             measurement_time_h = TIME_MAP[f"{measurement_tp_str.split(' ')[0]}h"]
             
-            # Apply any stimulations scheduled for the *start* of this time interval
             stim_tensor = torch.zeros(num_paths, num_nodes, device=device, dtype=torch.double)
+            # Apply any stimulations scheduled for the *start* of this time interval
             for path_idx, (t_val, i_val) in enumerate(path_combinations):
                 if stim_protocol.get("TGFb") == f"{previous_time_h}h":
-                    # Use .squeeze(0) to match tensor dimensions for the in-place addition
                     stim_tensor[path_idx, :] += e_T.squeeze(0) * t_val
                 if stim_protocol.get("IFNa") == f"{previous_time_h}h":
                     stim_tensor[path_idx, :] += e_I.squeeze(0) * i_val
             
             X_in = master_states + stim_tensor
             
-            # Run simulation using the model for the current measurement timepoint
+            # ---Logic to handle how the input state is determined ---
+            if not is_sequential:
+                # For simultaneous stimulations, we check if this is the first measurement
+                # after the stimulus was applied. If so, we save that input.
+                if previous_time_h == TIME_MAP[list(stim_times)[0]]:
+                    initial_input_for_direct_pass = X_in.clone()
+                
+                # If the initial state has been set, we use it for all subsequent passes.
+                if initial_input_for_direct_pass is not None:
+                    X_in = initial_input_for_direct_pass
+
             mean_full_state, mean_tf = ensemble_step_mean(measurement_tp_str, X_in)
 
-            # Store results in the requested tidy format
+            # Store results in the tidy format
             df = pd.DataFrame(mean_tf.cpu().numpy(), columns=all_tfs)
             df['experiment'] = exp_name
             df['TGFb_strength'] = [c[0].item() for c in path_combinations]
@@ -172,13 +179,15 @@ def main():
             df['measured_at'] = f"{measurement_time_h}h"
             all_results_list.append(df)
 
-            # Update state for the next step ("carry-on")
-            master_states = mean_full_state.detach()
+            # --- Only update master_states if the experiment is sequential ---
+            if is_sequential:
+                master_states = mean_full_state.detach()
+            
             previous_time_h = measurement_time_h
 
-    # 4. Finalize and save all data
+    # Finalize and save all data
     final_df = pd.concat(all_results_list, ignore_index=True)
-    out_csv = os.path.join(out_dir, 'async_stimulation_results_tidy.csv')
+    out_csv = os.path.join(out_dir, 'async_stimulation_results_no_carry_on.csv')
     final_df.to_csv(out_csv, index=False)
     
     elapsed = time.time() - start_time

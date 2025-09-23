@@ -1,4 +1,3 @@
-#### NEED TO CHANGE. THIS IS AN OLD TEMPLATE
 library(tidyverse)
 library(forcats)
 library(doFuture)
@@ -13,16 +12,16 @@ source('functions_translation.R')
 options(future.globals.maxSize = 2 * 1024^3) # 2 GiB
 
 ## Simulate combination of TGFBR1 and IFNAR1---------------
-simulation <- data.table::fread('../results/chained_async/TFs_chained_async_avg_then_chain.csv')
-tt <- simulation %>% select(experiment,timepoint,description)
+simulation <- data.table::fread('../results/async_experiments_tidy/async_stimulation_results_no_carry_on.csv')
+tt <- simulation %>% select(all_of(colnames(simulation)[105:110]))
 
 #Load annotation file to replace with gene names
 annot <- read.delim('../../../Artificial-Signaling-Network/DrugsANNSignaling/data/uniprot-reviewed_yes+AND+organism__Homo+sapiens+(Human)+[9606]_.tab')
 annot <- annot %>% select(c('node'='Entry'),c('TF'='Gene.names...primary..')) %>% unique()
 annot <- annot %>% filter(node %in% colnames(simulation))
-annot <- left_join(data.frame(node = colnames(simulation)[7:110]),annot)
-print(all(colnames(simulation)[7:110]==annot$node))
-colnames(simulation)[7:110] <- annot$TF
+annot <- left_join(data.frame(node = colnames(simulation)[1:104]),annot)
+print(all(colnames(simulation)[1:104]==annot$node))
+colnames(simulation)[1:104] <- annot$TF
 
 # Load human data, infer TF activity and train model to predict MAS, Fibrosis from TFs
 ## Load the all the data to be used
@@ -64,7 +63,7 @@ TF_human <- TF_human %>% select(source,condition,score) %>% spread(source,score)
   column_to_rownames('condition')
 TF_human <- as.matrix(TF_human)
 ## keep only TFs in LEMBAS
-TF_human <- TF_human[,colnames(simulation)[7:110]]
+TF_human <- TF_human[,colnames(simulation)[1:104]]
 ## train one model with all the data
 plsr_model <- opls(x = TF_human, 
                    y = Yh,
@@ -104,44 +103,45 @@ Yinsilico <- cbind(stimuli,yhat)
 #   group_by(phenotype,IFNa,TGFb) %>% mutate(mu = mean(score)) %>% mutate(se=sd(score)/sqrt(50))
 
 ### Visualize simulation
-Yinsilico <- Yinsilico %>% filter(description!='empty')
-Yall <- distinct(Yinsilico %>% 
-                   mutate(T_at_0h = ifelse(is.na(T_at_0h),0,T_at_0h)) %>%
-                   mutate(T_at_2h = ifelse(is.na(T_at_2h),0,T_at_2h)) %>%
-                   mutate(T_at_8h = ifelse(is.na(T_at_8h),0,T_at_8h)) %>%
-                   mutate(T_at_24h = ifelse(is.na(T_at_24h),0,T_at_24h)) %>%
-                   mutate(I_at_0h = ifelse(is.na(T_at_0h),0,T_at_0h)) %>%
-                   mutate(I_at_2h = ifelse(is.na(T_at_2h),0,T_at_2h)) %>%
-                   mutate(I_at_8h = ifelse(is.na(T_at_8h),0,T_at_8h)) %>%
-                   mutate(I_at_24h = ifelse(is.na(T_at_24h),0,T_at_24h)) %>%
-                   mutate(TGFBR1 = T_at_0h+T_at_2h+T_at_8h+T_at_24h) %>%
-                   mutate(IFNAR1 = I_at_0h+I_at_2h+I_at_8h+I_at_24h) %>%
-                   select(experiment,timepoint,description,IFNAR1,TGFBR1,NAS,fibrosis))
-mas_plot <- ggplot(Yall,aes(x=TGFBR1,y=IFNAR1,fill=NAS))+
+timepoint <- '24h'
+mas_plot <- ggplot(Yinsilico %>% filter(measured_at==timepoint),
+                   aes(x=IFNa_strength,y=TGFb_strength,fill=NAS))+
   geom_tile()+
-  scale_fill_gradient2(midpoint = 3)+
+  scale_fill_gradient2(midpoint = mean(as.matrix((Yinsilico %>% 
+                                                    filter(measured_at==timepoint) %>% 
+                                                    filter(TGFb_strength==0)%>% 
+                                                    filter(IFNa_strength==0) %>% 
+                                                    filter(TGFb_applied_at==IFNa_applied_at) %>% 
+                                                    select(NAS)))))+
    labs(fill='MAS',x = 'stimulation of IFNAR1',y='stimulation of TGFBR1')+
   scale_x_continuous(n.breaks = 10)+
   scale_y_continuous(n.breaks = 10)+
   geom_hline(yintercept = 0,lwd=1,color='black')+
   geom_vline(xintercept = 0,lwd=1,color='black') + 
-  facet_wrap(vars(experiment,timepoint))
+  facet_grid(paste0('TGFB at ',TGFb_applied_at) ~ paste0('IFNA at ',IFNa_applied_at))
 mas_plot <- add_theme(mas_plot) + 
   theme(legend.position = 'top',text = element_text(size=20),
         panel.border = element_blank(),
-        panel.grid = element_blank())
+        panel.grid = element_blank(),
+        )
 print(mas_plot)
 
 
-fib_plot <-ggplot(Yall,aes(x=TGFBR1,y=IFNAR1,fill=fibrosis))+
+fib_plot <-ggplot(Yinsilico %>% filter(measured_at==timepoint),
+                  aes(x=IFNa_strength,y=TGFb_strength,fill=fibrosis))+
   geom_tile()+
-  scale_fill_gradient2(midpoint = 3)+
-  labs(fill='MAS',x = 'stimulation of IFNAR1',y='stimulation of TGFBR1')+
+  scale_fill_gradient2(midpoint = mean(as.matrix((Yinsilico %>% 
+                                                    filter(measured_at==timepoint) %>% 
+                                                    filter(TGFb_strength==0)%>% 
+                                                    filter(IFNa_strength==0) %>% 
+                                                    filter(TGFb_applied_at==IFNa_applied_at) %>% 
+                                                    select(fibrosis)))))+
+  labs(fill='fibrosis',x= 'stimulation of IFNAR1',y='stimulation of TGFBR1')+
   scale_x_continuous(n.breaks = 10)+
   scale_y_continuous(n.breaks = 10)+
   geom_hline(yintercept = 0,lwd=1,color='black')+
   geom_vline(xintercept = 0,lwd=1,color='black') + 
-  facet_wrap(vars(experiment,timepoint))
+  facet_grid(paste0('TGFB at ',TGFb_applied_at) ~ paste0('IFNA at ',IFNa_applied_at))
 fib_plot <- add_theme(fib_plot) +
   theme(legend.position = 'top',text = element_text(size=20),
         panel.border = element_blank(),
