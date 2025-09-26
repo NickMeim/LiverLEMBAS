@@ -1,6 +1,8 @@
 postprocessing/__pycache__
 postprocessing/ValidateCarryOnOperation_forDrugs.py
 results/chained_async/plots
+results/async_experiments_tidy/async_stimulation_results_no_carry_on.csv
+results/validation_results/grid_201_points
 relevent_papers
 relevent_papers/*
 learning/__pycache__
@@ -52,3 +54,4 @@ results/CV_2hr_with_random_long.csv
 results/LOOCV_24hr_with_random_long.csv
 results/LOOCV_2hr_with_random_long.csv
 
+results/async_experiments_tidy/async_stimulation_results_no_carry_on.csv

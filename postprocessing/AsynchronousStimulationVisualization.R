@@ -3,13 +3,9 @@ library(forcats)
 library(doFuture)
 library(ropls)
 library(patchwork)
-# parallel: set number of workers
-cores <- 16
-registerDoFuture()
-plan(multisession,workers = cores)
 source("plotting_functions.R")
 source('functions_translation.R')
-options(future.globals.maxSize = 2 * 1024^3) # 2 GiB
+# options(future.globals.maxSize = 2 * 1024^3) # 2 GiB
 
 ## Simulate combination of TGFBR1 and IFNAR1---------------
 simulation <- data.table::fread('../results/async_experiments_tidy/async_stimulation_results_no_carry_on.csv')
@@ -47,10 +43,6 @@ if (ref_dataset=='Hoang'){
   sex_inferred <- 1*(sex_inferred>0)
   sex_inferred <- ifelse(sex_inferred==1,'male','female')
 }
-# Get matrices of target dataset
-Xm <- data_list[[target_dataset]]$data_center %>% t()
-# Get Wm as the PC space of the MPS data when averaging tech replicates to capture variance due to experimental factors
-Wm <- data_list[[target_dataset]]$Wm_group %>% as.matrix()
 
 # Infer TF activity
 dorotheaData = read.table('../../FattyLiverModeling/data/dorothea.tsv', sep = "\t", header=TRUE)
@@ -77,7 +69,6 @@ plot(Yh[,2],predict(plsr_model,TF_human)[,2])
 print(diag(cor(Yh,predict(plsr_model,TF_human))))
 
 # Convert them to differential TF activity
-options(future.globals.maxSize = 2 * 1024^3) # 2 GiB
 stimuli <- simulation %>% select(-all_of(colnames(TF_human)))
 expreriment <- as.matrix(simulation %>% select(all_of(colnames(TF_human))))
 expreriment[expreriment>1] <-1
@@ -85,22 +76,7 @@ expreriment[expreriment<0] <-0
 expreriment <- log((expreriment+1e-6)/(1 - expreriment + 1e-6))
 yhat <- as.data.frame(predict(plsr_model,expreriment))
 Yinsilico <- cbind(stimuli,yhat)
-
-
-
-# control <- as.matrix(simulation %>% filter(type=='untreated') %>%
-#                        select(-type,-model_no,-IFNa,-TGFb))
-# control[control>1] <-1
-# control[control<0] <-0
-# control <- log((control+1e-6)/(1 - control + 1e-6))
-# colnames(control) <- colnames(simulation)[1:104]
-# Ycontrol <- predict(plsr_model,control)
-# mean_control_mas <- mean(Ycontrol[,1]) 
-# se_control_mas <- sd(Ycontrol[,1])/sqrt(50)
-# mean_control_fib <- mean(Ycontrol[,2]) 
-# se_control_fib <- mean(Ycontrol[,2]) /sqrt(50)
-# Yinsilico <- Yinsilico %>% gather('phenotype','score',-model_no,-IFNa,-TGFb) %>%
-#   group_by(phenotype,IFNa,TGFb) %>% mutate(mu = mean(score)) %>% mutate(se=sd(score)/sqrt(50))
+gc()
 
 ### Visualize simulation
 timepoint <- '24h'
@@ -124,8 +100,14 @@ mas_plot <- add_theme(mas_plot) +
         panel.border = element_blank(),
         panel.grid = element_blank(),
         )
-print(mas_plot)
-
+# print(mas_plot)
+ggsave(filename = paste0('../results/async_experiments_tidy/plots/asychronous_MAS_measured_at_',
+                         timepoint,'.png'),
+       plot=mas_plot,
+       width = 16,
+       height = 10,
+       units = 'in',
+       dpi=600)
 
 fib_plot <-ggplot(Yinsilico %>% filter(measured_at==timepoint),
                   aes(x=IFNa_strength,y=TGFb_strength,fill=fibrosis))+
@@ -146,4 +128,11 @@ fib_plot <- add_theme(fib_plot) +
   theme(legend.position = 'top',text = element_text(size=20),
         panel.border = element_blank(),
         panel.grid = element_blank())
-print(fib_plot)
+# print(fib_plot)
+ggsave(filename = paste0('../results/async_experiments_tidy/plots/asychronous_fibrosis_measured_at_',
+                         timepoint,'.png'),
+       plot=fib_plot,
+       width = 16,
+       height = 10,
+       units = 'in',
+       dpi=600)
