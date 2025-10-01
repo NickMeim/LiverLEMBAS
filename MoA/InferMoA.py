@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 import torch
+import torch.nn as nn
 import sys 
 # gpu_lembas_path = '/nobackup/users/meimetis/LEMBAS-main'
 gpu_lembas_path = 'C:/Users/nmeim/Documents/Artificial-Signaling-Network/LEMBAS-main'
@@ -11,12 +12,12 @@ import logging
 from pathlib import Path
 from utility import *
 import networkx as nx
-import time
 from matplotlib import pyplot as plt
 import pcst_fast
 import pyreadr
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import GridSearchCV,RepeatedKFold
+from collections import defaultdict
 
 class FrozenLinear(nn.Module):
     def __init__(self, W_np: np.ndarray, b_np: np.ndarray | float, dtype=torch.double, device="gpu"):
@@ -35,12 +36,14 @@ class FrozenLinear(nn.Module):
         return self.lin(x)
 
 
-
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger()
 print2log = logger.info
 
 parser = argparse.ArgumentParser(prog='Hepatocyte simulation')
+parser.add_argument('--AnnotationCSV', action='store', type=str,
+                    default='../data/annotation.csv',
+                    help='CSV with columns: uniprot,symbol for node renaming')
 parser.add_argument('--DrugsIn', action='store',type = str, default='../preprocessing/preprocessed_data/TrainingValidationData/Hepatocytes_input_conditions.tsv')
 parser.add_argument('--TargetsIn', action='store',type = str, default='../preprocessing/preprocessed_data/PKN/Hepatocytes_DTI_mask.tsv')
 parser.add_argument('--TFsOut', action='store',type = str, default='../preprocessing/preprocessed_data/TF_activities/Trimmed_TFacitivities_hepatocytes_microarray.tsv')
@@ -65,18 +68,8 @@ parser.add_argument('--X_invivo_path', action='store', help='Path to in vivo TF 
 parser.add_argument('--Y_invivo_path', action='store', help='Path to in vivo phenotypes (.rds)', default='../data/Yh_tfs_govaere.rds')
 parser.add_argument('--stimulation_strength', action='store',type=float, default=3000)
 parser.add_argument('--num_steps', action='store',type = float, default=21)
-# parser.add_argument('--selected_signaling_nodes', metavar='N', type=str, nargs='*', action='store', 
-#                     help='Selected signaling nodes to predict and save their activity',
-#                     default=['P42226','P42229','P51692','P40763','P52630','P42224','Q14765',
-#                              'Q15797','Q15796','P84022','Q13485','Q99717','O43541',
-#                              'P17181','P48551','P15260','P38484',
-#                              'P10914','Q00978','Q14653',
-#                              'P05231','Q13651'])
-# stats = ['P42226','P42229','P51692','P40763','P52630','P42224','Q14765']
-# smads = ['Q15797','Q15796','P84022','Q13485','Q99717','O43541']
-# ifns = ['P17181','P48551','P15260','P38484']
-# irfs = ['P10914','Q00978','Q14653']
-# ils = ['P05231','Q13651']
+parser.add_argument('--EDGE_FREQ_MIN', action='store',type = float, default=0.5)
+parser.add_argument('--NODE_FREQ_MIN', action='store',type = float, default=0.5)
 
 args = parser.parse_args()
 DrugsIn = args.DrugsIn
@@ -95,13 +88,28 @@ number_DTLEMBAS_models = args.number_DTLEMBAS_models
 stimulation_strength=args.stimulation_strength
 num_steps = args.num_steps
 
+Path('results/individual_networks').mkdir(parents=True, exist_ok=True)
+
 n_cores = 12
 utils.set_cores(n_cores)
-# seed = int(args.no) * (int(args.maxIter) + 1)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print2log('Running on {}'.format(device))
 
 print2log('Loading input data...')
+# Load annotation and build mapping dict
+ann = pd.read_csv(args.AnnotationCSV)
+if not {'uniprot', 'symbol'}.issubset(ann.columns):
+    raise ValueError("AnnotationCSV must have columns: 'uniprot' and 'symbol'")
+id2sym = dict(zip(ann['uniprot'].astype(str), ann['symbol'].astype(str)))
+def to_symbol(x: str) -> str:
+    # return symbol if known, otherwise keep original Uniprot
+    return id2sym.get(str(x), str(x))
+# Aggregators across all models (appearance per model)
+edge_models = defaultdict(set)   # key=(src_sym, tgt_sym) -> set of model indices
+node_models = defaultdict(set)   # key=node_sym -> set of model indices
+edge_weight_sum = defaultdict(float)        # (src_sym, tgt_sym) -> sum of raw weights
+edge_weight_abs_sum = defaultdict(float)    # (src_sym, tgt_sym) -> sum of |weights|
+
 # prior knowledge signaling network
 net = pd.read_csv(PKN, sep = '\t', index_col = False).loc[:,['source','target','stimulation','inhibition']]
 # ligand input and TF output
@@ -150,15 +158,26 @@ for timepoint in ['8 hour']: #['2 hour','8 hour','24 hour']:
     drugSim = drugSim.loc[drugInput_tmp.columns.values,drugInput_tmp.columns.values]
     drugSim = torch.tensor(drugSim.values.copy(), dtype=torch.double)
     all_drugs = drugInput.columns
-    ### Make tensors and initialize model
-    # X = torch.tensor(drugInput_tmp.values.copy(), dtype=torch.double).to(device)
-    # Y = torch.tensor(TFOutput_tmp.values, dtype=torch.double).to(device)
+    
     print2log("Prepare and load the SignalingModel and the Graph...")
     tfs = list(outName)
     mask_dt =torch.tensor(np.array(drugTargets)).transpose(0,1)
     bionet_params = {'target_steps': 100, 'max_steps': args.max_LEMBAS_iterations, 
                     'exp_factor':50, 'tolerance': args.LEMBAS_tolerance, 
                     'leak':args.LEMBAS_leak}
+    print2log("Train TFs ---> Phenotype model...")
+    Xh = pyreadr.read_r(args.X_invivo_path)[None].to_numpy()
+    Yh = pyreadr.read_r(args.Y_invivo_path)[None].to_numpy()
+    params = {'alpha': [0.001,0.01,0.1,0.2,0.5,1,2,5,10,20,50,100,500,1000]}
+    ridge = GridSearchCV(estimator=Ridge(),param_grid = params, cv=RepeatedKFold(n_splits=10, n_repeats=10), n_jobs=-1)
+    ridge.fit(Xh, Yh)
+    coefs = ridge.best_estimator_.coef_
+    intercept = ridge.best_estimator_.intercept_
+    pheno = FrozenLinear(coefs, intercept, dtype=torch.double, device=device)
+    pheno.eval()
+    coef_vec = np.mean(np.abs(coefs),0)
+    top10_idx = np.argsort(coef_vec)[-10:][::-1]
+    top10_tfs = [to_symbol(TFOutput_tmp.columns[i]) for i in top10_idx]
     for model_no in range(number_DTLEMBAS_models):
         mod = SignalingModel(net = net,
                             X_in = drugTargets,
@@ -174,20 +193,9 @@ for timepoint in ['8 hour']: #['2 hour','8 hour','24 hour']:
         A = pd.DataFrame(weights.T, index = nodeNames, columns = nodeNames)
         sources = ['P36897','P17181']
         G = nx.from_pandas_adjacency(A, create_using=nx.DiGraph())
-        # edges_for_pcst = np.array(list(G.edges()))
-
-        print2log("Train TFs ---> Phenotype model...")
-        Xh = pyreadr.read_r(args.X_invivo_path)[None].to_numpy()
-        Yh = pyreadr.read_r(args.Y_invivo_path)[None].to_numpy()
-        params = {'alpha': [0.001,0.01,0.1,0.2,0.5,1,2,5,10,20,50,100,500,1000]}
-        ridge = GridSearchCV(estimator=Ridge(),param_grid = params, cv=RepeatedKFold(n_splits=10, n_repeats=10), n_jobs=-1)
-        ridge.fit(Xh, Yh)
-        coefs = ridge.best_estimator_.coef_
-        intercept = ridge.best_estimator_.intercept_
-        pheno = FrozenLinear(coefs, intercept, dtype=torch.double, device=device)
-        pheno.eval()
+        
         mod.eval()
-        print2log("Score nodes and edges of the graph...")
+        print2log(f"Model {model_no+1}: Score nodes and edges...")
         model = torch.nn.Sequential(
             mod.signaling_network,
             mod.output_layer,
@@ -206,57 +214,51 @@ for timepoint in ['8 hour']: #['2 hour','8 hour','24 hour']:
         Xin = torch.eye(len(all_nodes),dtype=torch.double).to(device)
         Xin_1 = Xin[subset_nodes_inds[0],:].unsqueeze(0)
         Xin_2 = Xin[subset_nodes_inds[1],:].unsqueeze(0)
-        # Define the number of interpolation steps you want
-        # Create linearly spaced values between -3000 and 3000
-        stim_range = torch.linspace(-stimulation_strength, stimulation_strength, num_steps)
-        # Create a grid of all combinations of stimulations
+        
+        stim_range = torch.linspace(-stimulation_strength, stimulation_strength, int(num_steps))
+        
         grid_Xin1, grid_Xin2 = torch.meshgrid(stim_range, stim_range, indexing='ij')
-        # Flatten the grid for batch processing
+        
         grid_Xin1 = grid_Xin1.flatten().view(-1, 1)
         grid_Xin2 = grid_Xin2.flatten().view(-1, 1)
-        # Expand the grids to match input dimensions
+        
         grid_Xin1 = grid_Xin1.repeat(1, Xin_1.shape[1])
         grid_Xin2 = grid_Xin2.repeat(1, Xin_2.shape[1])
-        # Multiply inputs with the grid values
+        
         Xin_1_grid = Xin_1 * grid_Xin1.to(device).double()
         Xin_2_grid = Xin_2 * grid_Xin2.to(device).double()
-        # Combine the two inputs for the model
+        
         Xin_combined = Xin_1_grid + Xin_2_grid
         Xin_combined = Xin_combined.detach()
-        ##Run the pass to score nodes and weights
+        
         Y = model(Xin_combined)
         L_objective = torch.sum(Y)
         L_objective.backward()
         db = model[0].bias.grad.T.squeeze().detach()
         dW = model[0].weights.grad.detach()
-        # plt.hist(dW.flatten().detach().cpu().numpy()[dW.flatten().detach().cpu().numpy()!=0])
-        # plt.show()
-        # plt.hist(mod.signaling_network.weights.detach().cpu().numpy()[mod.signaling_network.weights.detach().cpu().numpy()!=0])
-        # plt.show()
+        
         activities = model[0](Xin_combined).detach()
         Range = torch.abs(torch.max(activities,0)[0] - torch.min(activities,0)[0])
         nodeScores = torch.abs(db) * Range
         prizes = nodeScores.detach().cpu().numpy()
         inf_prize = nodeScores.max() * 100
-        #### PUT IN PRIZES  FOR SOME NODES inf_prize ####
+        
         prizes[subset_nodes_inds[0]] = inf_prize
         prizes[subset_nodes_inds[1]] = inf_prize
         name_to_int_map = {name: i for i, name in enumerate(A.columns)}
-        # Convert your list of string edges to a list of integer edges
+        
         integer_edge_list = []
         for u_name, v_name in list(G.edges()):
             integer_edge_list.append([name_to_int_map[u_name], name_to_int_map[v_name]])
-        # Now create the final NumPy array with the correct data type
+        
         edges_for_pcst = np.array(integer_edge_list, dtype=np.int64)
         root_int = name_to_int_map['P36897']
-        ## now make edge cost
+        
         edgeScores = torch.abs(dW) * torch.abs(mod.signaling_network.weights)
         edgeScores = edgeScores.T.detach().cpu().numpy()
         costs = []
         for u_i, v_i in integer_edge_list:
-            # Get the weight from your original matrix
             w = edgeScores[u_i, v_i]
-            # Calculate the cost (ensure it's a float)
             costs.append(1.0 / (w + 0.001))
         costs = np.array(costs, dtype=np.float64)
 
@@ -272,57 +274,217 @@ for timepoint in ['8 hour']: #['2 hour','8 hour','24 hour']:
             0)
 
         print2log("Extracting subgraph...")
-        result_nodes = list(vertex_indices)
-        result_edges_list = [list(G.edges())[i] for i in edge_indices]
+        result_nodes_uniprot = [A.columns[i] for i in vertex_indices]
+        result_edges_list = [(A.columns[u], A.columns[v]) for u,v in edges_for_pcst[edge_indices]]
         result_graph = nx.DiGraph(result_edges_list)
-        print2log(f"Nodes in subgraph: {result_nodes}")
+        print2log(f"Nodes in subgraph: {len(result_nodes_uniprot)}")
         print2log(f"Subgraph number of edges: {len(result_edges_list)}")
 
         print("\nSaving subgraph edgelist to CSV...")
-        # Create a map from an edge tuple to its original weight for easy lookup
-        # Build a list of dictionaries for the DataFrame by looking up weights directly
+        
         subgraph_data = []
         for u, v in result_edges_list:
-            # Directly access the weight from your adjacency matrix DataFrame
-            # This assumes the matrix is symmetric, so adj_matrix_df.loc[u, v] works
-            weight = A.loc[u, v]
+            weight = A.loc[u, v] 
             subgraph_data.append({
-                'source': u,
-                'target': v,
+                'source_uniprot': u,
+                'target_uniprot': v,
+                'source_symbol': to_symbol(u),
+                'target_symbol': to_symbol(v),
                 'weight': weight
             })
-        # Create and save the DataFrame
+        
         df = pd.DataFrame(subgraph_data)
-        # Using your variable `model_no` for the filename
-        df.to_csv(f'subgraph_edgelist_{model_no}.csv', index=False)
+        
+        df.to_csv(f'results/individual_networks/subgraph_edgelist_{model_no}.csv', index=False)
         print(f"Subgraph saved to subgraph_edgelist_{model_no}.csv")
+
+        # Update global aggregators (use symbols so identical proteins collapse across isoforms)
+        for _, r in df.iterrows():
+            src_sym = r['source_symbol']
+            tgt_sym = r['target_symbol']
+            key = (src_sym, tgt_sym)
+            edge_models[key].add(model_no)
+            node_models[src_sym].add(model_no)
+            node_models[tgt_sym].add(model_no)
+            w = float(r['weight'])
+            edge_weight_sum[key] += w
+            edge_weight_abs_sum[key] += abs(w)
 
         print2log('\nVisualuze the subgraph...')
         plt.figure(figsize=(12, 12))
-        # Use a layout designed for the subgraph for better spacing
+        
         pos = nx.spring_layout(result_graph, seed=42)
-        # Draw the subgraph
+        
         nx.draw_networkx_nodes(result_graph, pos, node_color='skyblue', node_size=600)
         nx.draw_networkx_edges(result_graph, pos, edge_color='dodgerblue', width=2.0)
         nx.draw_networkx_labels(result_graph, pos, font_color='black', font_size=10)
-        # Highlight input nodes and high-prize TFs that are in the result
+        
         final_input_nodes = [n for n in sources if n in result_graph]
         high_prize_tfs = [i for i, p in enumerate(prizes) if p > 0 and i in result_graph]
         nx.draw_networkx_nodes(result_graph, pos, nodelist=final_input_nodes, node_color='red', node_size=700)
         nx.draw_networkx_nodes(result_graph, pos, nodelist=high_prize_tfs, node_color='gold', node_size=700)
         plt.title("Focused Visualization of PCST Subgraph")
-        plt.savefig("pcst_subgraph_result_%s.png"%model_no)
-        print("Visualization saved to pcst_subgraph_result_%s.png"%model_no)
+        plt.savefig("results/individual_networks/pcst_subgraph_result_%s.png"%model_no)
+        print2log("Visualization saved to pcst_subgraph_result_%s.png"%model_no)
+
     print2log(f"Finished timepoint: {timepoint}")
 
+print2log("\nAggregating edges/nodes across models...")
+# Aggregate edges
+edge_rows = []
+for (src_sym, tgt_sym), model_set in edge_models.items():
+    count = len(model_set)
+    freq = count / float(number_DTLEMBAS_models)
+    mean_w = edge_weight_sum[(src_sym, tgt_sym)] / max(count, 1)
+    mean_abs_w = edge_weight_abs_sum[(src_sym, tgt_sym)] / max(count, 1)
+    edge_rows.append({
+        'source_symbol': src_sym,
+        'target_symbol': tgt_sym,
+        'models_count': count,
+        'models_freq': freq,
+        'mean_weight': mean_w,
+        'mean_abs_weight': mean_abs_w,
+    })
+edges_agg_df = pd.DataFrame(edge_rows).sort_values(
+    ['models_count', 'source_symbol', 'target_symbol'],
+    ascending=[False, True, True]
+).reset_index(drop=True)
+edges_agg_df.to_csv('results/subgraph_edges_aggregate.csv', index=False)
+print2log("Saved aggregated edge appearances to results/subgraph_edges_aggregate.csv")
+# Aggregate nodes
+node_rows = []
+for node_sym, model_set in node_models.items():
+    count = len(model_set)
+    freq = count / float(number_DTLEMBAS_models)
+    node_rows.append({'node_symbol': node_sym, 'models_count': count, 'models_freq': freq})
+nodes_agg_df = pd.DataFrame(node_rows).sort_values(
+    ['models_count', 'node_symbol'],
+    ascending=[False, True]
+).reset_index(drop=True)
+nodes_agg_df.to_csv('results/subgraph_nodes_aggregate.csv', index=False)
+print2log("Saved aggregated node appearances to results/subgraph_nodes_aggregate.csv")
+
+# ----------------------------------------------------------------
+# Build filtered aggregate network (Best Paths Approach)
+# ----------------------------------------------------------------
+print2log("\nBuilding final network using the 'Best Paths' approach...")
+SOURCES = ['TGFBR1', 'IFNAR1']
+
+# --- 1. Create the full aggregated graph with weights for pathfinding ---
+G_full_agg = nx.DiGraph()
+for _, r in edges_agg_df.iterrows():
+    # The weight for Dijkstra's should be a cost, so we use 1 - frequency
+    G_full_agg.add_edge(r['source_symbol'], r['target_symbol'], weight=(1.0 - r['models_freq']), **r.to_dict())
+
+if not G_full_agg.nodes() or any(s not in G_full_agg for s in SOURCES):
+    print2log("Full aggregated graph is empty or missing a source node. Exiting.")
+    sys.exit()
+
+# --- 2. Find the best paths from sources to TFs and between sources ---
+print2log("--- Finding best paths based on cumulative frequency ---")
+nodes_on_best_paths = set()
+sources_in_graph = [s for s in SOURCES if s in G_full_agg]
+tfs_in_graph = [t for t in top10_tfs if t in G_full_agg]
+
+if not sources_in_graph or not tfs_in_graph:
+    print2log("Warning: Sources or TFs are not present in the aggregate graph. Final network may be empty.")
+
+# Find best path for each Source -> TF pair
+for source in sources_in_graph:
+    for tf in tfs_in_graph:
+        try:
+            if nx.has_path(G_full_agg, source, tf):
+                # 'weight' was set to 1-frequency, so shortest_path finds the path maximizing frequency sum
+                path = nx.shortest_path(G_full_agg, source=source, target=tf, weight='weight')
+                nodes_on_best_paths.update(path)
+        except nx.NetworkXNoPath:
+            continue
+
+# Find best path between the two sources to ensure they are connected
+if len(sources_in_graph) == 2:
+    s1, s2 = sources_in_graph
+    try:
+        # Search for this path in an undirected version of the graph to find any connection
+        if nx.has_path(G_full_agg.to_undirected(), s1, s2):
+            path_between_sources = nx.shortest_path(G_full_agg.to_undirected(), source=s1, target=s2, weight='weight')
+            nodes_on_best_paths.update(path_between_sources)
+    except nx.NetworkXNoPath:
+        print2log(f"Warning: Could not find a connecting path between sources {s1} and {s2}.")
+
+# --- 3. Construct the final network ---
+if not nodes_on_best_paths:
+    print2log("Could not find any paths from Sources to TFs. The final graph will be empty.")
+    G_filt = nx.DiGraph()
+else:
+    print2log(f"Found {len(nodes_on_best_paths)} nodes on best paths.")
+    G_filt = G_full_agg.subgraph(nodes_on_best_paths).copy()
+    
+    # As a final safeguard, ensure the graph is connected. Take the largest component containing a source.
+    if not nx.is_weakly_connected(G_filt):
+        print2log("Best paths formed disconnected components. Selecting the largest component containing a source.")
+        largest_comp_nodes = set()
+        for component in nx.weakly_connected_components(G_filt):
+            # Check if any source is in this component and if it's the largest found so far
+            if any(s in component for s in sources_in_graph) and len(component) > len(largest_comp_nodes):
+                largest_comp_nodes = component
+        
+        if not largest_comp_nodes: # Fallback if no component had a source
+            largest_comp_nodes = max(nx.weakly_connected_components(G_filt), key=len)
+
+        G_filt = G_filt.subgraph(largest_comp_nodes).copy()
 
 
-# reach_from_src = set(sources)
-# for s in sources:
-#     reach_from_src |= nx.descendants(G, s)
-# Gr = G.reverse(copy=False)
-# reach_to_tf = set(tfs)
-# for t in tfs:
-#     reach_to_tf |= nx.descendants(Gr, t)
-# keep = reach_from_src & reach_to_tf
-# subG = G.subgraph(keep).copy()
+# --- Post-processing and saving the final filtered graph ---
+covered_tfs = [t for t in top10_tfs if t in G_filt]
+print2log(f"\nFinal filtered graph nodes: {G_filt.number_of_nodes()}, edges: {G_filt.number_of_edges()}")
+print2log(f"Top TFs present in final graph: {covered_tfs}")
+
+# --- Create and save node attributes file ---
+print2log("Creating node attributes file...")
+all_tf_uniprots = TFOutput.columns
+all_tf_symbols = {to_symbol(uniprot) for uniprot in all_tf_uniprots}
+
+node_attributes = []
+if G_filt.number_of_nodes() > 0:
+    for node in G_filt.nodes():
+        node_type = 'Intermediate'
+        if node in SOURCES:
+            node_type = 'Source'
+        elif node in all_tf_symbols:
+            node_type = 'TF'
+        node_attributes.append({'node_symbol': node, 'node_type': node_type})
+
+nodes_df = pd.DataFrame(node_attributes).sort_values('node_symbol').reset_index(drop=True) if node_attributes else pd.DataFrame(columns=['node_symbol', 'node_type'])
+nodes_df.to_csv('results/filtered_nodes_attributes.csv', index=False)
+print2log("Saved node attributes to results/filtered_nodes_attributes.csv")
+
+# --- Create and save final edge file ---
+filtered_rows = []
+for u, v, d in G_filt.edges(data=True):
+    mean_weight = d.get('mean_weight', 0.0)
+    interaction = '+' if mean_weight > 0 else '-' if mean_weight < 0 else 'neutral'
+    filtered_rows.append({
+        'source_symbol': u,
+        'target_symbol': v,
+        'models_count': d.get('models_count'),
+        'models_freq': d.get('models_freq'),
+        'mean_weight': mean_weight,
+        'mean_abs_weight': d.get('mean_abs_weight'),
+        'interaction': interaction
+    })
+
+if filtered_rows:
+    filtered_df = pd.DataFrame(filtered_rows).sort_values(
+        ['models_freq', 'models_count', 'source_symbol', 'target_symbol'],
+        ascending=[False, False, True, True]
+    ).reset_index(drop=True)
+else:
+    filtered_df = pd.DataFrame(columns=[
+        'source_symbol', 'target_symbol', 'models_count', 'models_freq',
+        'mean_weight', 'mean_abs_weight', 'interaction'
+    ])
+
+filtered_df.to_csv('results/subgraph_edges_aggregate_filtered.csv', index=False)
+print2log("Saved filtered aggregate network to results/subgraph_edges_aggregate_filtered.csv")
+
+print2log("\nDone")
