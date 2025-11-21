@@ -1,0 +1,1 @@
+python PathwayScoring_InferMoA.py --clear_checkpoints --num_steps_ig 100 --checkpoint_interval 0

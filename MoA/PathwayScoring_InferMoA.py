@@ -21,6 +21,9 @@ from collections import defaultdict
 from itertools import islice
 from tqdm import tqdm
 import pickle
+import hashlib
+import time
+from captum.attr import IntegratedGradients
 
 class FrozenLinear(nn.Module):
     def __init__(self, W_np: np.ndarray, b_np: np.ndarray | float, dtype=torch.double, device="gpu"):
@@ -37,6 +40,238 @@ class FrozenLinear(nn.Module):
             self.lin.bias.copy_(torch.as_tensor(np.atleast_1d(b_np), dtype=dtype, device=device))
     def forward(self, x):
         return self.lin(x)
+    
+def compute_edge_gradients(model, x_stim, node_idx_map, pheno_coefs, outName, print_func=print):
+    """
+    Compute ∂output/∂edge for every edge in the network.
+    This gives us the TRUE importance of each edge.
+    """
+    
+    # Get equilibrium
+    with torch.no_grad():
+        x_eq = model[0](x_stim)
+    
+    # Compute full model output
+    model.eval()
+    x_eq_grad = x_eq.clone().requires_grad_(True)
+    output = model[1:](x_eq_grad)  # TF layer + phenotype
+    
+    # Backprop to get ∂output/∂x_eq
+    grad_output_wrt_eq = torch.autograd.grad(
+        outputs=output.sum(),
+        inputs=x_eq_grad,
+        create_graph=False
+    )[0]  # [1, Nodes]
+    
+    # Now compute ∂x_eq/∂edge for each edge
+    # Edge (u -> v) affects x_eq[v]
+    
+    num_nodes = len(node_idx_map)
+    edge_gradients = {}
+    
+    weights = model[0].weights.data  # [Nodes, Nodes]
+    
+    # For each edge, compute its contribution
+    for u_name, u_idx in node_idx_map.items():
+        for v_name, v_idx in node_idx_map.items():
+            if abs(weights[v_idx, u_idx].item()) < 1e-10:
+                continue  # Skip zero edges
+            
+            # ∂output/∂w_{vu} = (∂output/∂x_eq[v]) * (∂x_eq[v]/∂w_{vu})
+            # For recurrent networks, this is complex, but we can approximate:
+            # ∂x_eq[v]/∂w_{vu} ≈ x_eq[u] (first-order approximation)
+            
+            edge_gradient = grad_output_wrt_eq[0, v_idx].item() * x_eq[0, u_idx].item()
+            
+            edge_gradients[(u_name, v_name)] = abs(edge_gradient)
+    
+    # Add TF -> phenotype edges
+    for tf_name in outName:
+        if isinstance(outName, np.ndarray):
+            tf_idx = int(np.where(outName == tf_name)[0][0])
+        else:
+            tf_idx = outName.index(tf_name)
+        
+        # ∂output/∂TF = phenotype coefficient
+        tf_gradient = abs(pheno_coefs[tf_idx].item())
+        edge_gradients[(tf_name, 'fibrosis')] = tf_gradient
+    
+    # print_func(f"\n📊 Edge gradient statistics:")
+    # all_grads = list(edge_gradients.values())
+    # print_func(f"  Total edges with gradient: {len(all_grads)}")
+    # print_func(f"  Max gradient: {max(all_grads):.4e}")
+    # print_func(f"  Mean gradient: {np.mean(all_grads):.4e}")
+    # print_func(f"  Min gradient: {min(all_grads):.4e}")
+    
+    return edge_gradients
+
+def compute_edge_gradients_grid(model, node_idx_map, sources, pheno_coefs, outName, 
+                                stimulation_strength=3000, num_steps=10, 
+                                aggregation='range', print_func=print):
+    """
+    Compute edge gradients over a grid of stimulations for robustness.
+    
+    Args:
+        model: Full model (signaling + TF + phenotype)
+        node_idx_map: Dict mapping node names to indices
+        sources: List of source nodes (e.g., ['P36897', 'P17181'])
+        pheno_coefs: Phenotype coefficients
+        outName: TF names
+        stimulation_strength: Max stimulation amplitude
+        num_steps: Grid resolution (num_steps x num_steps grid)
+        aggregation: How to aggregate gradients ('sum', 'range', 'mean', 'max')
+        print_func: Logging function
+    
+    Returns:
+        edge_gradients: Dict[(u, v) -> gradient magnitude]
+    """
+    
+    print_func(f"\n🔬 Computing edge gradients over {num_steps}x{num_steps} stimulation grid...")
+    print_func(f"   Sources: {sources}")
+    print_func(f"   Stimulation range: [{-stimulation_strength}, {stimulation_strength}]")
+    print_func(f"   Aggregation method: {aggregation}")
+    
+    model.eval()
+    device = next(model.parameters()).device
+    
+    # Get source indices
+    if len(sources) != 2:
+        raise ValueError("Currently only supports 2 sources for grid")
+    
+    source_idx_1 = node_idx_map[sources[0]]
+    source_idx_2 = node_idx_map[sources[1]]
+    num_nodes = len(node_idx_map)
+    
+    # Create grid of stimulations
+    stim_range = torch.linspace(-stimulation_strength, stimulation_strength, int(num_steps))
+    grid_stim1, grid_stim2 = torch.meshgrid(stim_range, stim_range, indexing='ij')
+    # Flatten grid: (num_steps^2, 1)
+    grid_stim1 = grid_stim1.flatten().view(-1, 1)
+    grid_stim2 = grid_stim2.flatten().view(-1, 1)
+    # Create input batch: (num_steps^2, num_nodes)
+    Xin_grid = torch.zeros((num_steps**2, num_nodes), dtype=torch.double, device=device)
+    Xin_grid[:, source_idx_1] = grid_stim1.squeeze()
+    Xin_grid[:, source_idx_2] = grid_stim2.squeeze()
+    
+    # Zero gradients
+    model.zero_grad()
+    # Forward pass
+    Y = model(Xin_grid)  # (num_steps^2, 1) or (num_steps^2,)
+    
+    # Choose objective based on aggregation
+    if aggregation == 'sum':
+        L_objective = torch.sum(Y)
+    elif aggregation == 'range':
+        L_objective = torch.max(Y) - torch.min(Y)
+    elif aggregation == 'mean':
+        L_objective = torch.mean(Y)
+    elif aggregation == 'max':
+        L_objective = torch.max(torch.abs(Y))
+    else:
+        raise ValueError(f"Unknown aggregation: {aggregation}")
+    
+    print_func(f"   Objective value: {L_objective.item():.6f}")
+    
+    # Backward pass
+    L_objective.backward()
+    
+    # Extract gradients - VECTORIZED VERSION
+    dW = model[0].weights.grad.detach().cpu().numpy()  # (num_nodes, num_nodes)
+    dW_abs = np.abs(dW)  # Take absolute value once
+    
+    # Create node name arrays for efficient indexing
+    node_names = list(node_idx_map.keys())
+    
+    # Convert gradient matrix to dictionary using vectorized operations
+    # Create meshgrid of indices
+    target_indices, source_indices = np.meshgrid(np.arange(num_nodes), np.arange(num_nodes), indexing='ij')
+    
+    # Flatten and create edge tuples efficiently
+    edge_gradients = {
+        (node_names[src_idx], node_names[tgt_idx]): float(dW_abs[tgt_idx, src_idx])
+        for src_idx, tgt_idx in zip(source_indices.ravel(), target_indices.ravel())
+    }
+    
+    # Add TF -> phenotype edges using pheno_coefs directly
+    for tf_name in outName:
+        if isinstance(outName, np.ndarray):
+            tf_idx = int(np.where(outName == tf_name)[0][0])
+        else:
+            tf_idx = outName.index(tf_name)
+
+        if isinstance(pheno_coefs, torch.Tensor):
+            grad_val = abs(pheno_coefs[tf_idx].item())
+        else:
+            grad_val = abs(float(pheno_coefs[tf_idx]))
+        
+        edge_gradients[(tf_name, 'fibrosis')] = grad_val
+    
+    # Statistics
+    all_grads = list(edge_gradients.values())
+    print_func(f"\n✅ Computed gradients for {len(edge_gradients)} edges")
+    print_func(f"   Max gradient: {max(all_grads):.4e}")
+    print_func(f"   Mean gradient: {np.mean(all_grads):.4e}")
+    print_func(f"   Min gradient: {min(all_grads):.4e}")
+    
+    # Zero gradients to clean up
+    model.zero_grad()
+    
+    return edge_gradients
+
+def find_top_gradient_weighted_paths(G, edge_gradients, source, target='fibrosis', 
+                                     top_k=20, print_func=print):
+    """
+    Find top-k shortest paths weighted by INVERSE gradient magnitude.
+    High gradient edges have LOW cost, so they're preferred.
+    
+    This is efficient because it uses Yen's algorithm (nx.shortest_simple_paths).
+    """
+    
+    print_func(f"\n🔍 Finding top-{top_k} gradient-weighted paths from {source}...")
+    
+    # Create edge weights: cost = 1 / |gradient|
+    # High gradient → low cost → preferred in shortest path
+    G_weighted = nx.DiGraph()
+    
+    for (u, v), grad in edge_gradients.items():
+        if G.has_edge(u, v):
+            # weight = 1.0 / (grad + 1e-6)  # Inverse: high gradient = low cost
+            weight = -np.log10(grad + 1e-6)  # Log: high gradient = low cost
+            G_weighted.add_edge(u, v, weight=weight)
+    
+    print_func(f"   Filtered graph: {G_weighted.number_of_nodes()} nodes, {G_weighted.number_of_edges()} edges")
+    
+    # Check if path exists
+    if not nx.has_path(G_weighted, source, target):
+        print_func(f"   ⚠️  No path found from {source} to {target}")
+        return []
+    
+    # Find k-shortest paths using Yen's algorithm (efficient!)
+    try:
+        paths = []
+        for path in nx.shortest_simple_paths(G_weighted, source, target, weight='weight'):
+            if len(paths) >= top_k:
+                break
+            
+            # Convert to edge tuples
+            path_edges = tuple(nx.utils.pairwise(path))
+            paths.append(path_edges)
+        
+        print_func(f"✅ Found {len(paths)} gradient-weighted paths")
+        
+        # Optional: Show gradient info for top path
+        if paths:
+            top_path_gradient = 1.0
+            for u, v in paths[0]:
+                if (u, v) in edge_gradients:
+                    top_path_gradient *= edge_gradients[(u, v)]
+            print_func(f"   Top path gradient product: {top_path_gradient:.4e}")
+        
+        return paths
+        
+    except nx.NetworkXNoPath:
+        print_func(f"   ⚠️  No path found from {source} to {target}")
+        return []
 
 def compute_single_step_jacobian_efficient(bionet_layer, x_equilibrium, x_input):
     """
@@ -58,739 +293,420 @@ def compute_single_step_jacobian_efficient(bionet_layer, x_equilibrium, x_input)
     z = torch.mm(weights, x_equilibrium.T) + X_bias
     
     # Activation derivative
-    derivative = bionet_layer.delta(z, leak)
+    derivative = bionet_layer.delta(z.T, leak)
     
-    # Jacobian = diag(f'(z)) @ W (NO +I because X_bias is constant!)
-    jacobian = derivative.squeeze(1).unsqueeze(1) * weights
+    # Jacobian = diag(f'(z)) @ W
+    # W is [Nodes, Nodes]
+    # Jacobian Batch: [Batch, Nodes, Nodes] = [Batch, Nodes, 1] * [Nodes, Nodes]
+    jacobian = derivative.unsqueeze(-1) * weights
+
+    # jacobian_batch[k, i, j] = d(node i)_k / d(node j)_k
     
     return jacobian
 
-
-def test_jacobian_computation(bionet_layer, x_equilibrium, rtol=1e-4):
+def compute_tfs_jacobian_batch(model, x_equilibrium_batch, outName):
     """
-    Verify that efficient analytical Jacobian matches autograd.
-    """
-    
-    print("\n" + "="*70)
-    print("TESTING JACOBIAN COMPUTATION")
-    print("="*70)
-    
-    # Method 1: Efficient analytical (fast)
-    import time
-    start = time.time()
-    jac_analytical = compute_single_step_jacobian_efficient(bionet_layer, x_equilibrium)
-    time_analytical = time.time() - start
-    
-    # Method 2: Loop-based autograd (slow but reliable reference)
-    start = time.time()
-    jac_autograd = compute_single_step_jacobian_autograd_reference(bionet_layer, x_equilibrium)
-    time_autograd = time.time() - start
-    
-    # Compare
-    max_diff = torch.max(torch.abs(jac_autograd - jac_analytical)).item()
-    max_val = torch.max(torch.abs(jac_autograd)).item()
-    rel_diff = max_diff / (max_val + 1e-8)
-    
-    print(f"\nEfficient analytical: {time_analytical:.4f}s")
-    print(f"Autograd reference: {time_autograd:.4f}s")
-    print(f"Speedup: {time_autograd/time_analytical:.1f}x")
-    print(f"\nMax absolute difference: {max_diff:.2e}")
-    print(f"Max relative difference: {rel_diff:.2e}")
-    
-    if rel_diff < rtol:
-        print("\n✓ PASSED: Jacobians match within tolerance!")
-        return True
-    else:
-        print("\n✗ FAILED: Jacobians differ!")
-        # Print some sample values for debugging
-        print("\nSample comparison (first 5x5):")
-        print("Analytical:")
-        print(jac_analytical[:5, :5])
-        print("Autograd:")
-        print(jac_autograd[:5, :5])
-        return False
-
-
-def compute_single_step_jacobian_autograd_reference(bionet_layer, x_equilibrium):
-    """
-    Reference implementation using autograd (slow but correct).
-    Matches the ACTUAL BioNet.forward() recurrence exactly.
-    """
-    
-    x_eq = x_equilibrium.clone().requires_grad_(True)
-    
-    weights = bionet_layer.weights
-    bias = bionet_layer.bias
-    leak = bionet_layer.training_params['leak']
-    
-    # ONE step of recurrence (matching BioNet.forward EXACTLY)
-    X_bias = x_eq.T + bias  # Constant term
-    X_new = torch.mm(weights, x_eq.T)  # W @ X
-    X_new = X_new + X_bias              # Add constant
-    X_new = bionet_layer.activation(X_new, leak)  # Activation
-    X_new = X_new.T  # Back to (1, num_nodes)
-    
-    num_nodes = x_eq.shape[1]
-    jacobian = torch.zeros((num_nodes, num_nodes), dtype=x_eq.dtype, device=x_eq.device)
-    
-    for i in range(num_nodes):
-        if x_eq.grad is not None:
-            x_eq.grad.zero_()
-        
-        grad_outputs = torch.zeros_like(X_new)
-        grad_outputs[0, i] = 1.0
-        X_new.backward(grad_outputs, retain_graph=True)  # ← Fixed: was X_next, now X_new
-        
-        if x_eq.grad is not None:
-            jacobian[i, :] = x_eq.grad[0, :].clone()
-    
-    return jacobian
-
-
-# ============================================================================
-# PATH SCORING WITH EFFICIENT JACOBIAN
-# ============================================================================
-
-def compute_path_gradient_from_jacobian(path_edges, node_idx_map, jacobian,
-                                        grad_tfs_wrt_nodes, pheno_coefs, outName):
-    """
-    Compute path gradient using pre-computed Jacobian.
-    
-    For path P = [n0 → n1 → n2 → ... → nk → TF → fibrosis]:
-        gradient = J[n1,n0] × J[n2,n1] × ... × J[nk,n(k-1)] × ∂TF/∂nk × coef[TF]
-    
-    Args:
-        path_edges: List of (u, v) tuples defining the path
-        node_idx_map: Dict mapping node names to indices
-        jacobian: Pre-computed Jacobian matrix, shape (num_nodes, num_nodes)
-        grad_tfs_wrt_nodes: Gradients of TFs w.r.t. nodes, shape (num_tfs, num_nodes)
-        pheno_coefs: Linear coefficients from TFs to phenotype
-        outName: List of TF names
+    Computes the partial derivative of all TFs w.r.t. all recurrent nodes for the batch.
     
     Returns:
-        gradient: Scalar gradient along this path
+        grad_tfs_wrt_nodes: [Batch, Num_TFs, Num_Nodes]
     """
+    num_nodes = x_equilibrium_batch.shape[1]
+    num_tfs = len(outName)
+    batch_size = x_equilibrium_batch.shape[0]
     
-    source_node = path_edges[0][0]
-    source_idx = node_idx_map[source_node]
+    x_eq_grad = x_equilibrium_batch.clone().requires_grad_(True)
     
-    current_gradient = 1.0
-    current_node_idx = source_idx
+    # TF activations: [Batch, Num_TFs]
+    tf_acts = model[1](x_eq_grad)
+    
+    # Initialize full gradient tensor: [Batch, Num_TFs, Num_Nodes]
+    grad_tfs_wrt_nodes = torch.zeros((batch_size, num_tfs, num_nodes), dtype=torch.double, device=x_eq_grad.device)
+    
+    # Loop over TFs (must loop because autograd requires scalar loss or single output)
+    for tf_idx in range(num_tfs):
+        # Sum the TF activity across the entire batch to create a scalar loss
+        tf_loss = tf_acts[:, tf_idx].sum()
+        
+        # Calculate gradient of this summed TF loss w.r.t. the input (x_eq_grad)
+        grad = torch.autograd.grad(
+            outputs=tf_loss,
+            inputs=x_eq_grad,
+            retain_graph=True
+        )[0] # grad shape is [Batch, Num_Nodes]
+        
+        # Store for all batches and this specific TF
+        grad_tfs_wrt_nodes[:, tf_idx, :] = grad.clone()
+
+    return grad_tfs_wrt_nodes
+
+
+def compute_path_gradient_from_jacobian(path_edges, node_idx_map, jacobian_batch,
+                                        grad_tfs_wrt_nodes, pheno_coefs, outName):
+    """Compute path gradient using log-space to avoid underflow."""
+    
+    batch_size = jacobian_batch.shape[0]
+    
+    # Work in log space: log(product) = sum(logs)
+    log_abs_gradient = torch.zeros(batch_size, dtype=torch.double, device=jacobian_batch.device)
+    sign_accumulator = torch.ones(batch_size, dtype=torch.double, device=jacobian_batch.device)
+    
+    current_node_idx = node_idx_map[path_edges[0][0]]
     
     for (u, v) in path_edges:
         if v == 'fibrosis':
-            # Final edge: TF -> fibrosis
             tf_name = u
-            tf_idx = outName.index(tf_name)
+            if isinstance(outName, np.ndarray):
+                tf_idx = int(np.where(outName == tf_name)[0][0])
+            else:
+                tf_idx = outName.index(tf_name)
             
-            # ∂fibrosis/∂TF (linear coefficient)
             grad_fibrosis_wrt_tf = pheno_coefs[tf_idx]
+            grad_tf_wrt_current_batch = grad_tfs_wrt_nodes[:, tf_idx, current_node_idx]
             
-            # ∂TF/∂current_node
-            grad_tf_wrt_current = grad_tfs_wrt_nodes[tf_idx, current_node_idx].item()
-            
-            current_gradient *= grad_fibrosis_wrt_tf * grad_tf_wrt_current
+            derivative = grad_fibrosis_wrt_tf * grad_tf_wrt_current_batch
         else:
-            # Edge within signaling network
             v_idx = node_idx_map[v]
-            
-            # Partial derivative from Jacobian
-            partial_derivative = jacobian[v_idx, current_node_idx].item()
-            
-            current_gradient *= partial_derivative
+            derivative = jacobian_batch[:, v_idx, current_node_idx]
             current_node_idx = v_idx
+        
+        # Accumulate in log space
+        log_abs_gradient += torch.log(torch.abs(derivative) + 1e-100)  # Avoid log(0)
+        sign_accumulator *= torch.sign(derivative)
     
-    return current_gradient
+    # Convert back from log space
+    path_gradient_batch = sign_accumulator * torch.exp(log_abs_gradient)
+    
+    return path_gradient_batch
 
 
-def score_paths_single_step_jacobian(model, all_paths, node_idx_map,
-                                     x_baseline, x_stim, pheno_coefs, outName,
-                                     num_steps_ig=50,
-                                     show_progress=True):
+def score_paths_vectorized_jacobian(model, all_paths, node_idx_map,
+                                    x_baseline_batch, x_stim_batch, pheno_coefs, outName,
+                                    num_steps_ig=50, show_progress=True,
+                                    checkpoint_dir=None, checkpoint_key=None, 
+                                    checkpoint_interval=15, print_func=print):
     """
-    Score paths using efficient analytical single-step Jacobian.
-    
-    This is the RECOMMENDED method - closest analogy to GGM partial correlations.
+    Scores all paths across the ENTIRE stimulation grid in a single vectorized IG run.
+    Now with checkpointing support for long runs.
     
     Args:
-        model: Sequential model [signaling_network, output_layer, phenotype]
-        all_paths: List of paths (each path is tuple of (u,v) edges)
-        node_idx_map: Dict mapping node names to indices
-        x_baseline: Baseline input
-        x_stim: Stimulation input
-        pheno_coefs: Coefficients from TFs to phenotype
-        outName: List of TF names
-        num_steps_ig: Number of IG integration steps
-        show_progress: Whether to show progress bar
-    
-    Returns:
-        path_scores: Dict mapping path_edges -> path IG score
+        checkpoint_dir: Directory to save/load checkpoints (None = no checkpointing)
+        checkpoint_key: Unique identifier for this computation
+        checkpoint_interval: Save checkpoint every N steps
+        print_func: Function for logging
     """
     
     model.eval()
-    path_scores = {path: 0.0 for path in all_paths}
+    batch_size = x_stim_batch.shape[0]
+    path_list = list(all_paths)
+    num_paths = len(path_list)
     
-    iterator = range(1, num_steps_ig + 1)
+    # Try to load existing checkpoint
+    start_step = 1
+    path_score_matrix = None
+    
+    if checkpoint_dir and checkpoint_key:
+        loaded_step, loaded_matrix, loaded_metadata = load_ig_checkpoint(checkpoint_dir, checkpoint_key)
+        
+        if loaded_matrix is not None:
+            # Validate checkpoint compatibility
+            if (loaded_metadata['num_paths'] == num_paths and 
+                loaded_metadata['batch_size'] == batch_size and
+                loaded_metadata['num_steps_ig'] == num_steps_ig):
+                
+                start_step = loaded_step + 1
+                path_score_matrix = loaded_matrix.to(x_stim_batch.device)
+                print_func(f"  🔄 Resuming IG computation from step {start_step}/{num_steps_ig}")
+            else:
+                print_func(f"  ⚠️  Checkpoint found but incompatible (shape mismatch). Starting fresh.")
+    
+    # Initialize path score matrix if not loaded
+    if path_score_matrix is None:
+        path_score_matrix = torch.zeros((num_paths, batch_size), 
+                                        dtype=torch.double, 
+                                        device=x_stim_batch.device)
+    
+    # Metadata for checkpointing
+    metadata = {
+        'num_steps_ig': num_steps_ig,
+        'num_paths': num_paths,
+        'batch_size': batch_size,
+        'num_nodes': x_stim_batch.shape[1]
+    }
+    
+    # IG Loop with checkpointing
+    iterator = range(start_step, num_steps_ig + 1)
     if show_progress:
-        iterator = tqdm(iterator, desc="IG steps", leave=False, ncols=100)
+        iterator = tqdm(iterator, desc="Vectorized IG Steps", 
+                       initial=start_step-1, total=num_steps_ig,
+                       leave=False, ncols=100)
     
     for step in iterator:
         alpha = step / num_steps_ig
-        x_alpha = x_baseline + alpha * (x_stim - x_baseline)
         
-        # Get equilibrium state (model[0] handles recurrence internally)
+        # 1. Vectorized Interpolation
+        x_alpha_batch = x_baseline_batch + alpha * (x_stim_batch - x_baseline_batch)
+        
+        # 2. Get equilibrium state (model[0] handles recurrence internally)
         with torch.no_grad():
-            x_equilibrium = model[0](x_alpha)
+            x_equilibrium_batch = model[0](x_alpha_batch)
         
-        # Compute single-step Jacobian efficiently (NO LOOPS!)
-        jacobian = compute_single_step_jacobian_efficient(model[0], x_equilibrium, x_alpha)
+        # 3. Compute single-step Jacobian batch [Batch, Nodes, Nodes]
+        jacobian_batch = compute_single_step_jacobian_efficient(model[0], x_equilibrium_batch, x_alpha_batch)
+        # Check Jacobian magnitudes
+        # print_func(f"  Jacobian stats: max={jacobian_batch.abs().max():.4e}, "
+        #         f"mean={jacobian_batch.abs().mean():.4e}, "
+        #         f"min={jacobian_batch.abs().min():.4e}")
+        # 4. Compute TF gradients batch [Batch, Num_TFs, Num_Nodes]
+        grad_tfs_wrt_nodes = compute_tfs_jacobian_batch(model, x_equilibrium_batch, outName)
         
-        # Compute TF gradients
-        x_eq_grad = x_equilibrium.clone().requires_grad_(True)
-        tf_acts = model[1](x_eq_grad)
-        
-        num_nodes = x_equilibrium.shape[1]
-        grad_tfs_wrt_nodes = torch.zeros((len(outName), num_nodes), dtype=torch.double)
-        
-        for tf_idx in range(len(outName)):
-            grad = torch.autograd.grad(
-                outputs=tf_acts[0, tf_idx],
-                inputs=x_eq_grad,
-                retain_graph=True
-            )[0]
-            grad_tfs_wrt_nodes[tf_idx, :] = grad[0, :]
-        
-        # Score all paths (fast - just lookups and multiplications)
-        for path_edges in all_paths:
-            gradient = compute_path_gradient_from_jacobian(
-                path_edges, node_idx_map, jacobian,
+        # 5. Score all paths for the entire batch
+        for i, path_edges in enumerate(path_list):
+            path_gradient_batch = compute_path_gradient_from_jacobian(
+                path_edges, node_idx_map, jacobian_batch,
                 grad_tfs_wrt_nodes, pheno_coefs, outName
             )
-            path_scores[path_edges] += gradient
+            # Accumulate the gradient contribution
+            path_score_matrix[i, :] += path_gradient_batch
+        
+        # 6. Save checkpoint at intervals
+        if checkpoint_dir and checkpoint_key and step % checkpoint_interval == 0:
+            save_ig_checkpoint(checkpoint_dir, checkpoint_key, step, 
+                             path_score_matrix, metadata, print_func)
+            
+            # Clean up old checkpoints (keep last 2)
+            cleanup_old_checkpoints(checkpoint_dir, checkpoint_key, keep_last_n=2)
     
-    # Finalize IG scores
-    for path_edges in all_paths:
-        source_idx = node_idx_map[path_edges[0][0]]
-        delta_source = (x_stim - x_baseline)[0, source_idx].item()
-        path_scores[path_edges] = (path_scores[path_edges] / num_steps_ig) * delta_source
+    # 7. Finalize IG scores (scale by 1/num_steps_ig and delta_x)
+    final_path_scores_grid = {}
+
+    if path_score_matrix.abs().max().item() < 1e-10:
+        print_func("⚠️  WARNING: All accumulated gradients are near zero!")
+        print_func("   Check that:")
+        print_func("   • Model is producing non-zero equilibrium states")
+        print_func("   • Jacobians are being computed correctly")
+        print_func("   • TF gradients are non-zero")
+    else:
+        print_func(f"✓ Gradient magnitude: max={path_score_matrix.abs().max().item():.4e}, "
+                  f"mean={path_score_matrix.abs().mean().item():.4e}")
     
-    return path_scores
+    # After the IG loop, separate the scoring by source
+    A_idx = 1   # TGFBR1 Only
+    I_idx = 2   # IFNAR1 Only
+    AI_idx = 3  # Combined
+
+    for i, path_edges in enumerate(path_list):
+        source_node = path_edges[0][0]
+        source_idx = node_idx_map[source_node]
+        
+        # delta_source_batch is the vector of [Batch] changes in the source node's input
+        delta_source_batch = (x_stim_batch - x_baseline_batch)[:, source_idx]
+        
+        # Final IG score = (Sum of Gradients / num_steps_ig) * delta_source_batch
+        # BUT: Only for batch indices where delta is non-zero!
+        # Otherwise we multiply valid gradients by zero
+        
+        final_score_vector = torch.zeros_like(delta_source_batch)
+        non_zero_mask = delta_source_batch.abs() > 1e-10
+        
+        if non_zero_mask.any():
+            final_score_vector[non_zero_mask] = (
+                (path_score_matrix[i, non_zero_mask] / num_steps_ig) * 
+                delta_source_batch[non_zero_mask]
+            )
+        
+        final_path_scores_grid[path_edges] = final_score_vector.cpu().numpy()
+    
+    # 8. Save final checkpoint
+    if checkpoint_dir and checkpoint_key:
+        save_ig_checkpoint(checkpoint_dir, checkpoint_key, num_steps_ig, 
+                         path_score_matrix, metadata, print_func)
+        print_func(f"  ✅ IG computation complete. Final checkpoint saved.")
+    
+    return final_path_scores_grid
 
 
-# ============================================================================
-# GRID-BASED COMPETITION ANALYSIS
-# ============================================================================
-
-def score_paths_across_grid(model, all_paths, node_idx_map,
-                            x_baseline, Xin_combined,
-                            pheno_coefs, outName,
-                            num_steps_ig=50,
-                            checkpoint_dir=None,
-                            checkpoint_prefix='',
-                            resume_from_checkpoint=True):
+def analyze_critical_paths(grid_path_scores_vector, print_func=print):
     """
-    Score all paths across the ENTIRE stimulation grid.
+    Analyze competition patterns using the four critical stimulation points.
     
     Args:
-        model: Sequential model [signaling_network, output_layer, phenotype]
-        all_paths: List of paths
-        node_idx_map: Dict mapping node names to indices
-        x_baseline: Baseline input (typically zeros)
-        Xin_combined: Grid of stimulations, shape (num_grid_points, num_nodes)
-        pheno_coefs: Coefficients from TFs to phenotype
-        outName: List of TF names
-        num_steps_ig: Number of IG integration steps per grid point
-        checkpoint_dir: Directory for checkpoints
-        checkpoint_prefix: Prefix for checkpoint files
-        resume_from_checkpoint: Whether to resume from checkpoint
-    
-    Returns:
-        grid_path_scores: Dict[grid_idx -> Dict[path -> score]]
-        grid_metadata: Dict[grid_idx -> metadata]
-    """
-    
-    model.eval()
-    num_grid_points = Xin_combined.shape[0]
-    
-    # Initialize storage
-    grid_path_scores = {}
-    grid_metadata = {}
-    
-    # Setup checkpointing
-    checkpoint_path = None
-    start_grid_idx = 0
-    
-    if checkpoint_dir is not None:
-        Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
-        checkpoint_path = os.path.join(checkpoint_dir, f'{checkpoint_prefix}_grid_checkpoint.pkl')
+        grid_path_scores_vector: Dict[path -> numpy array of scores (size 4)]
+        ...
         
-        if resume_from_checkpoint and os.path.exists(checkpoint_path):
-            try:
-                with open(checkpoint_path, 'rb') as f:
-                    checkpoint_data = pickle.load(f)
-                
-                grid_path_scores = checkpoint_data['grid_path_scores']
-                grid_metadata = checkpoint_data['grid_metadata']
-                start_grid_idx = checkpoint_data['last_grid_idx'] + 1
-                
-                print(f"✓ Resumed from checkpoint: grid point {start_grid_idx}/{num_grid_points}")
-                
-                if start_grid_idx >= num_grid_points:
-                    print(f"✓ Already completed! Returning cached results.")
-                    return grid_path_scores, grid_metadata
-                    
-            except Exception as e:
-                print(f"⚠ Warning: Could not load checkpoint: {e}")
-                start_grid_idx = 0
-    
-    print(f"\n{'='*70}")
-    print(f"SCORING PATHS ACROSS STIMULATION GRID")
-    print(f"{'='*70}")
-    print(f"Grid size: {num_grid_points} points")
-    print(f"Paths to score: {len(all_paths)}")
-    print(f"IG steps per point: {num_steps_ig}")
-    print(f"Method: Single-step Jacobian (GGM analogy)")
-    print(f"Checkpoint: {'Enabled' if checkpoint_path else 'Disabled'}")
-    print(f"{'='*70}\n")
-    
-    # Progress bar for grid points
-    pbar_grid = tqdm(range(start_grid_idx, num_grid_points),
-                     desc="Grid Points",
-                     unit="point",
-                     ncols=100)
-    
-    try:
-        for grid_idx in pbar_grid:
-            # Get this grid point's stimulation
-            x_stim = Xin_combined[grid_idx:grid_idx+1, :]
-            
-            # Extract stimulation levels for metadata
-            tgfbr1_idx = node_idx_map.get('P36897')
-            ifnar1_idx = node_idx_map.get('P17181')
-            
-            if tgfbr1_idx is not None and ifnar1_idx is not None:
-                tgfbr1_stim = x_stim[0, tgfbr1_idx].item()
-                ifnar1_stim = x_stim[0, ifnar1_idx].item()
-            else:
-                tgfbr1_stim = 0
-                ifnar1_stim = 0
-            
-            pbar_grid.set_postfix({
-                'TGFBR1': f'{tgfbr1_stim:.0f}', 
-                'IFNAR1': f'{ifnar1_stim:.0f}'
-            })
-            
-            # Score paths for this grid point
-            path_scores = score_paths_single_step_jacobian(
-                model=model,
-                all_paths=all_paths,
-                node_idx_map=node_idx_map,
-                x_baseline=x_baseline,
-                x_stim=x_stim,
-                pheno_coefs=pheno_coefs,
-                outName=outName,
-                num_steps_ig=num_steps_ig,
-                show_progress=False  # Don't show nested progress bar
-            )
-            
-            # Store results
-            grid_path_scores[grid_idx] = path_scores
-            grid_metadata[grid_idx] = {
-                'tgfbr1_stim': tgfbr1_stim,
-                'ifnar1_stim': ifnar1_stim,
-                'x_stim': x_stim.cpu().numpy()
-            }
-            
-            # Save checkpoint periodically
-            if checkpoint_path and (grid_idx % 10 == 0 or grid_idx == num_grid_points - 1):
-                checkpoint_data = {
-                    'grid_path_scores': grid_path_scores,
-                    'grid_metadata': grid_metadata,
-                    'last_grid_idx': grid_idx,
-                    'num_grid_points': num_grid_points
-                }
-                
-                with open(checkpoint_path, 'wb') as f:
-                    pickle.dump(checkpoint_data, f)
-                
-                pbar_grid.set_postfix({
-                    'TGFBR1': f'{tgfbr1_stim:.0f}', 
-                    'IFNAR1': f'{ifnar1_stim:.0f}',
-                    'saved': '✓'
-                })
-    
-    except KeyboardInterrupt:
-        print("\n\n⚠ Interrupted! Saving checkpoint...")
-        if checkpoint_path:
-            checkpoint_data = {
-                'grid_path_scores': grid_path_scores,
-                'grid_metadata': grid_metadata,
-                'last_grid_idx': grid_idx - 1,
-                'num_grid_points': num_grid_points
-            }
-            with open(checkpoint_path, 'wb') as f:
-                pickle.dump(checkpoint_data, f)
-            print(f"✓ Checkpoint saved. Resume from grid point {grid_idx}")
-        raise
-    
-    finally:
-        pbar_grid.close()
-    
-    print(f"\n✓ Completed scoring {len(all_paths)} paths across {num_grid_points} grid points")
-    
-    # Clean up checkpoint on success
-    if checkpoint_path and os.path.exists(checkpoint_path):
-        os.remove(checkpoint_path)
-        print(f"✓ Checkpoint cleaned up")
-    
-    return grid_path_scores, grid_metadata
-
-
-def analyze_competition_grid(grid_path_scores, grid_metadata, all_paths,
-                             stimulation_strength):
-    """
-    Analyze competition patterns across the stimulation grid.
-    
     Returns:
-        competitive_paths: Paths with sign changes (opposite effects)
-        cooperative_paths: Paths with synergistic effects
-        path_importance_grids: Dict mapping paths to 2D score arrays
+        competitive_paths: Paths with strong competition/synergy metrics
     """
     
-    print("\n" + "="*70)
-    print("ANALYZING COMPETITION PATTERNS ACROSS GRID")
-    print("="*70)
+    print_func("\n" + "="*70)
+    print_func("ANALYZING COMPETITION PATTERNS USING CRITICAL POINTS")
+    print_func("="*70)
     
-    num_grid_points = len(grid_path_scores)
-    grid_size = int(np.sqrt(num_grid_points))
+    # Indices correspond to the order defined in the main loop:
+    # 0: BASELINE (Zero stim)
+    # 1: TGFBR1 Only (A)
+    # 2: IFNAR1 Only (I)
+    # 3: Combined (AI)
     
-    print(f"Grid size: {grid_size} × {grid_size}")
-    print(f"Analyzing {len(all_paths)} paths...")
+    A_idx = 1
+    I_idx = 2
+    AI_idx = 3
     
-    # Create importance grids for each path
-    path_importance_grids = {}
-    
-    for path_edges in tqdm(all_paths, desc="Creating importance grids", ncols=100):
-        scores = []
-        for grid_idx in range(num_grid_points):
-            score = grid_path_scores[grid_idx].get(path_edges, 0)
-            scores.append(score)
-        
-        score_grid = np.array(scores).reshape((grid_size, grid_size))
-        path_importance_grids[path_edges] = score_grid
-    
-    # Find competitive paths (sign changes across grid)
     competitive_paths = []
     
-    for path_edges, score_grid in path_importance_grids.items():
-        has_positive = (score_grid > 0.01).any()
-        has_negative = (score_grid < -0.01).any()
+    for path_edges, score_vector in tqdm(grid_path_scores_vector.items(), desc="Analyzing competition", ncols=100):
         
-        if has_positive and has_negative:
-            max_val = score_grid.max()
-            min_val = score_grid.min()
-            competition_strength = abs(max_val - min_val)
-            
-            competitive_paths.append({
-                'path': path_edges,
-                'score_grid': score_grid,
-                'max_score': max_val,
-                'min_score': min_val,
-                'competition': competition_strength
-            })
-    
-    competitive_paths.sort(key=lambda x: x['competition'], reverse=True)
-    
-    # Find cooperative/synergistic paths
-    cooperative_paths = []
-    
-    center_idx = grid_size // 2  # (0,0) baseline point
-    
-    for path_edges, score_grid in path_importance_grids.items():
-        # Scores at key grid points
-        baseline_score = score_grid[center_idx, center_idx]
-        tgfbr1_only_score = score_grid[center_idx, -1]  # Max TGFBR1, zero IFNAR1
-        ifnar1_only_score = score_grid[-1, center_idx]  # Zero TGFBR1, max IFNAR1
-        both_score = score_grid[-1, -1]  # Both max
+        # 1. Extract Path IG scores for the three key transitions (Baseline -> Point X)
+        score_A = score_vector[A_idx]    # Effect of A only
+        score_I = score_vector[I_idx]    # Effect of I only
+        score_AI = score_vector[AI_idx]  # Effect of A + I combined
         
-        # Expected additive effect
-        expected = tgfbr1_only_score + ifnar1_only_score - baseline_score
-        synergy = both_score - expected
+        # 2. Calculate Expected Additive Effect
+        # The true IG score for a path is the change from the true baseline (zero input), 
+        # so we sum the individual effects.
+        expected_additive = score_A + score_I
         
-        if abs(synergy) > 0.01:
-            cooperative_paths.append({
-                'path': path_edges,
-                'score_grid': score_grid,
-                'tgfbr1_only': tgfbr1_only_score,
-                'ifnar1_only': ifnar1_only_score,
-                'both': both_score,
-                'expected': expected,
-                'synergy': synergy
-            })
+        # 3. Synergy/Interference Metric
+        synergy = score_AI - expected_additive
+        
+        # 4. Total Dynamic Range (Competition Metric)
+        dynamic_range = max(score_A, score_I, score_AI) - min(score_A, score_I, score_AI, 0)
+        
+        # Determine if the path is truly competitive (opposite signs)
+        is_competitive = (np.sign(score_A) != np.sign(score_I))
+        
+        competitive_paths.append({
+            'path': path_edges,
+            'tgfbr1_only': score_A,
+            'ifnar1_only': score_I,
+            'combined': score_AI,
+            'expected': expected_additive,
+            'synergy': synergy,
+            'dynamic_range': dynamic_range,
+            'is_competitive': is_competitive
+        })
     
-    cooperative_paths.sort(key=lambda x: abs(x['synergy']), reverse=True)
+    # Sort by competition strength (synergy/interference magnitude)
+    competitive_paths.sort(key=lambda x: abs(x['synergy']), reverse=True)
     
-    print(f"\n✓ Found {len(competitive_paths)} competitive paths (sign changes)")
-    print(f"✓ Found {len(cooperative_paths)} cooperative paths (synergy/interference)")
+    print_func(f"\n✓ Found {len([p for p in competitive_paths if p['is_competitive']])} paths with opposite directional effects (TGFBR1 vs IFNAR1).")
+    print_func(f"✓ Sorted paths by synergy/interference magnitude (Max |Synergy|: {competitive_paths[0]['synergy']:+.4f})")
     
-    return competitive_paths, cooperative_paths, path_importance_grids
+    return competitive_paths
 
 
-# ============================================================================
-# VISUALIZATION
-# ============================================================================
-
-def visualize_competition_heatmaps(competitive_paths, stimulation_strength,
-                                   out_dir, model_no, top_n=10):
+def visualize_critical_paths_bar_TOP(top_tgfbr1_path, top_ifnar1_path, 
+                                     grid_path_scores_vector, out_dir, 
+                                     model_no, print_func=print2log):
     """
-    Create heatmap visualizations of top competitive paths.
+    Create bar chart for TOP paths only (TGFBR1 and IFNAR1).
     """
     
-    n_paths_to_plot = min(top_n, len(competitive_paths))
-    if n_paths_to_plot == 0:
-        print("No competitive paths to plot")
+    A_idx = 1
+    I_idx = 2
+    AI_idx = 3
+    
+    paths_to_plot = []
+    
+    # Add TGFBR1 top path
+    if top_tgfbr1_path[0]:
+        scores = top_tgfbr1_path[1] if isinstance(top_tgfbr1_path[1], np.ndarray) else \
+                 grid_path_scores_vector[top_tgfbr1_path[0]]
+        paths_to_plot.append({
+            'name': f"TGFBR1\n{top_tgfbr1_path[0][0][0]} → {top_tgfbr1_path[0][-1][1]}",
+            'receptor': 'TGFBR1',
+            'tgfbr1_only': scores[A_idx],
+            'ifnar1_only': scores[I_idx],
+            'combined': scores[AI_idx],
+            'synergy': scores[AI_idx] - scores[A_idx] - scores[I_idx]
+        })
+    
+    # Add IFNAR1 top path
+    if top_ifnar1_path[0]:
+        scores = top_ifnar1_path[1] if isinstance(top_ifnar1_path[1], np.ndarray) else \
+                 grid_path_scores_vector[top_ifnar1_path[0]]
+        paths_to_plot.append({
+            'name': f"IFNAR1\n{top_ifnar1_path[0][0][0]} → {top_ifnar1_path[0][-1][1]}",
+            'receptor': 'IFNAR1',
+            'tgfbr1_only': scores[A_idx],
+            'ifnar1_only': scores[I_idx],
+            'combined': scores[AI_idx],
+            'synergy': scores[AI_idx] - scores[A_idx] - scores[I_idx]
+        })
+    
+    if not paths_to_plot:
+        print_func("No top paths to plot")
         return
     
-    n_rows = (n_paths_to_plot + 4) // 5  # Ceiling division
-    n_cols = min(5, n_paths_to_plot)
+    # Create bar plot
+    n = len(paths_to_plot)
+    x = np.arange(n)
+    width = 0.25
     
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(4*n_cols, 4*n_rows))
-    if n_rows == 1:
-        axes = axes.reshape(1, -1)
-    axes = axes.flatten()
+    fig, ax = plt.subplots(figsize=(10, 8))
     
-    for i in range(n_rows * n_cols):
-        ax = axes[i]
-        
-        if i < n_paths_to_plot:
-            path_info = competitive_paths[i]
-            score_grid = path_info['score_grid']
-            path_edges = path_info['path']
-            
-            # Create heatmap
-            vmax = max(abs(score_grid.max()), abs(score_grid.min()))
-            im = ax.imshow(score_grid, cmap='RdBu_r', origin='lower',
-                          extent=[-stimulation_strength, stimulation_strength,
-                                 -stimulation_strength, stimulation_strength],
-                          vmin=-vmax, vmax=vmax, aspect='auto')
-            
-            ax.set_xlabel('TGFBR1 stimulation', fontsize=9)
-            ax.set_ylabel('IFNAR1 stimulation', fontsize=9)
-            
-            # Path description
-            source = path_edges[0][0]
-            target = path_edges[-1][1]
-            ax.set_title(f"#{i+1}: {source} → {target}\n"
-                        f"Competition: {path_info['competition']:.3f}", 
-                        fontsize=9)
-            
-            # Add colorbar
-            plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-            
-            # Mark key points
-            ax.axhline(y=0, color='k', linestyle='--', alpha=0.3, linewidth=0.5)
-            ax.axvline(x=0, color='k', linestyle='--', alpha=0.3, linewidth=0.5)
-        else:
-            ax.axis('off')
+    scores_array = np.array([[p['tgfbr1_only'], p['ifnar1_only'], p['combined']] 
+                             for p in paths_to_plot])
+    
+    rects1 = ax.bar(x - width, scores_array[:, 0], width, label='TGFBR1 Only', color='tomato')
+    rects2 = ax.bar(x, scores_array[:, 1], width, label='IFNAR1 Only', color='skyblue')
+    rects3 = ax.bar(x + width, scores_array[:, 2], width, label='Combined (AI)', color='darkgreen')
+    
+    # Add labels
+    ax.set_ylabel('Path Integrated Gradient Score', fontsize=12)
+    ax.set_xlabel('Top Path per Receptor', fontsize=12)
+    ax.set_title(f"Model {model_no+1}: TOP Path Contributions (Your Method)", fontsize=16, fontweight='bold')
+    ax.set_xticks(x)
+    ax.set_xticklabels([p['name'] for p in paths_to_plot], fontsize=10)
+    ax.legend(loc='best')
+    ax.grid(axis='y', linestyle='--', alpha=0.6)
+    
+    # Add synergy annotations
+    for i, p in enumerate(paths_to_plot):
+        ax.text(x[i] + width, scores_array[i, 2] * 1.05, 
+                f"S:{p['synergy']:+.2f}", 
+                ha='center', va='bottom', fontsize=9, color='purple', fontweight='bold')
     
     plt.tight_layout()
-    fig_path = os.path.join(out_dir, f'competition_heatmaps_model{model_no}.png')
+    fig_path = os.path.join(out_dir, "barplots", f'TOP_paths_custom_method_model{model_no}.png')
     plt.savefig(fig_path, dpi=150, bbox_inches='tight')
     plt.close()
     
-    print(f"✓ Saved competition heatmaps to: {fig_path}")
+    print_func(f"✓ Saved TOP path visualization (custom method) to: {fig_path}")
 
-
-def print_competition_results(competitive_paths, cooperative_paths, print_func, top_n=10):
+def visualize_top_path_captum_validation(top_path_edges, your_score, captum_score, 
+                                         receptor_name, out_dir, model_no, print_func):
     """
-    Pretty print competition analysis results.
-    """
-    
-    print_func("\n" + "="*70)
-    print_func("TOP COMPETITIVE PATHS (opposite effects across grid)")
-    print_func("="*70)
-    
-    for i, path_info in enumerate(competitive_paths[:top_n]):
-        path = path_info['path']
-        source = path[0][0]
-        target = path[-1][1]
-        
-        print_func(f"\n{i+1}. Path: {source} → ... → {target}")
-        print_func(f"   Full path: {' → '.join([e[0] for e in path] + [target])}")
-        print_func(f"   Max score: {path_info['max_score']:+.6f}")
-        print_func(f"   Min score: {path_info['min_score']:+.6f}")
-        print_func(f"   Competition strength: {path_info['competition']:.6f}")
-    
-    print_func("\n" + "="*70)
-    print_func("TOP COOPERATIVE PATHS (synergistic effects)")
-    print_func("="*70)
-    
-    for i, path_info in enumerate(cooperative_paths[:top_n]):
-        path = path_info['path']
-        source = path[0][0]
-        target = path[-1][1]
-        
-        print_func(f"\n{i+1}. Path: {source} → ... → {target}")
-        print_func(f"   Full path: {' → '.join([e[0] for e in path] + [target])}")
-        print_func(f"   TGFBR1 only:  {path_info['tgfbr1_only']:+.6f}")
-        print_func(f"   IFNAR1 only:  {path_info['ifnar1_only']:+.6f}")
-        print_func(f"   Expected sum: {path_info['expected']:+.6f}")
-        print_func(f"   Actual both:  {path_info['both']:+.6f}")
-        print_func(f"   Synergy:      {path_info['synergy']:+.6f}")
-        
-        if path_info['synergy'] > 0:
-            print_func(f"   → Positive synergy: combined > sum")
-        else:
-            print_func(f"   → Negative synergy: interference/competition")
-
-def extract_and_save_top_path_subgraph(grid_path_scores, grid_metadata, all_paths,
-                                       A, nodeNames, outName, out_dir, model_no,
-                                       edge_models, node_models,
-                                       edge_weight_sum, edge_weight_abs_sum,
-                                       to_symbol, print_func,
-                                       sources=['P36897', 'P17181']):
-    """
-    Extract top paths from IFNAR1 and TGFBR1, save subgraph as CSV and PNG.
-    Updates global aggregators.
-    
-    Args:
-        grid_path_scores: Dict[grid_idx -> Dict[path -> score]]
-        grid_metadata: Dict[grid_idx -> metadata]
-        all_paths: List of all paths
-        A: Adjacency matrix DataFrame (includes 'fibrosis' node)
-        nodeNames: List of node names
-        outName: List of TF names
-        out_dir: Output directory
-        model_no: Model number
-        edge_models, node_models: Global aggregators (modified in place)
-        edge_weight_sum, edge_weight_abs_sum: Global aggregators (modified in place)
-        to_symbol: Function to convert UniProt ID to gene symbol
-        print_func: Logging function
-        sources: List of receptor node IDs
-    
-    Returns:
-        top_ifnar1_path: Tuple of (path_edges, score)
-        top_tgfbr1_path: Tuple of (path_edges, score)
-        result_graph: NetworkX DiGraph of subgraph
-        df: DataFrame of subgraph edges
+    Bar plot comparing YOUR method vs CAPTUM on the top path.
     """
     
-    print_func("\n" + "="*70)
-    print_func("STEP 3: EXTRACT TOP PATH SUBGRAPH")
-    print_func("="*70)
+    fig, ax = plt.subplots(figsize=(8, 6))
     
-    # Use the max stimulation grid point (both receptors fully activated)
-    num_grid_points = len(grid_path_scores)
-    grid_size = int(np.sqrt(num_grid_points))
-    max_stim_idx = num_grid_points - 1  # Last point in grid
+    methods = ['Your Chain-Rule\nMethod', 'Captum Masked\nModel']
+    scores = [your_score, captum_score]
+    colors = ['dodgerblue', 'orange']
     
-    path_scores = grid_path_scores[max_stim_idx]
+    bars = ax.bar(methods, scores, color=colors, alpha=0.8, edgecolor='black', linewidth=1.5)
     
-    print_func(f"Using grid point {max_stim_idx} (both receptors at max stimulation)")
+    # Add value labels
+    for bar, score in zip(bars, scores):
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2., height,
+                f'{score:+.6f}',
+                ha='center', va='bottom' if score > 0 else 'top', fontsize=11, fontweight='bold')
     
-    # Find top paths from each receptor
-    ifnar1_paths = {k: v for k, v in path_scores.items() if k[0][0] == 'P17181'}
-    tgfbr1_paths = {k: v for k, v in path_scores.items() if k[0][0] == 'P36897'}
+    ax.set_ylabel('Path IG Score', fontsize=12)
+    ax.set_title(f"Model {model_no+1}: TOP {receptor_name} Path\nMethod Comparison", 
+                 fontsize=14, fontweight='bold')
+    ax.axhline(0, color='black', linewidth=0.8, linestyle='--')
+    ax.grid(axis='y', linestyle='--', alpha=0.5)
     
-    if not ifnar1_paths:
-        print_func("⚠ Warning: No paths found starting from IFNAR1 (P17181)")
-        top_ifnar1_path = None
-    else:
-        top_ifnar1_path = max(ifnar1_paths.items(), key=lambda item: abs(item[1]))
-        print_func(f"\n✓ Top IFNAR1 (P17181) Path Score: {top_ifnar1_path[1]:+.6f}")
-        print_func(f"  Path: {' → '.join([e[0] for e in top_ifnar1_path[0]] + [top_ifnar1_path[0][-1][1]])}")
+    plt.tight_layout()
+    fig_path = os.path.join(out_dir, "barplots", f'TOP_{receptor_name}_captum_validation_model{model_no}.png')
+    plt.savefig(fig_path, dpi=150, bbox_inches='tight')
+    plt.close()
     
-    if not tgfbr1_paths:
-        print_func("⚠ Warning: No paths found starting from TGFBR1 (P36897)")
-        top_tgfbr1_path = None
-    else:
-        top_tgfbr1_path = max(tgfbr1_paths.items(), key=lambda item: abs(item[1]))
-        print_func(f"\n✓ Top TGFBR1 (P36897) Path Score: {top_tgfbr1_path[1]:+.6f}")
-        print_func(f"  Path: {' → '.join([e[0] for e in top_tgfbr1_path[0]] + [top_tgfbr1_path[0][-1][1]])}")
-    
-    # Collect edges from top paths
-    print_func("\nExtracting and saving Path-IG Subgraph...")
-    result_edges_set = set()
-    
-    if top_ifnar1_path and top_ifnar1_path[0]:
-        for u, v in top_ifnar1_path[0]:
-            result_edges_set.add((u, v))
-        print_func(f"  Added {len(top_ifnar1_path[0])} edges from IFNAR1 path")
-    
-    if top_tgfbr1_path and top_tgfbr1_path[0]:
-        for u, v in top_tgfbr1_path[0]:
-            result_edges_set.add((u, v))
-        print_func(f"  Added {len(top_tgfbr1_path[0])} edges from TGFBR1 path")
-    
-    if not result_edges_set:
-        print_func("⚠ Warning: No edges to save (no valid paths found)")
-        return top_ifnar1_path, top_tgfbr1_path, None, None
-    
-    # Build result graph
-    result_graph = nx.DiGraph(list(result_edges_set))
-    result_nodes_uniprot = list(result_graph.nodes())
-    
-    print_func(f"\n✓ Nodes in Path-IG subgraph: {len(result_nodes_uniprot)}")
-    print_func(f"✓ Subgraph number of edges: {len(result_edges_set)}")
-    
-    # Create CSV data
-    print_func("\nSaving subgraph edgelist to CSV...")
-    subgraph_data = []
-    
-    for u, v in result_edges_set:
-        try:
-            weight = A.loc[u, v]
-        except KeyError:
-            print_func(f"  ⚠ Warning: Edge ({u}, {v}) not found in A, using 0.0")
-            weight = 0.0
-        
-        try:
-            source_symbol = to_symbol(u)
-            target_symbol = to_symbol(v)
-        except:
-            source_symbol = u
-            target_symbol = v
-        
-        subgraph_data.append({
-            'source_uniprot': u,
-            'target_uniprot': v,
-            'source_symbol': source_symbol,
-            'target_symbol': target_symbol,
-            'weight': weight,
-            'path_ID': 'IFNAR1_TGFBR1_Top_Set'
-        })
-    
-    df = pd.DataFrame(subgraph_data)
-    
-    # Save CSV
-    csv_path = os.path.join(out_dir, 'individual_networks', f'subgraph_edgelist_{model_no}.csv')
-    df.to_csv(csv_path, index=False)
-    print_func(f"✓ Subgraph saved to: subgraph_edgelist_{model_no}.csv")
-    
-    # Update global aggregators
-    print_func("\nUpdating global aggregators...")
-    for idx in range(len(df)):
-        src_sym = df.loc[idx, 'source_symbol']
-        tgt_sym = df.loc[idx, 'target_symbol']
-        key = (src_sym, tgt_sym)
-        w = df.loc[idx, 'weight']
-        
-        edge_models[key].add(model_no)
-        node_models[src_sym].add(model_no)
-        node_models[tgt_sym].add(model_no)
-        edge_weight_sum[key] += w
-        edge_weight_abs_sum[key] += abs(w)
-    
-    print_func(f"✓ Updated aggregators: {len(df)} edges processed")
-    
-    # Visualize and save
-    print_func("\nVisualizing the subgraph...")
-    visualize_subgraph(result_graph, sources, to_symbol, out_dir, model_no, print_func)
-    
-    print_func("="*70)
-    
-    return top_ifnar1_path, top_tgfbr1_path, result_graph, df
-
+    print_func(f"✓ Saved Captum validation plot for TOP {receptor_name} path: {fig_path}")
 
 def visualize_subgraph(result_graph, sources, to_symbol, out_dir, model_no, print_func):
     """
@@ -836,46 +752,147 @@ def visualize_subgraph(result_graph, sources, to_symbol, out_dir, model_no, prin
     
     print_func(f"✓ Visualization saved to: path_ig_subgraph_result_{model_no}.png")
 
-
-# ============================================================================
-# RESULTS SAVING
-# ============================================================================
-
-def save_path_scores(grid_path_scores, grid_metadata, competitive_paths, 
-                    cooperative_paths, path_importance_grids, 
-                    out_dir, model_no):
+def print_competition_results(competitive_paths, print_func, top_n=10):
     """
-    Save all path scoring results to disk.
+    Pretty print competition analysis results (simplified for critical path analysis).
+    """
+    if competitive_paths is None:
+        return
+    
+    print_func("\n" + "="*70)
+    print_func("TOP COMPETITIVE PATHS (Sorted by Synergy/Interference)")
+    print_func("="*70)
+    
+    # Summary of score magnitudes
+    all_scores = []
+    for p in competitive_paths:
+        all_scores.extend([abs(p['tgfbr1_only']), abs(p['ifnar1_only']), abs(p['combined'])])
+    all_scores = np.array([s for s in all_scores if s > 0])  # Filter out true zeros
+    
+    if len(all_scores) > 0:
+        print_func(f"\nScore magnitude summary:")
+        print_func(f"  Max:    {all_scores.max():.4e}")
+        print_func(f"  Median: {np.median(all_scores):.4e}")
+        print_func(f"  Min:    {all_scores.min():.4e}")
+    else:
+        print_func("\n⚠️  WARNING: All scores are exactly zero!")
+        print_func("   This suggests the IG computation failed or gradients vanished.")
+    
+    for i, path_info in enumerate(competitive_paths[:top_n]):
+        path = path_info['path']
+        source = path[0][0]
+        target = path[-1][1]
+        
+        print_func(f"\n{i+1}. Path: {source} → ... → {target}")
+        print_func(f"   Full path: {' → '.join([e[0] for e in path] + [target])}")
+        
+        # Use scientific notation if values are very small
+        tgfbr1_val = path_info['tgfbr1_only']
+        ifnar1_val = path_info['ifnar1_only']
+        combined_val = path_info['combined']
+        expected_val = path_info['expected']
+        synergy_val = path_info['synergy']
+        
+        # Choose format based on magnitude
+        def format_score(val):
+            if abs(val) < 1e-4:
+                return f"{val:+.4e}"  # Scientific notation
+            else:
+                return f"{val:+.6f}"  # Fixed point
+        
+        print_func(f"   TGFBR1 only:  {format_score(tgfbr1_val)}")
+        print_func(f"   IFNAR1 only:  {format_score(ifnar1_val)}")
+        print_func(f"   Expected sum: {format_score(expected_val)}")
+        print_func(f"   Actual combined: {format_score(combined_val)}")
+        print_func(f"   Synergy:      {format_score(synergy_val)} ({'Opposite Effect' if path_info['is_competitive'] else 'Same Effect'})")
+
+def extract_and_save_top_path_subgraph(combined_score_vector, A, out_dir, model_no, 
+                                       edge_models, node_models, edge_weight_sum, 
+                                       edge_weight_abs_sum, to_symbol, print_func, 
+                                       sources=['P36897', 'P17181']):
+    """
+    Extract top paths from IFNAR1 and TGFBR1 using the combined max stimulation score, 
+    save subgraph as CSV and PNG, and update global aggregators.
     """
     
-    results_dir = Path(out_dir) / 'path_ig_results'
-    results_dir.mkdir(parents=True, exist_ok=True)
+    print_func("\n" + "="*70)
+    print_func("STEP 3: EXTRACT TOP PATH SUBGRAPH")
+    print_func("="*70)
     
-    # Save comprehensive results
-    results = {
-        'grid_path_scores': grid_path_scores,
-        'grid_metadata': grid_metadata,
-        'competitive_paths': competitive_paths,
-        'cooperative_paths': cooperative_paths,
-        'path_importance_grids': path_importance_grids,
-        'model_number': model_no
-    }
+    path_scores = combined_score_vector # Scores from the combined (AI) max point
     
-    results_path = results_dir / f'model_{model_no}_path_ig_results.pkl'
-    with open(results_path, 'wb') as f:
-        pickle.dump(results, f)
+    # Find top paths from each receptor
+    ifnar1_paths = {k: v for k, v in path_scores.items() if k[0][0] == 'P17181'} # IFNAR1 is P17181
+    tgfbr1_paths = {k: v for k, v in path_scores.items() if k[0][0] == 'P36897'} # TGFBR1 is P36897
     
-    print(f"\n✓ Saved results to: {results_path}")
+    top_ifnar1_path = max(ifnar1_paths.items(), key=lambda item: abs(item[1])) if ifnar1_paths else (None, 0.0)
+    top_tgfbr1_path = max(tgfbr1_paths.items(), key=lambda item: abs(item[1])) if tgfbr1_paths else (None, 0.0)
     
-    return results_path
+    # Print Results 
+    print_func(f"\n✓ Top IFNAR1 (P17181) Path Score (Combined Stim): {top_ifnar1_path[1]:+.6f}")
+    if top_ifnar1_path[0]:
+        print_func(f"  Path: {' → '.join([e[0] for e in top_ifnar1_path[0]] + [top_ifnar1_path[0][-1][1]])}")
+    
+    print_func(f"\n✓ Top TGFBR1 (P36897) Path Score (Combined Stim): {top_tgfbr1_path[1]:+.6f}")
+    if top_tgfbr1_path[0]:
+        print_func(f"  Path: {' → '.join([e[0] for e in top_tgfbr1_path[0]] + [top_tgfbr1_path[0][-1][1]])}")
+    
+    # Collect edges from top paths
+    result_edges_set = set()
+    
+    if top_ifnar1_path[0]:
+        for u, v in top_ifnar1_path[0]:
+            result_edges_set.add((u, v))
+    
+    if top_tgfbr1_path[0]:
+        for u, v in top_tgfbr1_path[0]:
+            result_edges_set.add((u, v))
+    
+    if not result_edges_set:
+        print_func("⚠ Warning: No edges to save (no valid paths found)")
+        return top_ifnar1_path, top_tgfbr1_path, None, None
+    
+    # Build result graph and CSV data
+    result_graph = nx.DiGraph(list(result_edges_set))
+    subgraph_data = []
+    
+    for u, v in result_edges_set:
+        weight = A.loc[u, v]
+        subgraph_data.append({
+            'source_uniprot': u,
+            'target_uniprot': v,
+            'source_symbol': to_symbol(u),
+            'target_symbol': to_symbol(v),
+            'weight': weight,
+            'path_ID': 'IFNAR1_TGFBR1_Top_Set'
+        })
+    
+    df = pd.DataFrame(subgraph_data)
+    
+    # Save CSV
+    csv_path = os.path.join(out_dir, 'individual_networks', f'subgraph_edgelist_{model_no}.csv')
+    df.to_csv(csv_path, index=False)
+    print_func(f"✓ Subgraph saved to: subgraph_edgelist_{model_no}.csv")
+    
+    # Update global aggregators
+    for idx in range(len(df)):
+        src_sym = df.loc[idx, 'source_symbol']
+        tgt_sym = df.loc[idx, 'target_symbol']
+        key = (src_sym, tgt_sym)
+        w = df.loc[idx, 'weight']
+        
+        edge_models[key].add(model_no)
+        node_models[src_sym].add(model_no)
+        node_models[tgt_sym].add(model_no)
+        edge_weight_sum[key] += w
+        edge_weight_abs_sum[key] += abs(w)
+    
+    # Visualize
+    visualize_subgraph(result_graph, sources, to_symbol, out_dir, model_no, print_func)
+    
+    return top_ifnar1_path, top_tgfbr1_path, result_graph, df
 
-
-# ============================================================================
-# AGGREGATION ACROSS MODELS
-# ============================================================================
-
-def aggregate_subgraph_edges(edge_models, node_models, edge_weight_sum, 
-                            edge_weight_abs_sum, number_models, out_dir, print_func):
+def aggregate_subgraph_edges(edge_models, edge_weight_sum, edge_weight_abs_sum, number_models, out_dir, print_func):
     """
     Aggregate subgraph edges across all models.
     """
@@ -912,22 +929,10 @@ def aggregate_subgraph_edges(edge_models, node_models, edge_weight_sum,
     
     print_func(f"\n✓ Saved aggregated edges to: {agg_path}")
     print_func(f"  Total unique edges: {len(aggregated_edges)}")
-    print_func(f"  Edges in >50% models: {sum(1 for e in aggregated_edges if e['frequency'] > 0.5)}")
-    print_func(f"  Edges in >75% models: {sum(1 for e in aggregated_edges if e['frequency'] > 0.75)}")
-    
-    # Print top edges
-    print_func("\nTop 20 Most Frequent Edges (across models):")
-    print_func("="*70)
-    for i, edge in enumerate(aggregated_edges[:20]):
-        print_func(f"{i+1}. {edge['source_symbol']} → {edge['target_symbol']}")
-        print_func(f"   Frequency: {edge['frequency']:.1%} ({edge['num_models']}/{number_models} models)")
-        print_func(f"   Avg weight: {edge['avg_weight']:+.4f}")
     
     return aggregated_edges, df_aggregated
 
-
-def visualize_aggregated_subgraph(aggregated_edges, node_models, number_models, 
-                                  out_dir, print_func, freq_threshold=0.5):
+def visualize_aggregated_subgraph(aggregated_edges, node_models, number_models, out_dir, print_func, freq_threshold=0.5):
     """
     Visualize aggregated subgraph (edges appearing in >threshold of models).
     """
@@ -977,7 +982,6 @@ def visualize_aggregated_subgraph(aggregated_edges, node_models, number_models,
     plt.close()
     
     print_func(f"✓ Aggregated visualization saved to: {agg_fig_path}")
-
 
 def aggregate_path_scores(path_ig_sum, path_ig_count, number_models, print_func):
     """
@@ -1034,12 +1038,605 @@ def save_final_aggregated_results(avg_path_scores, aggregated_edges,
     
     return final_path
 
+def format_score(val):
+    """Helper to format scores with appropriate precision."""
+    if abs(val) < 1e-4:
+        return f"{val:+.4e}"
+    else:
+        return f"{val:+.6f}"
 
-logging.basicConfig(level=logging.INFO, format='%(message)s')
-logger = logging.getLogger()
-print2log = logger.info
+def validate_biological_sanity(grid_path_scores_vector, print_func, sources=['P36897', 'P17181']):
+    """
+    Validate that biologically known pro-fibrotic receptors have positive path contributions.
+    
+    TGFBR1 (P36897) is known to be strongly pro-fibrotic, so its top path should be positive.
+    IFNAR1 (P17181) is more context-dependent.
+    
+    Args:
+        grid_path_scores_vector: Dict[path -> numpy array of 4 scores]
+        print_func: Logging function
+        sources: List of source receptors
+    
+    Returns:
+        validation_results: Dict with validation outcomes
+    """
+    
+    print_func("\n" + "="*70)
+    print_func("BIOLOGICAL SANITY CHECK")
+    print_func("="*70)
+    
+    validation_results = {}
+    
+    # Indices for the 4 critical points
+    A_idx = 1   # TGFBR1 Only
+    I_idx = 2   # IFNAR1 Only
+    AI_idx = 3  # Combined
+    
+    # Check TGFBR1 (P36897) - Known pro-fibrotic
+    tgfbr1_paths = {k: v for k, v in grid_path_scores_vector.items() if k[0][0] == 'P36897'}
+    
+    if tgfbr1_paths:
+        # Find path with largest absolute value when TGFBR1 alone is stimulated
+        top_tgfbr1_path = max(tgfbr1_paths.items(), key=lambda item: abs(item[1][A_idx]))
+        path_edges, scores = top_tgfbr1_path
+        tgfbr1_only_score = scores[A_idx]
+        combined_score = scores[AI_idx]
+        
+        # Check if pro-fibrotic (positive)
+        is_profibrotic = tgfbr1_only_score > 0
+        
+        print_func(f"\n✓ TGFBR1 (P36897) Top Path Validation:")
+        print_func(f"  Path: {' → '.join([e[0] for e in path_edges] + [path_edges[-1][1]])}")
+        print_func(f"  TGFBR1 Only Score: {format_score(tgfbr1_only_score)}")
+        print_func(f"  Combined Score: {format_score(combined_score)}")
+        
+        if is_profibrotic:
+            print_func(f"  ✅ PASS - Top TGFBR1 path is PRO-FIBROTIC (positive), as expected!")
+        else:
+            print_func(f"  ⚠️  WARNING - Top TGFBR1 path is ANTI-FIBROTIC (negative)!")
+            print_func(f"      This contradicts biological knowledge that TGFB is pro-fibrotic.")
+            print_func(f"      Possible reasons:")
+            print_func(f"        • Model learned compensatory/feedback mechanisms")
+            print_func(f"        • Training data has context-dependent effects")
+            print_func(f"        • Path scoring may need more IG steps for accuracy")
+        
+        validation_results['tgfbr1'] = {
+            'top_path': path_edges,
+            'score_alone': tgfbr1_only_score,
+            'score_combined': combined_score,
+            'is_profibrotic': is_profibrotic,
+            'passes_check': is_profibrotic
+        }
+    else:
+        print_func("  ⚠️  No TGFBR1 paths found!")
+        validation_results['tgfbr1'] = {'passes_check': False}
+    
+    # Check IFNAR1 (P17181) - Context-dependent, just report
+    ifnar1_paths = {k: v for k, v in grid_path_scores_vector.items() if k[0][0] == 'P17181'}
+    
+    if ifnar1_paths:
+        top_ifnar1_path = max(ifnar1_paths.items(), key=lambda item: abs(item[1][I_idx]))
+        path_edges, scores = top_ifnar1_path
+        ifnar1_only_score = scores[I_idx]
+        combined_score = scores[AI_idx]
+        
+        print_func(f"\n✓ IFNAR1 (P17181) Top Path (Informational):")
+        print_func(f"  Path: {' → '.join([e[0] for e in path_edges] + [path_edges[-1][1]])}")
+        print_func(f"  IFNAR1 Only Score: {ifnar1_only_score:+.6f}")
+        print_func(f"  Combined Score: {combined_score:+.6f}")
+        
+        if ifnar1_only_score > 0:
+            print_func(f"  ℹ️  IFNAR1 top path is PRO-FIBROTIC (positive)")
+        else:
+            print_func(f"  ℹ️  IFNAR1 top path is ANTI-FIBROTIC (negative)")
+        
+        validation_results['ifnar1'] = {
+            'top_path': path_edges,
+            'score_alone': ifnar1_only_score,
+            'score_combined': combined_score,
+            'is_profibrotic': ifnar1_only_score > 0
+        }
+    else:
+        print_func("  ⚠️  No IFNAR1 paths found!")
+        validation_results['ifnar1'] = {}
+    
+    # Check if they're competitive (opposite signs)
+    if tgfbr1_paths and ifnar1_paths:
+        tgfbr1_sign = np.sign(validation_results['tgfbr1']['score_alone'])
+        ifnar1_sign = np.sign(validation_results['ifnar1']['score_alone'])
+        
+        if tgfbr1_sign != ifnar1_sign and tgfbr1_sign != 0 and ifnar1_sign != 0:
+            print_func(f"\n✓ COMPETITION DETECTED:")
+            print_func(f"  TGFBR1 and IFNAR1 top paths have OPPOSITE effects on fibrosis!")
+            print_func(f"  This suggests antagonistic signaling between the two receptors.")
+            validation_results['competitive'] = True
+        else:
+            print_func(f"\n✓ NO COMPETITION:")
+            print_func(f"  TGFBR1 and IFNAR1 top paths have SAME SIGN effects.")
+            validation_results['competitive'] = False
+    
+    return validation_results
+
+def allpaths_biological_sanity_check(grid_path_scores_vector, validation_summary, print_func):
+    """
+    Sanity check using TOTAL contribution AND extract TOP path info.
+    """
+    
+    print_func("\n" + "="*70)
+    print_func("BIOLOGICAL SANITY CHECK (Total Contribution)")
+    print_func("="*70)
+    
+    validation_results = {}
+    
+    A_idx = 1
+    
+    # Check TGFBR1 using TOTAL contribution
+    if 'tgfbr1' in validation_summary:
+        total_contribution = validation_summary['tgfbr1']['total_path_contribution']
+        global_ig = validation_summary['tgfbr1']['global_ig']
+        
+        print_func(f"\n✓ TGFBR1 (P36897) SANITY CHECK - Total Contribution:")
+        print_func(f"  Total Path Contribution: {total_contribution:+.6f}")
+        print_func(f"  Global IG (Captum):      {global_ig:+.6f}")
+        
+        if global_ig > 0:
+            print_func(f"  ✅ PASS - TGFBR1 total effect is PRO-FIBROTIC, as expected!")
+        else:
+            print_func(f"  ❌ FAIL - TGFBR1 total effect is ANTI-FIBROTIC (biology issue!)")
+        
+        # For aggregation/tracking: use total contribution
+        validation_results['tgfbr1_total_profibrotic'] = global_ig > 0
+        validation_results['tgfbr1_passes'] = global_ig > 0  # Keep for sanity check
+        
+        # Extract TOP path for plotting
+        tgfbr1_paths = {k: v for k, v in grid_path_scores_vector.items() if k[0][0] == 'P36897'}
+        if tgfbr1_paths:
+            top_path_edges, top_scores = max(tgfbr1_paths.items(), 
+                                             key=lambda x: abs(x[1][A_idx]))
+            top_path_score = top_scores[A_idx]
+            
+            print_func(f"\n✓ TGFBR1 TOP PATH (for visualization):")
+            print_func(f"  Score: {top_path_score:+.6f} ({'PRO' if top_path_score > 0 else 'ANTI'}-fibrotic)")
+            print_func(f"  Path: {' → '.join([e[0] for e in top_path_edges[:3]])} ... → fibrosis")
+            
+            # Store top path info for plotting
+            validation_results['tgfbr1_top_path'] = top_path_edges
+            validation_results['tgfbr1_top_score'] = top_path_score
+            validation_results['tgfbr1_top_profibrotic'] = top_path_score > 0
+    
+    return validation_results
+
+## Optional to consider having a normalized score like they do in PPS. NOT USED FOR NOW
+def compute_normalized_path_scores(final_path_scores_grid):
+    """
+    Compute PPS-style normalized attribution: each path's contribution 
+    relative to the sum of all paths from the same source.
+    """
+    # Group by source
+    source_groups = {}
+    for path_edges, scores in final_path_scores_grid.items():
+        source = path_edges[0][0]
+        if source not in source_groups:
+            source_groups[source] = {}
+        source_groups[source][path_edges] = scores
+    
+    # Normalize within each source group
+    normalized_scores = {}
+    for source, paths_dict in source_groups.items():
+        total_abs = sum(np.abs(scores) for scores in paths_dict.values())
+        for path_edges, scores in paths_dict.items():
+            normalized_scores[path_edges] = np.abs(scores) / (total_abs + 1e-10)
+    
+    return normalized_scores
+
+def compute_global_gradient_captum(model, x_baseline, x_stim, source_idx, n_steps=100):
+    """
+    Compute global gradient ∂output/∂input using Captum's IntegratedGradients.
+    This serves as ground truth for validating path-based decomposition.
+    
+    Args:
+        model: Full model (signaling + TF + phenotype)
+        x_baseline: Baseline input (zeros)
+        x_stim: Stimulation input
+        source_idx: Index of source node (e.g., TGFBR1)
+        n_steps: Number of IG steps
+    
+    Returns:
+        attribution: ∂output/∂source_input
+    """
+    
+    model.eval()
+    
+    # Captum's IG requires specific output selection
+    def forward_func(x):
+        # For phenotype output (single value)
+        out = model(x)
+        if out.dim() > 1:
+            out = out.squeeze()
+        return out
+    
+    # Initialize Captum's IG
+    ig = IntegratedGradients(forward_func)
+    
+    # Compute attributions
+    x_baseline_grad = x_baseline.clone().requires_grad_(True)
+    x_stim_grad = x_stim.clone().requires_grad_(True)
+    
+    attributions = ig.attribute(
+        x_stim_grad,
+        baselines=x_baseline_grad,
+        n_steps=n_steps,
+        return_convergence_delta=False
+    )
+    
+    # Extract attribution for the source node
+    source_attribution = attributions[0, source_idx].item()
+    
+    return source_attribution
+
+def validate_path_with_captum(model, path_edges, node_idx_map, x_baseline, x_stim, 
+                               source_idx, print_func=print):
+    """
+    Mask out all weights except those on the path, then compute IG with Captum.
+    If this gives zero, the path truly has no gradient flow.
+    """
+    model.eval()
+    # Save original weights
+    original_weights = model[0].weights.data.clone()
+    
+    # Create mask: only keep edges that are in the path
+    mask = torch.zeros_like(original_weights, dtype=torch.bool)
+    
+    for (u, v) in path_edges:
+        if v != 'fibrosis':  # Skip the final TF->phenotype edge
+            u_idx = node_idx_map[u]
+            v_idx = node_idx_map[v]
+            mask[v_idx, u_idx] = True  # Adjacency is [target, source]
+    
+    # Apply mask: zero out all edges NOT in the path
+    model[0].weights.data = original_weights * mask.double()
+    
+    # Compute IG with Captum on this masked model
+    def forward_func(x):
+        out = model(x)
+        if out.dim() > 1:
+            out = out.squeeze()
+        return out
+    
+    ig = IntegratedGradients(forward_func)
+    
+    x_baseline_grad = x_baseline.clone().requires_grad_(True)
+    x_stim_grad = x_stim.clone().requires_grad_(True)
+    
+    attributions = ig.attribute(
+        x_stim_grad,
+        baselines=x_baseline_grad,
+        n_steps=100,
+        return_convergence_delta=False
+    )
+    
+    path_score_captum = attributions[0, source_idx].item()
+    
+    # Restore original weights
+    model[0].weights.data = original_weights
+    
+    print_func(f"  Path score (Captum, masked model): {path_score_captum:+.6e}")
+    
+    return path_score_captum
+
+def validate_path_decomposition(grid_path_scores_vector, model, x_baseline_batch, x_stim_batch,
+                                 mod, print_func):
+    """
+    Validate that:
+    1. Sum of all path scores = Global IG (path decomposition is correct)
+    2. Global TGFBR1 effect is pro-fibrotic (model captures biology)
+    """
+    
+    print_func("\n" + "="*70)
+    print_func("PATH DECOMPOSITION VALIDATION")
+    print_func("="*70)
+    
+    validation_summary = {}
+    
+    # Indices for the 4 critical points
+    A_idx = 1   # TGFBR1 Only
+    I_idx = 2   # IFNAR1 Only
+    AI_idx = 3  # Combined
+    
+    tgfbr1_idx = mod.node_idx_map['P36897']
+    ifnar1_idx = mod.node_idx_map['P17181']
+    
+    # ========================================================================
+    # VALIDATION 1: TGFBR1 Only - Total Path Contribution vs Global IG
+    # ========================================================================
+    
+    print_func("\n--- Validation 1: TGFBR1 Only (A) ---")
+    
+    # Get all TGFBR1 paths and sum their contributions
+    tgfbr1_paths = {k: v for k, v in grid_path_scores_vector.items() if k[0][0] == 'P36897'}
+    
+    if tgfbr1_paths:
+        tgfbr1_path_contributions = np.array([scores[A_idx] for scores in tgfbr1_paths.values()])
+        total_tgfbr1_paths = tgfbr1_path_contributions.sum()
+        
+        print_func(f"\nSum of {len(tgfbr1_paths)} TGFBR1 path contributions: {format_score(total_tgfbr1_paths)}")
+        
+        # Compute global IG using Captum (ground truth)
+        x_baseline_A = x_baseline_batch[A_idx:A_idx+1, :]
+        x_stim_A = x_stim_batch[A_idx:A_idx+1, :]
+        
+        global_ig_tgfbr1 = compute_global_gradient_captum(
+            model, x_baseline_A, x_stim_A, 
+            source_idx=tgfbr1_idx,
+            n_steps=100)
+        
+        print_func(f"Global IG (Captum) for TGFBR1: {format_score(global_ig_tgfbr1)}")
+        
+        # Check agreement
+        relative_error = abs(total_tgfbr1_paths - global_ig_tgfbr1) / (abs(global_ig_tgfbr1) + 1e-10)
+        
+        print_func(f"Relative error: {relative_error:.4%}")
+        
+        if relative_error < 0.10:  # 10% tolerance
+            print_func("✅ PASS - Path decomposition matches global gradient!")
+        else:
+            print_func("⚠️  WARNING - Significant mismatch between paths and global gradient")
+            print_func("   Possible reasons:")
+            print_func("   • Need more paths (increase max_path_length or paths per source)")
+            print_func("   • Need more IG steps for accuracy")
+        
+        # Check if TGFBR1 is globally pro-fibrotic
+        if global_ig_tgfbr1 > 0:
+            print_func(f"\n✅ MODEL VALIDATION PASS - TGFBR1 is PRO-FIBROTIC (global IG > 0)")
+        else:
+            print_func(f"\n❌ MODEL VALIDATION FAIL - TGFBR1 is ANTI-FIBROTIC (global IG < 0)")
+            print_func("   This contradicts known biology!")
+        
+        validation_summary['tgfbr1'] = {
+            'total_path_contribution': total_tgfbr1_paths,
+            'global_ig': global_ig_tgfbr1,
+            'relative_error': relative_error,
+            'is_profibrotic': global_ig_tgfbr1 > 0,
+            'decomposition_valid': relative_error < 0.10
+        }
+    
+    # ========================================================================
+    # VALIDATION 2: IFNAR1 Only - Total Path Contribution vs Global IG
+    # ========================================================================
+    
+    print_func("\n--- Validation 2: IFNAR1 Only (I) ---")
+    
+    ifnar1_paths = {k: v for k, v in grid_path_scores_vector.items() if k[0][0] == 'P17181'}
+    
+    if ifnar1_paths:
+        ifnar1_path_contributions = np.array([scores[I_idx] for scores in ifnar1_paths.values()])
+        total_ifnar1_paths = ifnar1_path_contributions.sum()
+        
+        print_func(f"\nSum of {len(ifnar1_paths)} IFNAR1 path contributions: {total_ifnar1_paths:+.6f}")
+        
+        x_baseline_I = x_baseline_batch[I_idx:I_idx+1, :]
+        x_stim_I = x_stim_batch[I_idx:I_idx+1, :]
+        
+        global_ig_ifnar1 = compute_global_gradient_captum(
+            model, x_baseline_I, x_stim_I,
+            source_idx=ifnar1_idx,
+            n_steps=100
+        )
+        
+        print_func(f"Global IG (Captum) for IFNAR1:        {global_ig_ifnar1:+.6f}")
+        
+        relative_error_ifnar1 = abs(total_ifnar1_paths - global_ig_ifnar1) / (abs(global_ig_ifnar1) + 1e-10)
+        print_func(f"Relative error: {relative_error_ifnar1:.4%}")
+        
+        if relative_error_ifnar1 < 0.10:
+            print_func("✅ PASS - Path decomposition matches global gradient!")
+        else:
+            print_func("⚠️  WARNING - Significant mismatch")
+        
+        validation_summary['ifnar1'] = {
+            'total_path_contribution': total_ifnar1_paths,
+            'global_ig': global_ig_ifnar1,
+            'relative_error': relative_error_ifnar1,
+            'is_profibrotic': global_ig_ifnar1 > 0,
+            'decomposition_valid': relative_error_ifnar1 < 0.10
+        }
+    
+    # ========================================================================
+    # VALIDATION 3: Check Additivity (A + I ≈ AI for independent effects)
+    # ========================================================================
+    
+    if 'tgfbr1' in validation_summary and 'ifnar1' in validation_summary:
+        print_func("\n--- Validation 3: Additivity Check ---")
+        
+        expected_sum = validation_summary['tgfbr1']['global_ig'] + validation_summary['ifnar1']['global_ig']
+        
+        x_baseline_AI = x_baseline_batch[AI_idx:AI_idx+1, :]
+        x_stim_AI = x_stim_batch[AI_idx:AI_idx+1, :]
+        
+        # For combined, we need to compute gradient w.r.t. both inputs
+        # For simplicity, just report the total model output
+        with torch.no_grad():
+            model.eval()
+            output_AI = model(x_stim_AI)[0, 0].item() if model(x_stim_AI).dim() > 1 else model(x_stim_AI).item()
+            output_baseline = model(x_baseline_AI)[0, 0].item() if model(x_baseline_AI).dim() > 1 else model(x_baseline_AI).item()
+        
+        actual_combined_effect = output_AI - output_baseline
+        
+        print_func(f"\nExpected (A + I):     {expected_sum:+.6f}")
+        print_func(f"Actual combined (AI): {actual_combined_effect:+.6f}")
+        
+        synergy = actual_combined_effect - expected_sum
+        print_func(f"Synergy:              {synergy:+.6f}")
+        
+        if abs(synergy) < abs(expected_sum) * 0.2:  # Within 20%
+            print_func("✅ Approximately additive (small synergy)")
+        else:
+            print_func("⚠️  Non-additive (large synergy/interference)")
+        
+        validation_summary['synergy'] = synergy
+    
+    return validation_summary
+
+## Checkpointing functions
+def generate_checkpoint_key(model_no, timepoint, all_paths, x_stim_batch, x_baseline_batch):
+    """
+    Generate a unique hash key for checkpoint based on inputs.
+    This ensures we only reuse checkpoints with identical configurations.
+    """
+    # Create a deterministic string representation
+    paths_str = str(sorted([str(p) for p in all_paths]))
+    stim_str = f"{x_stim_batch.cpu().numpy().tobytes()}"
+    baseline_str = f"{x_baseline_batch.cpu().numpy().tobytes()}"
+    
+    key_str = f"{model_no}_{timepoint}_{paths_str}_{stim_str}_{baseline_str}"
+    return hashlib.md5(key_str.encode()).hexdigest()
+
+def save_ig_checkpoint(checkpoint_dir, checkpoint_key, step, path_score_matrix, metadata, print_func=print):
+    """
+    Save intermediate IG computation state.
+    """
+    os.makedirs(checkpoint_dir, exist_ok=True)
+    
+    checkpoint_path = os.path.join(checkpoint_dir, f'ckpt_{checkpoint_key}_step{step}.pkl')
+    
+    checkpoint_data = {
+        'step': step,
+        'path_score_matrix': path_score_matrix.cpu().numpy(),
+        'metadata': metadata,
+        'timestamp': time.time()
+    }
+    
+    with open(checkpoint_path, 'wb') as f:
+        pickle.dump(checkpoint_data, f)
+    
+    print_func(f"  💾 Checkpoint saved at step {step}/{metadata['num_steps_ig']}")
+
+def load_ig_checkpoint(checkpoint_dir, checkpoint_key):
+    """
+    Load the most recent checkpoint for this run.
+    
+    Returns:
+        (step, path_score_matrix, metadata) or (0, None, None) if no checkpoint found
+    """
+    if not os.path.exists(checkpoint_dir):
+        return 0, None, None
+    
+    # Find all checkpoints for this key
+    checkpoint_files = [f for f in os.listdir(checkpoint_dir) 
+                       if f.startswith(f'ckpt_{checkpoint_key}_step')]
+    
+    if not checkpoint_files:
+        return 0, None, None
+    
+    # Get the most recent checkpoint
+    checkpoint_files.sort(key=lambda f: int(f.split('step')[1].split('.pkl')[0]))
+    latest_checkpoint = checkpoint_files[-1]
+    
+    checkpoint_path = os.path.join(checkpoint_dir, latest_checkpoint)
+    
+    with open(checkpoint_path, 'rb') as f:
+        checkpoint_data = pickle.load(f)
+    
+    step = checkpoint_data['step']
+    path_score_matrix = torch.from_numpy(checkpoint_data['path_score_matrix'])
+    metadata = checkpoint_data['metadata']
+    
+    print(f"  ✅ Resuming from checkpoint at step {step}/{metadata['num_steps_ig']}")
+    
+    return step, path_score_matrix, metadata
+
+def cleanup_old_checkpoints(checkpoint_dir, checkpoint_key, keep_last_n=2):
+    """
+    Remove old checkpoints to save disk space, keeping only the most recent ones.
+    """
+    if not os.path.exists(checkpoint_dir):
+        return
+    
+    checkpoint_files = [f for f in os.listdir(checkpoint_dir) 
+                       if f.startswith(f'ckpt_{checkpoint_key}_step')]
+    
+    if len(checkpoint_files) <= keep_last_n:
+        return
+    
+    checkpoint_files.sort(key=lambda f: int(f.split('step')[1].split('.pkl')[0]))
+    
+    # Remove all but the last keep_last_n
+    for old_file in checkpoint_files[:-keep_last_n]:
+        os.remove(os.path.join(checkpoint_dir, old_file))
+
+def setup_dual_logging(out_dir='.', log_filename='pathway_scoring.log', use_timestamp=True):
+    """
+    Setup logging to both console and file with different formats.
+    
+    Args:
+        out_dir: Directory to save log file
+        log_filename: Base name of log file
+        use_timestamp: If True, add timestamp to filename
+    
+    Returns:
+        print2log: Function to use for all print statements
+    """
+    import logging
+    from pathlib import Path
+    
+    # Create output directory if it doesn't exist
+    Path(out_dir).mkdir(parents=True, exist_ok=True)
+    
+    # Add timestamp to filename if requested
+    if use_timestamp:
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        base, ext = os.path.splitext(log_filename)
+        log_filename = f"{base}_{timestamp}{ext}"
+    
+    # Create logger
+    logger = logging.getLogger('PathwayScoring')
+    logger.setLevel(logging.INFO)
+    
+    # Remove any existing handlers
+    logger.handlers = []
+    logger.propagate = False
+    
+    # Create formatters
+    file_formatter = logging.Formatter(
+        fmt='%(asctime)s | %(levelname)s | %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    
+    console_formatter = logging.Formatter('%(message)s')
+    
+    # File handler
+    log_path = os.path.join(out_dir, log_filename)
+    file_handler = logging.FileHandler(log_path, mode='w', encoding='utf-8')
+    file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(file_formatter)
+    logger.addHandler(file_handler)
+    
+    # Console handler
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
+    console_handler.setFormatter(console_formatter)
+    logger.addHandler(console_handler)
+    
+    # Log the setup
+    logger.info("="*70)
+    logger.info("PATHWAY SCORING ANALYSIS - LOGGING STARTED")
+    logger.info("="*70)
+    logger.info(f"Log file: {log_path}")
+    logger.info(f"Logger directory: {out_dir}")
+    logger.info("="*70 + "\n")
+    
+    return logger.info, log_path
 
 parser = argparse.ArgumentParser(prog='Hepatocyte simulation')
+parser.add_argument('--log_filename', action='store', type=str, 
+                    default='pathway_scoring.log',
+                    help='Name of the log file')
+parser.add_argument('--checkpoint_interval', action='store', type=int, default=20,
+                    help='Save IG checkpoint every N steps (0 = no checkpointing)')
+parser.add_argument('--resume_from_checkpoint', action='store_true',
+                    help='Resume from existing checkpoint if available')
+parser.add_argument('--clear_checkpoints', action='store_true',
+                    help='Clear all existing checkpoints before starting')
 parser.add_argument('--AnnotationCSV', action='store', type=str,
                     default='../data/annotation.csv',
                     help='CSV with columns: uniprot,symbol for node renaming')
@@ -1066,11 +1663,11 @@ parser.add_argument('--drug_bn', action='store', default=0.2)
 parser.add_argument('--drug_drop', action='store', default=0.1)
 parser.add_argument('--X_invivo_path', action='store', help='Path to in vivo TF activities (.rds)', default='../data/Xh_tfs_govaere.rds')
 parser.add_argument('--Y_invivo_path', action='store', help='Path to in vivo phenotypes (.rds)', default='../data/Yh_tfs_govaere.rds')
-parser.add_argument('--max_path_length', action='store',type = int, default=10)
+parser.add_argument('--max_path_length', action='store',type = int, default=20)
 parser.add_argument('--stimulation_strength', action='store',type=float, default=3000)
-parser.add_argument('--num_steps', action='store',type = float, default=11) # make it at least 21 or 101
-parser.add_argument('--num_steps_ig', action='store',type = float, default=10) #make it at least 50
-parser.add_argument('--EDGE_FREQ_MIN', action='store',type = float, default=0.2)
+parser.add_argument('--num_steps_ig', action='store',type = float, default=100) #make it at least 50
+parser.add_argument('--GRADIENT_THRESHOLD', action='store',type = float, default=7.4e-3) # NEW ARGUMENT
+parser.add_argument('--EDGE_FREQ_MIN', action='store',type = float, default=0.5)
 parser.add_argument('--NODE_FREQ_MIN', action='store',type = float, default=0.5)
 
 fibrosis_output_idx = 0
@@ -1089,12 +1686,24 @@ projection_amplitude_out = args.projectionAmplitude
 ConvertToEmpProb = args.ConvertToEmpProb
 number_DTLEMBAS_models = args.number_DTLEMBAS_models
 stimulation_strength=args.stimulation_strength
-num_steps = args.num_steps
 max_path_length = args.max_path_length
 num_steps_ig =  args.num_steps_ig
 out_dir = args.out_dir
+GRADIENT_THRESHOLD = args.GRADIENT_THRESHOLD
+
+
+print2log, log_file_path = setup_dual_logging(log_filename=args.log_filename, use_timestamp=True)
+
+# At the start of main loop, after argument parsing
+if args.clear_checkpoints:
+    checkpoint_dir = os.path.join(out_dir, 'ig_checkpoints')
+    if os.path.exists(checkpoint_dir):
+        import shutil
+        shutil.rmtree(checkpoint_dir)
+        print2log("🗑️  Cleared all existing checkpoints")
 
 Path(os.path.join(out_dir, 'individual_networks')).mkdir(parents=True, exist_ok=True)
+Path(os.path.join(out_dir, 'barplots')).mkdir(parents=True, exist_ok=True)
 
 n_cores = 12
 utils.set_cores(n_cores)
@@ -1197,10 +1806,6 @@ for timepoint in ['8 hour']:  # or ['2 hour','8 hour','24 hour']
     pheno = FrozenLinear(coefs[np.newaxis, :], intercept, dtype=torch.double, device=device)
     pheno.eval()
     
-    # ============================================================================
-    # MAIN MODEL LOOP
-    # ============================================================================
-    
     for model_no in range(number_DTLEMBAS_models):
         print2log(f"\n{'='*70}")
         print2log(f"MODEL {model_no+1}/{number_DTLEMBAS_models}")
@@ -1241,136 +1846,354 @@ for timepoint in ['8 hour']:  # or ['2 hour','8 hour','24 hour']
         )
         model.eval()
         
-        # OPTIONAL: Test Jacobian computation on first model
-        if model_no == 0:
-            print2log("\nTesting Jacobian computation on first model...")
-            x_test = torch.zeros((1, len(nodeNames)), dtype=torch.double).to(device)
-            with torch.no_grad():
-                x_eq_test = model[0](x_test)
-            test_jacobian_computation(model[0], x_eq_test)
-        
-        # --- STEP 0: Create grid of stimulations ---
+        # --- STEP 0: Create CRITICAL input batch ---
         print2log('\n' + '='*70)
-        print2log('STEP 0: CREATING STIMULATION GRID')
+        print2log('STEP 0: CREATING CRITICAL INPUT BATCH (4 POINTS)')
         print2log('='*70)
         
         nodeNames_array = np.array(list(mod.node_idx_map.keys()))
         all_nodes = np.array(list(mod.node_idx_map.keys()))
         
-        subset_nodes = {key: mod.node_idx_map[key] for key in sources if key in mod.node_idx_map}
-        subset_nodes_inds = np.array(list(subset_nodes.values()))
+        # TGFBR1: P36897, IFNAR1: P17181
+        tgfbr1_idx_R = mod.node_idx_map['P36897']
+        ifnar1_idx_R = mod.node_idx_map['P17181']
         
-        Xin = torch.eye(len(all_nodes), dtype=torch.double).to(device)
-        Xin_1 = Xin[subset_nodes_inds[0],:].unsqueeze(0)
-        Xin_2 = Xin[subset_nodes_inds[1],:].unsqueeze(0)
+        # Create a zero vector for the base input
+        x_base = torch.zeros((1, len(nodeNames_array)), dtype=torch.double).to(device)
         
-        stim_range = torch.linspace(-stimulation_strength, stimulation_strength, int(num_steps))
-        grid_Xin1, grid_Xin2 = torch.meshgrid(stim_range, stim_range, indexing='ij')
-        grid_Xin1 = grid_Xin1.flatten().view(-1, 1)
-        grid_Xin2 = grid_Xin2.flatten().view(-1, 1)
-        grid_Xin1 = grid_Xin1.repeat(1, Xin_1.shape[1])
-        grid_Xin2 = grid_Xin2.repeat(1, Xin_2.shape[1])
+        # Define the 4 critical inputs (Batch size = 4)
+        x_baseline_B = x_base.clone()  # B: Zero, Zero (Index 0)
+        x_tgfbr1_A = x_base.clone()
+        x_tgfbr1_A[0, tgfbr1_idx_R] = stimulation_strength # A: Max TGFBR1, Zero IFNAR1 (Index 1)
+        x_ifnar1_I = x_base.clone()
+        x_ifnar1_I[0, ifnar1_idx_R] = stimulation_strength # I: Zero TGFBR1, Max IFNAR1 (Index 2)
+        x_combined_AI = x_base.clone()
+        x_combined_AI[0, tgfbr1_idx_R] = stimulation_strength
+        x_combined_AI[0, ifnar1_idx_R] = stimulation_strength # AI: Max TGFBR1, Max IFNAR1 (Index 3)
         
-        Xin_1_grid = Xin_1 * grid_Xin1.to(device).double()
-        Xin_2_grid = Xin_2 * grid_Xin2.to(device).double()
-        Xin_combined = Xin_1_grid + Xin_2_grid
-        Xin_combined = Xin_combined.detach()
+        # Combine into a single batch for vectorized IG computation
+        Xin_critical = torch.cat([x_baseline_B, x_tgfbr1_A, x_ifnar1_I, x_combined_AI], dim=0).detach()
+        x_baseline_batch = torch.zeros_like(Xin_critical).to(device) # Baseline for IG is always zero vector
         
-        print2log(f"Grid size: {int(num_steps)} × {int(num_steps)} = {Xin_combined.shape[0]} points")
-        print2log(f"Stimulation range: [{-stimulation_strength:.0f}, {stimulation_strength:.0f}]")
-        
-        # Calculate net effects
-        netEffect = np.linalg.inv(np.eye(len(A)) - A.values)
-        print2log(f"Net effect of IFNAR1 (P17181) on fibrosis: {netEffect[subset_nodes_inds[1],-1]:.4f}")
-        print2log(f"Net effect of TGFBR1 (P36897) on fibrosis: {netEffect[subset_nodes_inds[0],-1]:.4f}")
+        print2log(f"Batch created with {Xin_critical.shape[0]} critical points.")
+        print2log(f"TGFBR1 ID (P36897) index: {tgfbr1_idx_R}, IFNAR1 ID (P17181) index: {ifnar1_idx_R}")
         
         # --- STEP 1: Define target paths ---
         print2log('\n' + '='*70)
         print2log('STEP 1: DEFINING TARGET PATHS')
         print2log('='*70)
+        # First, compute edge gradients to identify active edges
+        print2log("\n Computing edge gradients for all edges in the network...")
+        # Use a representative stimulation (e.g., combined stimulation)
+        AI_idx = 3  # Combined stimulation
+        x_stim_representative = Xin_critical[AI_idx:AI_idx+1, :]
+
+        edge_gradients = compute_edge_gradients_grid(
+            model=model,
+            node_idx_map=mod.node_idx_map,
+            sources=sources,
+            pheno_coefs=torch.tensor(coefs, dtype=torch.double, device=device),
+            outName=outName,
+            stimulation_strength=stimulation_strength,
+            num_steps=11,  # 10x10 grid = 100 conditions
+            aggregation='range',  # max(Y) - min(Y)
+            print_func=print2log
+        )
+        all_grads = list(edge_gradients.values())
+        print2log(f"   Edges with |gradient| > {GRADIENT_THRESHOLD:.1e}: {sum(1 for g in all_grads if g > GRADIENT_THRESHOLD)}")
+
+        # Filter the graph G to keep only edges with high gradient magnitude
+        # Collect active signaling network edges (u -> v, excluding TF->Phenotype)
+        active_signaling_edges = [
+            (u, v, {'weight': grad})
+            for (u, v), grad in edge_gradients.items()
+            if v != 'fibrosis' and G.has_edge(u, v) and grad >= GRADIENT_THRESHOLD
+        ]
+        # Collect active TF -> Phenotype edges
+        active_tf_edges = [
+            (tf_name, 'fibrosis', {'weight': edge_gradients[(tf_name, 'fibrosis')]})
+            for tf_name in outName
+            if edge_gradients.get((tf_name, 'fibrosis'), 0.0) >= GRADIENT_THRESHOLD
+        ]
+        # Construct the filtered graph in a single step
+        G_filtered = nx.DiGraph(active_signaling_edges + active_tf_edges)
+
+        # --- DIAGNOSTIC CHECK FOR SPECIFIC EDGES ---
+        print2log("\n   *** DIAGNOSTIC CHECK: P36897 -> Q9H3D4 -> fibrosis ***")
+        edge_1 = ('P36897', 'Q9H3D4')
+        edge_2 = ('Q9H3D4', 'fibrosis')
+        grad_1 = edge_gradients.get(edge_1, 0.0)
+        grad_2 = edge_gradients.get(edge_2, 0.0)
+        is_in_G_1 = G_filtered.has_edge(*edge_1)
+        is_in_G_2 = G_filtered.has_edge(*edge_2)
+        print2log(f"   Threshold (T): {GRADIENT_THRESHOLD:.2e}")
+        print2log(f"   Edge 1: {edge_1[0]} -> {edge_1[1]}")
+        print2log(f"     |Gradient|: {grad_1:.4e} (Is >= T: {grad_1 >= GRADIENT_THRESHOLD})")
+        print2log(f"     In G_filtered: {is_in_G_1}")
+        print2log(f"   Edge 2: {edge_2[0]} -> {edge_2[1]}")
+        print2log(f"     |Gradient|: {grad_2:.4e} (Is >= T: {grad_2 >= GRADIENT_THRESHOLD})")
+        print2log(f"     In G_filtered: {is_in_G_2}")
+        print2log("   *** END DIAGNOSTIC CHECK ***\n")
         
+        # # Find gradient-weighted paths
+        # all_paths = []
+        # paths_per_source = 20
+        # for source_node in sources:
+        #     print2log(f"Finding paths from {source_node}...")
+        #     source_paths = find_top_gradient_weighted_paths(
+        #         G=G,
+        #         edge_gradients=edge_gradients,
+        #         source=source_node,
+        #         target='fibrosis',
+        #         top_k=paths_per_source,
+        #         print_func=print2log
+        #     )
+        #     for path_edges in source_paths:
+        #         if path_edges not in all_paths:
+        #             all_paths.append(path_edges)
+        # print2log(f"\n✅ Found {len(all_paths)} unique gradient-weighted paths to score")
         all_paths = []
         for source_node in sources:
             print2log(f"Finding paths from {source_node}...")
-            paths_gen = nx.shortest_simple_paths(G, source=source_node, target='fibrosis')
-            top_k_paths = list(islice(paths_gen, 5))
+            # Use all_simple_paths with islice for a controlled path search
+            paths_gen = nx.all_simple_paths(G_filtered, source=source_node, target='fibrosis', cutoff=args.max_path_length)
+            top_k_paths = list(islice(paths_gen, 500)) # Limit to 100 paths per source for runtime safety
             for path in top_k_paths:
                 path_edges = tuple(nx.utils.pairwise(path))
                 if path_edges not in all_paths:
                     all_paths.append(path_edges)
-                    path_str = ' → '.join([e[0] for e in path_edges] + [path_edges[-1][1]])
-                    print2log(f"  Path {len(all_paths)}: {path_str}")
-        
-        print2log(f"\n✓ Found {len(all_paths)} unique paths to score")
-        
-        # --- STEP 2: Score paths across grid ---
+        print2log(f"\n✅ Enumerated {len(all_paths)} unique paths to score")
+                
+        # --- STEP 2: Score paths across CRITICAL batch ---
         print2log('\n' + '='*70)
-        print2log('STEP 2: SCORING PATHS ACROSS STIMULATION GRID')
+        print2log('STEP 2: SCORING PATHS ACROSS CRITICAL BATCH (VECTORIZED)')
         print2log('='*70)
         
-        checkpoint_dir = os.path.join(out_dir, 'ig_checkpoints')
-        Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
-        Path(os.path.join(out_dir, 'individual_networks')).mkdir(parents=True, exist_ok=True)
+        checkpoint_dir = os.path.join('.', 'ig_checkpoints') if args.checkpoint_interval > 0 else None
+        checkpoint_interval = args.checkpoint_interval if args.checkpoint_interval > 0 else None
+        # Generate unique checkpoint key for this model
+        checkpoint_key = generate_checkpoint_key(
+            model_no=model_no, 
+            timepoint=timepoint,
+            all_paths=all_paths,
+            x_stim_batch=Xin_critical,
+            x_baseline_batch=x_baseline_batch
+        )
         
-        x_baseline = torch.zeros((1, len(nodeNames_array)), dtype=torch.double).to(device)
-        
-        grid_path_scores, grid_metadata = score_paths_across_grid(
+        # Use the vectorized scoring function
+        grid_path_scores_vector = score_paths_vectorized_jacobian(
             model=model,
             all_paths=all_paths,
             node_idx_map=mod.node_idx_map,
-            x_baseline=x_baseline,
-            Xin_combined=Xin_combined,
-            pheno_coefs=torch.tensor(coefs, dtype=torch.double),
+            x_baseline_batch=x_baseline_batch,
+            x_stim_batch=Xin_critical,
+            pheno_coefs=torch.tensor(coefs, dtype=torch.double, device=device),
             outName=outName,
             num_steps_ig=int(num_steps_ig),
+            show_progress=True,
             checkpoint_dir=checkpoint_dir,
-            checkpoint_prefix=f'model{model_no}',
-            resume_from_checkpoint=True
+            checkpoint_key=checkpoint_key,
+            checkpoint_interval=checkpoint_interval,
+            print_func=print2log
         )
+
+        # --- DIAGNOSTIC: Print score for target path ---
+        A_idx = 1
+        target_path_tuple = (('P36897', 'Q9H3D4'), ('Q9H3D4', 'fibrosis'))
+        if target_path_tuple in grid_path_scores_vector:
+            scores = grid_path_scores_vector[target_path_tuple]
+            print2log("\n" + "-"*70)
+            print2log(f"*** PATH SCORE LOOKUP: P36897 -> Q9H3D4 -> fibrosis ***")
+            print2log(f"   TGFBR1 Only (A) Score: {format_score(scores[A_idx])}")
+            print2log(f"   Combined (AI) Score: {format_score(scores[AI_idx])}")
+            print2log("-" * 70 + "\n")
+        else:
+            print2log("\n" + "-"*70)
+            print2log(f"*** PATH SCORE LOOKUP: P36897 -> Q9H3D4 -> fibrosis ***")
+            print2log(f"   ⚠️  Path not found in enumerated list. (It may have been filtered out.)")
+            print2log("-" * 70 + "\n")
+        # --- END DIAGNOSTIC: Print score for target path ---
+
+        print2log("\n" + "="*70)
+        print2log("🔬 VALIDATING PATH SCORES WITH CAPTUM (MASKED MODEL TEST)")
+        print2log("="*70)
+        print2log("\nThis test will:")
+        print2log("  1. Take the top TGFBR1 path")
+        print2log("  2. Mask the model to ONLY use edges in that path")
+        print2log("  3. Compute IG with Captum on the masked model")
+        print2log("  4. Compare to your chain-rule method")
+        print2log("\nIf Captum also gives ~zero → Path has no gradient flow (path selection issue)")
+        print2log("If Captum gives non-zero → Your chain-rule has a bug\n")
+
+        # Get the top TGFBR1 path
+        A_idx = 1  # TGFBR1 only stimulation
+        tgfbr1_paths = {k: v for k, v in grid_path_scores_vector.items() if k[0][0] == 'P36897'}
+
+        if tgfbr1_paths:
+            # Find path with largest absolute value
+            top_tgfbr1_path_edges, top_tgfbr1_scores = max(
+                tgfbr1_paths.items(), 
+                key=lambda x: abs(x[1][A_idx])
+            )
+            
+            your_method_score = top_tgfbr1_scores[A_idx]
+            
+            print2log(f"Testing TOP TGFBR1 path:")
+            print2log(f"  Path length: {len(top_tgfbr1_path_edges)} edges")
+            print2log(f"  Path: {' → '.join([e[0] for e in top_tgfbr1_path_edges[:3]])} ... → fibrosis")
+            print2log(f"  Your method score: {your_method_score:+.6e}")
+            
+            # Extract the correct batch inputs for TGFBR1 only
+            x_baseline_A = x_baseline_batch[A_idx:A_idx+1, :]
+            x_stim_A = Xin_critical[A_idx:A_idx+1, :]
+            
+            # Run Captum validation
+            captum_score = validate_path_with_captum(
+                model=model,
+                path_edges=top_tgfbr1_path_edges,
+                node_idx_map=mod.node_idx_map,
+                x_baseline=x_baseline_A,
+                x_stim=x_stim_A,
+                source_idx=tgfbr1_idx_R,
+                print_func=print2log
+            )
+            
+            print2log("\n" + "-"*70)
+            print2log("DIAGNOSIS:")
+            print2log("-"*70)
+            
+            if abs(captum_score) < 1e-10 and abs(your_method_score) < 1e-10:
+                print2log("❌ BOTH methods give ~zero")
+                print2log("   → This path has NO GRADIENT FLOW in the model")
+                print2log("   → Your path finding method is selecting inactive paths")
+                print2log("   → SOLUTION: Use gradient-weighted path finding")
+                
+            elif abs(captum_score) < 1e-10 and abs(your_method_score) > 1e-10:
+                print2log("⚠️  Captum gives zero, but your method gives non-zero")
+                print2log("   → Something is wrong with your implementation")
+                print2log("   → (Captum should be ground truth)")
+                
+            elif abs(captum_score) > 1e-10:
+                print2log(f"✅ Path HAS gradient flow! Captum score: {captum_score:+.6e}")
+                
+                if abs(your_method_score) < 1e-10:
+                    print2log("❌ But your method gives ~zero")
+                    print2log("   → BUG in your chain-rule implementation")
+                    print2log("   → Check log-space conversion and accumulation")
+                else:
+                    ratio = your_method_score / captum_score
+                    error = abs(ratio - 1.0)
+                    
+                    print2log(f"\n   Ratio (your / Captum): {ratio:.4e}")
+                    print2log(f"   Relative error: {error:.2%}")
+                    
+                    if error < 0.1:
+                        print2log("   ✅ EXCELLENT - Your method is correct!")
+                    elif error < 0.5:
+                        print2log("   ⚠️  Close but not exact - minor numerical issue")
+                    else:
+                        print2log("   ❌ Large discrepancy - check implementation")
+            
+            print2log("="*70 + "\n")
+            
+        else:
+            print2log("❌ No TGFBR1 paths found to test!\n")
         
-        # --- STEP 2B: Analyze competition ---
+        # --- STEP 2B: Analyze competition using the critical points ---
         print2log('\n' + '='*70)
         print2log('STEP 2B: ANALYZING COMPETITION PATTERNS')
         print2log('='*70)
         
-        competitive_paths, cooperative_paths, path_importance_grids = analyze_competition_grid(
-            grid_path_scores=grid_path_scores,
-            grid_metadata=grid_metadata,
-            all_paths=all_paths,
-            stimulation_strength=stimulation_strength
-        )
+        # grid_path_scores_vector is a Dict[path -> numpy array of 4 scores]
+        competitive_paths = analyze_critical_paths(grid_path_scores_vector=grid_path_scores_vector,print_func=print2log)
         
         # Print results
-        print_competition_results(competitive_paths, cooperative_paths, print2log, top_n=10)
+        # print_competition_results(competitive_paths, print2log, top_n=10)
+
+        # Biological sanity check
+        validation_results = validate_biological_sanity(
+            grid_path_scores_vector=grid_path_scores_vector,
+            print_func=print2log,
+            sources=sources)
         
+        # Validate path decomposition (sum of paths = global gradient)
+        validation_summary = validate_path_decomposition(
+            grid_path_scores_vector=grid_path_scores_vector,
+            model=model,
+            x_baseline_batch=x_baseline_batch,
+            x_stim_batch=Xin_critical,
+            mod=mod,
+            print_func=print2log
+        )
+        
+        allpaths_validation_results = allpaths_biological_sanity_check(
+            grid_path_scores_vector=grid_path_scores_vector,
+            validation_summary=validation_summary,
+            print_func=print2log
+        )
+
         # Visualize
-        visualize_competition_heatmaps(
-            competitive_paths=competitive_paths,
-            stimulation_strength=stimulation_strength,
+        visualize_critical_paths_bar_TOP(
+            top_tgfbr1_path=(top_tgfbr1_path_edges, top_tgfbr1_scores),  # From masked model test
+            top_ifnar1_path=(None, None),  # Add IFNAR1 if needed
+            grid_path_scores_vector=grid_path_scores_vector,
             out_dir=out_dir,
             model_no=model_no,
-            top_n=10
+            print_func=print2log
         )
-        
-        # Save results
-        save_path_scores(
-            grid_path_scores=grid_path_scores,
-            grid_metadata=grid_metadata,
-            competitive_paths=competitive_paths,
-            cooperative_paths=cooperative_paths,
-            path_importance_grids=path_importance_grids,
+        visualize_top_path_captum_validation(
+            top_path_edges=top_tgfbr1_path_edges,
+            your_score=your_method_score,
+            captum_score=captum_score,
+            receptor_name='TGFBR1',
             out_dir=out_dir,
-            model_no=model_no
+            model_no=model_no,
+            print_func=print2log
         )
         
-        # --- STEP 3: Extract top path subgraph ---
+        # --- Update aggregation (Using the Combined (AI) score for ensemble voting) ---
+        combined_score_vector = {path: scores[3] for path, scores in grid_path_scores_vector.items()}
+        
+        for path_edges in all_paths:
+            score = combined_score_vector[path_edges]
+            path_ig_sum[path_edges] += score
+            path_ig_count[path_edges] += 1
+
+        # Track biological validation results across models
+        if 'validation_tracker' not in locals():
+            validation_tracker = {
+                'tgfbr1_total_profibrotic_count': 0,
+                'tgfbr1_top_profibrotic_count': 0,
+                'captum_top_profibrotic_count': 0,
+                'decomposition_valid_count': 0,
+                'total_models': 0,
+                'failed_models_total': [],
+                'failed_models_top': [],
+                'decomposition_failed': []
+            }
+
+        validation_tracker['total_models'] += 1
+
+        # Check TOTAL contribution (for sanity)
+        if allpaths_validation_results.get('tgfbr1_passes', False):
+            validation_tracker['tgfbr1_total_profibrotic_count'] += 1
+        else:
+            validation_tracker['failed_models_total'].append(model_no)
+
+        # Check TOP path (your method)
+        if allpaths_validation_results.get('tgfbr1_top_profibrotic', False):
+            validation_tracker['tgfbr1_top_profibrotic_count'] += 1
+        else:
+            validation_tracker['failed_models_top'].append(model_no)
+
+        # Check if Captum also finds pro-fibrotic TOP path
+        if captum_score > 0:
+            validation_tracker['captum_top_profibrotic_count'] += 1
+        
+        # --- STEP 3: Extract top path subgraph (Uses the Combined (AI) score) ---
         top_ifnar1_path, top_tgfbr1_path, result_graph, subgraph_df = extract_and_save_top_path_subgraph(
-            grid_path_scores=grid_path_scores,
-            grid_metadata=grid_metadata,
-            all_paths=all_paths,
+            combined_score_vector=combined_score_vector,
             A=A,
-            nodeNames=nodeNames,
-            outName=outName,
             out_dir=out_dir,
             model_no=model_no,
             edge_models=edge_models,
@@ -1382,68 +2205,96 @@ for timepoint in ['8 hour']:  # or ['2 hour','8 hour','24 hour']
             sources=sources
         )
         
-        # Update path aggregators (using max stimulation point)
-        max_stim_idx = len(grid_path_scores) - 1
-        for path_edges in all_paths:
-            score = grid_path_scores[max_stim_idx].get(path_edges, 0)
-            path_ig_sum[path_edges] += score
-            path_ig_count[path_edges] += 1
-        
         print2log(f"\n{'='*70}")
         print2log(f"✓ COMPLETED MODEL {model_no+1}/{number_DTLEMBAS_models}")
         print2log(f"{'='*70}\n")
     
+    # AGGREGATE ACROSS ALL MODELS
+    print2log('\n' + '='*70)
+    print2log('FINAL: AGGREGATING RESULTS ACROSS ALL MODELS')
+    print2log('='*70)
+
+    # Aggregate subgraph edges
+    aggregated_edges, df_aggregated = aggregate_subgraph_edges(
+        edge_models=edge_models,
+        edge_weight_sum=edge_weight_sum,
+        edge_weight_abs_sum=edge_weight_abs_sum,
+        number_models=number_DTLEMBAS_models,
+        out_dir=out_dir,
+        print_func=print2log
+    )
+
+    # Visualize aggregated subgraph
+    visualize_aggregated_subgraph(
+        aggregated_edges=aggregated_edges,
+        node_models=node_models,
+        number_models=number_DTLEMBAS_models,
+        out_dir=out_dir,
+        print_func=print2log,
+        freq_threshold=args.EDGE_FREQ_MIN
+    )
+
+    # Aggregate path scores
+    avg_path_scores, sorted_paths = aggregate_path_scores(
+        path_ig_sum=path_ig_sum,
+        path_ig_count=path_ig_count,
+        number_models=number_DTLEMBAS_models,
+        print_func=print2log
+    )
+
+    # Save final results
+    save_final_aggregated_results(
+        avg_path_scores=avg_path_scores,
+        aggregated_edges=aggregated_edges,
+        path_ig_sum=path_ig_sum,
+        path_ig_count=path_ig_count,
+        edge_models=edge_models,
+        node_models=node_models,
+        number_models=number_DTLEMBAS_models,
+        out_dir=out_dir,
+        print_func=print2log
+    )
+
+    print2log('\n' + '='*70)
+    print2log('FINAL VALIDATION SUMMARY')
+    print2log('='*70)
+
+    # Biological validation
+    profibrotic_total_percent = (validation_tracker['tgfbr1_total_profibrotic_count'] / 
+                             validation_tracker['total_models'] * 100)
+    profibrotic_top_percent = (validation_tracker['tgfbr1_top_profibrotic_count'] / 
+                            validation_tracker['total_models'] * 100)
+    captum_top_percent = (validation_tracker['captum_top_profibrotic_count'] / 
+                        validation_tracker['total_models'] * 100)
+
+    print2log(f"\n1. SANITY CHECK - TGFBR1 Total Contribution (All Paths):")
+    print2log(f"   {validation_tracker['tgfbr1_total_profibrotic_count']}/{validation_tracker['total_models']} models ({profibrotic_total_percent:.1f}%) have pro-fibrotic total effect")
+
+    if profibrotic_total_percent >= 90:
+        print2log(f"   ✅ EXCELLENT - High consistency with biological knowledge!")
+    elif profibrotic_total_percent >= 70:
+        print2log(f"   ⚠️  MODERATE - Some models show unexpected total effects")
+    else:
+        print2log(f"   ❌ POOR - Many models contradict known TGFB biology")
+
+    print2log(f"\n2. TOP PATH COMPARISON (The King!):")
+    print2log(f"   My method (top path):      {validation_tracker['tgfbr1_top_profibrotic_count']}/{validation_tracker['total_models']} models ({profibrotic_top_percent:.1f}%) have pro-fibrotic TGFBR1 top path")
+    print2log(f"   Captum (top path, masked): {validation_tracker['captum_top_profibrotic_count']}/{validation_tracker['total_models']} models ({captum_top_percent:.1f}%) have pro-fibrotic TGFBR1 top path")
+
+    # Compare top path consistency
+    if abs(profibrotic_top_percent - captum_top_percent) < 10:
+        print2log(f"\n   ✅ EXCELLENT - Your top path and Captum agree ({abs(profibrotic_top_percent - captum_top_percent):.1f}% difference)")
+    elif abs(profibrotic_top_percent - captum_top_percent) < 30:
+        print2log(f"\n   ⚠️  MODERATE - Some discrepancy between methods ({abs(profibrotic_top_percent - captum_top_percent):.1f}% difference)")
+    else:
+        print2log(f"\n   ❌ POOR - Large discrepancy between methods ({abs(profibrotic_top_percent - captum_top_percent):.1f}% difference)")
+
+    if validation_tracker['failed_models_top']:
+        print2log(f"\n   Models with anti-fibrotic TOP path: {validation_tracker['failed_models_top'][:10]}")
+    
+    print2log("\n" + "="*70)
     print2log(f"Finished timepoint: {timepoint}")
-
-# ============================================================================
-# FINAL: AGGREGATE ACROSS ALL MODELS
-# ============================================================================
-
-print2log('\n' + '='*70)
-print2log('FINAL: AGGREGATING RESULTS ACROSS ALL MODELS')
-print2log('='*70)
-
-# Aggregate subgraph edges
-aggregated_edges, df_aggregated = aggregate_subgraph_edges(
-    edge_models=edge_models,
-    node_models=node_models,
-    edge_weight_sum=edge_weight_sum,
-    edge_weight_abs_sum=edge_weight_abs_sum,
-    number_models=number_DTLEMBAS_models,
-    out_dir=out_dir,
-    print_func=print2log
-)
-
-# Visualize aggregated subgraph
-visualize_aggregated_subgraph(
-    aggregated_edges=aggregated_edges,
-    node_models=node_models,
-    number_models=number_DTLEMBAS_models,
-    out_dir=out_dir,
-    print_func=print2log,
-    freq_threshold=args.EDGE_FREQ_MIN
-)
-
-# Aggregate path scores
-avg_path_scores, sorted_paths = aggregate_path_scores(
-    path_ig_sum=path_ig_sum,
-    path_ig_count=path_ig_count,
-    number_models=number_DTLEMBAS_models,
-    print_func=print2log
-)
-
-# Save final results
-save_final_aggregated_results(
-    avg_path_scores=avg_path_scores,
-    aggregated_edges=aggregated_edges,
-    path_ig_sum=path_ig_sum,
-    path_ig_count=path_ig_count,
-    edge_models=edge_models,
-    node_models=node_models,
-    number_models=number_DTLEMBAS_models,
-    out_dir=out_dir,
-    print_func=print2log
-)
+    print2log("="*70)
 
 print2log("\n" + "="*70)
 print2log("ANALYSIS COMPLETE!")
