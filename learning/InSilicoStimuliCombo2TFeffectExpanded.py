@@ -4,6 +4,7 @@ import pandas as pd
 import torch
 import sys 
 gpu_lembas_path = 'C:/Users/nmeim/Documents/Artificial-Signaling-Network/LEMBAS-main'
+# gpu_lembas_path = '/home/meimetis/meimetis/LEMBAS-main'
 sys.path.insert(1,os.path.join(gpu_lembas_path))
 import argparse
 import logging

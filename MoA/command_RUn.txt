@@ -1,1 +1,2 @@
-python PathwayScoring_InferMoA.py --clear_checkpoints --num_steps_ig 100 --checkpoint_interval 0
+python PathwayScoring_InferMoA.py --clear_checkpoints --checkpoint_interval 0 --enumerated_pathways_path results/enumerated_pathways
+python EnumerationOfPathways.py --enumerated_pathways_path results/enumerated_pathways

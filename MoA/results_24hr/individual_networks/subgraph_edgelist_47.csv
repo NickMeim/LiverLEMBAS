@@ -1,0 +1,3 @@
+source_uniprot,target_uniprot,source_symbol,target_symbol,weight,path_ID
+P52630,fibrosis,STAT2,fibrosis,-0.02455487727040301,IFNAR1_TGFBR1_Top_Set
+P17181,P52630,IFNAR1,STAT2,0.21898603502173739,IFNAR1_TGFBR1_Top_Set

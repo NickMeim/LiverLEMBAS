@@ -8,7 +8,6 @@ import sys
 gpu_lembas_path = 'C:/Users/nmeim/Documents/Artificial-Signaling-Network/LEMBAS-main'
 sys.path.insert(1,os.path.join(gpu_lembas_path))
 import argparse
-import logging
 from pathlib import Path
 from utility import *
 import networkx as nx
@@ -41,6 +40,199 @@ class FrozenLinear(nn.Module):
     def forward(self, x):
         return self.lin(x)
     
+def analyze_paths_with_normalization(grid_path_scores_vector, print_func):
+    """
+    Compute length-normalized path scores (geometric mean per edge)
+    and print a brief sanity comparison between raw and normalized
+    'synergy' rankings.
+
+    Returns
+    -------
+    normalized_scores : dict
+        {path_edges: np.array([baseline, A_norm, I_norm, AI_norm])}
+        with the same keys as grid_path_scores_vector.
+    """
+    A_idx, I_idx, AI_idx = 1, 2, 3
+
+    # Compute normalized scores
+    normalized_scores = {}
+    for path_edges, scores in grid_path_scores_vector.items():
+        path_length = len(path_edges) or 1
+
+        normalized_scores[path_edges] = np.array([
+            np.sign(s) * (abs(s) ** (1.0 / path_length)) if s != 0 else 0.0
+            for s in scores
+        ], dtype=float)
+
+    if not grid_path_scores_vector:
+        print_func("\n⚠️  No paths found for normalization.")
+        return normalized_scores
+
+    def synergy(vec: np.ndarray) -> float:
+        # AI - A - I
+        return float(vec[AI_idx] - vec[A_idx] - vec[I_idx])
+
+    # Top path by RAW synergy
+    top_raw_path, top_raw_scores = max(
+        grid_path_scores_vector.items(),
+        key=lambda x: abs(synergy(x[1]))
+    )
+
+    # Top path by NORMALIZED synergy
+    top_norm_path, top_norm_scores = max(
+        normalized_scores.items(),
+        key=lambda x: abs(synergy(x[1]))
+    )
+
+    # print_func("\n=== RAW vs LENGTH-NORMALIZED COMPETITIVE PATH (sanity check) ===")
+    # print_func(f"  RAW top-synergy path length: {len(top_raw_path)} edges")
+    # print_func(f"    RAW synergy: {synergy(top_raw_scores):+.6f}")
+    # print_func(f"  NORM top-synergy path length: {len(top_norm_path)} edges")
+    # print_func(f"    NORM synergy: {synergy(top_norm_scores):+.6f}")
+
+    # Also show raw synergy of the normalized top path
+    raw_for_norm = grid_path_scores_vector[top_norm_path]
+    # print_func(f"  RAW synergy of NORM top path: {synergy(raw_for_norm):+.6f}")
+
+    return normalized_scores
+
+def select_top_paths_with_rank_tracking(grid_path_scores_raw,
+                                        grid_path_scores_norm,
+                                        print_func):
+    """
+    Select ONE top path per source (TGFBR1, IFNAR1) based on the
+    LENGTH-NORMALIZED combined effect (AI_norm), but report both
+    RAW and NORMALIZED scores and their solo ranks.
+
+    Parameters
+    ----------
+    grid_path_scores_raw : dict
+        {path_edges: np.array([baseline, A_raw, I_raw, AI_raw])}
+    grid_path_scores_norm : dict
+        {path_edges: np.array([baseline, A_norm, I_norm, AI_norm])}
+    """
+
+    A_idx, I_idx, AI_idx = 1, 2, 3
+
+    print_func('\n' + '='*70)
+    print_func('SELECTING TOP PATHS (NORMALIZED RANKING + RAW REPORTING)')
+    print_func('='*70)
+
+    def _analyze_source(source_uniprot: str,
+                        label: str,
+                        solo_idx: int):
+        # Subset paths for this receptor
+        paths_raw = {k: v for k, v in grid_path_scores_raw.items()
+                     if k[0][0] == source_uniprot}
+        paths_norm = {k: v for k, v in grid_path_scores_norm.items()
+                      if k[0][0] == source_uniprot}
+
+        # Ensure same keys in both dictionaries
+        common_keys = set(paths_raw.keys()) & set(paths_norm.keys())
+        paths_raw = {k: paths_raw[k] for k in common_keys}
+        paths_norm = {k: paths_norm[k] for k in common_keys}
+
+        if not paths_raw:
+            print_func(f"\n⚠️  No paths found for {label}.")
+            return None
+
+        # Rank all paths by SOLO effect (RAW)
+        solo_ranked_raw = sorted(
+            paths_raw.items(),
+            key=lambda x: abs(x[1][solo_idx]),
+            reverse=True
+        )
+
+        # Rank all paths by SOLO effect (NORMALIZED)
+        solo_ranked_norm = sorted(
+            paths_norm.items(),
+            key=lambda x: abs(x[1][solo_idx]),
+            reverse=True
+        )
+
+        # Select top path by NORMALIZED combined effect (AI_norm)
+        top_path_edges, top_scores_norm = max(
+            paths_norm.items(),
+            key=lambda x: abs(x[1][AI_idx])
+        )
+        top_scores_raw = paths_raw[top_path_edges]
+
+        # Solo ranks of this path
+        solo_rank_raw = next(
+            i for i, (p, _) in enumerate(solo_ranked_raw, 1)
+            if p == top_path_edges
+        )
+        solo_rank_norm = next(
+            i for i, (p, _) in enumerate(solo_ranked_norm, 1)
+            if p == top_path_edges
+        )
+
+        # Synergy in raw and normalized space
+        synergy_raw = (top_scores_raw[AI_idx] -
+                       top_scores_raw[A_idx] -
+                       top_scores_raw[I_idx])
+        synergy_norm = (top_scores_norm[AI_idx] -
+                        top_scores_norm[A_idx] -
+                        top_scores_norm[I_idx])
+
+        # Pretty path string
+        show_len = min(3, len(top_path_edges))
+        path_str = " → ".join([e[0] for e in top_path_edges[:show_len]])
+        if len(top_path_edges) > show_len:
+            path_str += " ... → fibrosis"
+        else:
+            path_str += " → fibrosis"
+
+        # ---- Printing ----
+        print_func(f"\n{label} TOP PATH (selected by *normalized* combined effect):")
+        print_func(f"   Path length: {len(top_path_edges)} edges")
+        print_func(f"   Path: {path_str}")
+
+        # print_func(f"\n   RAW SCORES:")
+        # print_func(f"     TGFBR1-only: {top_scores_raw[A_idx]:+.6f}")
+        # print_func(f"     IFNAR1-only: {top_scores_raw[I_idx]:+.6f}")
+        # print_func(f"     Combined:    {top_scores_raw[AI_idx]:+.6f}")
+        # print_func(f"     Synergy:     {synergy_raw:+.6f}")
+
+        # print_func(f"\n   NORMALIZED SCORES (geometric mean per edge):")
+        # print_func(f"     TGFBR1-only: {top_scores_norm[A_idx]:+.6f}")
+        # print_func(f"     IFNAR1-only: {top_scores_norm[I_idx]:+.6f}")
+        # print_func(f"     Combined:    {top_scores_norm[AI_idx]:+.6f} ⭐ (selection criterion)")
+        # print_func(f"     Synergy:     {synergy_norm:+.6f}")
+
+        total_paths = len(paths_raw)
+        print_func(f"\n   SOLO RANKING:")
+        print_func(f"     RAW solo rank:  #{solo_rank_raw} / {total_paths}")
+        print_func(f"     NORM solo rank: #{solo_rank_norm} / {total_paths}")
+
+        # if solo_rank_raw > 10:
+        #     print_func(f"   ⚠️  RAW: ranks #{solo_rank_raw} when acting alone.")
+        #     print_func(f"       → Importance emerges mainly with co-stimulation.")
+        # else:
+        #     print_func(f"   ✅ RAW: also strong when acting alone (rank #{solo_rank_raw}).")
+
+        return {
+            'path': top_path_edges,
+            'raw_scores': top_scores_raw,
+            'norm_scores': top_scores_norm,
+            'synergy_raw': synergy_raw,
+            'synergy_norm': synergy_norm,
+            'solo_rank_raw': solo_rank_raw,
+            'solo_rank_norm': solo_rank_norm,
+            'total_paths': total_paths,
+        }
+
+    # Run per receptor
+    tgfbr1_res = _analyze_source('P36897', '🔴 TGFBR1', solo_idx=A_idx)
+    ifnar1_res = _analyze_source('P17181', '🔵 IFNAR1', solo_idx=I_idx)
+
+    return {
+        'tgfbr1': tgfbr1_res,
+        'ifnar1': ifnar1_res,
+    }
+
+
+
 def compute_edge_gradients(model, x_stim, node_idx_map, pheno_coefs, outName, print_func=print):
     """
     Compute ∂output/∂edge for every edge in the network.
@@ -106,7 +298,7 @@ def compute_edge_gradients(model, x_stim, node_idx_map, pheno_coefs, outName, pr
     return edge_gradients
 
 def compute_edge_gradients_grid(model, node_idx_map, sources, pheno_coefs, outName, 
-                                stimulation_strength=3000, num_steps=10, 
+                                stimulation_strength=3000, num_steps=21, 
                                 aggregation='range', print_func=print):
     """
     Compute edge gradients over a grid of stimulations for robustness.
@@ -208,10 +400,10 @@ def compute_edge_gradients_grid(model, node_idx_map, sources, pheno_coefs, outNa
     
     # Statistics
     all_grads = list(edge_gradients.values())
-    print_func(f"\n✅ Computed gradients for {len(edge_gradients)} edges")
-    print_func(f"   Max gradient: {max(all_grads):.4e}")
-    print_func(f"   Mean gradient: {np.mean(all_grads):.4e}")
-    print_func(f"   Min gradient: {min(all_grads):.4e}")
+    # print_func(f"\n✅ Computed gradients for {len(edge_gradients)} edges")
+    # print_func(f"   Max gradient: {max(all_grads):.4e}")
+    # print_func(f"   Mean gradient: {np.mean(all_grads):.4e}")
+    # print_func(f"   Min gradient: {min(all_grads):.4e}")
     
     # Zero gradients to clean up
     model.zero_grad()
@@ -830,12 +1022,12 @@ def extract_and_save_top_path_subgraph(combined_score_vector, A, out_dir, model_
     
     # Print Results 
     print_func(f"\n✓ Top IFNAR1 (P17181) Path Score (Combined Stim): {top_ifnar1_path[1]:+.6f}")
-    if top_ifnar1_path[0]:
-        print_func(f"  Path: {' → '.join([e[0] for e in top_ifnar1_path[0]] + [top_ifnar1_path[0][-1][1]])}")
+    # if top_ifnar1_path[0]:
+    #     print_func(f"  Path: {' → '.join([e[0] for e in top_ifnar1_path[0]] + [top_ifnar1_path[0][-1][1]])}")
     
     print_func(f"\n✓ Top TGFBR1 (P36897) Path Score (Combined Stim): {top_tgfbr1_path[1]:+.6f}")
-    if top_tgfbr1_path[0]:
-        print_func(f"  Path: {' → '.join([e[0] for e in top_tgfbr1_path[0]] + [top_tgfbr1_path[0][-1][1]])}")
+    # if top_tgfbr1_path[0]:
+    #     print_func(f"  Path: {' → '.join([e[0] for e in top_tgfbr1_path[0]] + [top_tgfbr1_path[0][-1][1]])}")
     
     # Collect edges from top paths
     result_edges_set = set()
@@ -1000,14 +1192,14 @@ def aggregate_path_scores(path_ig_sum, path_ig_count, number_models, print_func)
     print_func(f"\nTop 20 Most Important Paths (averaged across {number_models} models):")
     print_func("="*70)
     
-    for i, (path_edges, avg_score) in enumerate(sorted_paths[:20]):
-        source = path_edges[0][0]
-        target = path_edges[-1][1]
-        path_length = len(path_edges)
+    # for i, (path_edges, avg_score) in enumerate(sorted_paths[:20]):
+    #     source = path_edges[0][0]
+    #     target = path_edges[-1][1]
+    #     path_length = len(path_edges)
         
-        print_func(f"\n{i+1}. {source} → ... → {target}")
-        print_func(f"   Path length: {path_length}")
-        print_func(f"   Average IG score: {avg_score:+.6f}")
+    #     print_func(f"\n{i+1}. {source} → ... → {target}")
+    #     print_func(f"   Path length: {path_length}")
+    #     print_func(f"   Average IG score: {avg_score:+.6f}")
     
     return avg_path_scores, sorted_paths
 
@@ -1146,13 +1338,13 @@ def validate_biological_sanity(grid_path_scores_vector, print_func, sources=['P3
         ifnar1_sign = np.sign(validation_results['ifnar1']['score_alone'])
         
         if tgfbr1_sign != ifnar1_sign and tgfbr1_sign != 0 and ifnar1_sign != 0:
-            print_func(f"\n✓ COMPETITION DETECTED:")
-            print_func(f"  TGFBR1 and IFNAR1 top paths have OPPOSITE effects on fibrosis!")
-            print_func(f"  This suggests antagonistic signaling between the two receptors.")
+            # print_func(f"\n✓ COMPETITION DETECTED:")
+            # print_func(f"  TGFBR1 and IFNAR1 top paths have OPPOSITE effects on fibrosis!")
+            # print_func(f"  This suggests antagonistic signaling between the two receptors.")
             validation_results['competitive'] = True
         else:
-            print_func(f"\n✓ NO COMPETITION:")
-            print_func(f"  TGFBR1 and IFNAR1 top paths have SAME SIGN effects.")
+            # print_func(f"\n✓ NO COMPETITION:")
+            # print_func(f"  TGFBR1 and IFNAR1 top paths have SAME SIGN effects.")
             validation_results['competitive'] = False
     
     return validation_results
@@ -1205,29 +1397,6 @@ def allpaths_biological_sanity_check(grid_path_scores_vector, validation_summary
             validation_results['tgfbr1_top_profibrotic'] = top_path_score > 0
     
     return validation_results
-
-## Optional to consider having a normalized score like they do in PPS. NOT USED FOR NOW
-def compute_normalized_path_scores(final_path_scores_grid):
-    """
-    Compute PPS-style normalized attribution: each path's contribution 
-    relative to the sum of all paths from the same source.
-    """
-    # Group by source
-    source_groups = {}
-    for path_edges, scores in final_path_scores_grid.items():
-        source = path_edges[0][0]
-        if source not in source_groups:
-            source_groups[source] = {}
-        source_groups[source][path_edges] = scores
-    
-    # Normalize within each source group
-    normalized_scores = {}
-    for source, paths_dict in source_groups.items():
-        total_abs = sum(np.abs(scores) for scores in paths_dict.values())
-        for path_edges, scores in paths_dict.items():
-            normalized_scores[path_edges] = np.abs(scores) / (total_abs + 1e-10)
-    
-    return normalized_scores
 
 def compute_global_gradient_captum(model, x_baseline, x_stim, source_idx, n_steps=100):
     """
@@ -1320,7 +1489,7 @@ def validate_path_with_captum(model, path_edges, node_idx_map, x_baseline, x_sti
     # Restore original weights
     model[0].weights.data = original_weights
     
-    print_func(f"  Path score (Captum, masked model): {path_score_captum:+.6e}")
+    # print_func(f"  Path score (Captum, masked model): {path_score_captum:+.6e}")
     
     return path_score_captum
 
@@ -1445,9 +1614,7 @@ def validate_path_decomposition(grid_path_scores_vector, model, x_baseline_batch
     # VALIDATION 3: Check Additivity (A + I ≈ AI for independent effects)
     # ========================================================================
     
-    if 'tgfbr1' in validation_summary and 'ifnar1' in validation_summary:
-        print_func("\n--- Validation 3: Additivity Check ---")
-        
+    if 'tgfbr1' in validation_summary and 'ifnar1' in validation_summary:        
         expected_sum = validation_summary['tgfbr1']['global_ig'] + validation_summary['ifnar1']['global_ig']
         
         x_baseline_AI = x_baseline_batch[AI_idx:AI_idx+1, :]
@@ -1461,17 +1628,7 @@ def validate_path_decomposition(grid_path_scores_vector, model, x_baseline_batch
             output_baseline = model(x_baseline_AI)[0, 0].item() if model(x_baseline_AI).dim() > 1 else model(x_baseline_AI).item()
         
         actual_combined_effect = output_AI - output_baseline
-        
-        print_func(f"\nExpected (A + I):     {expected_sum:+.6f}")
-        print_func(f"Actual combined (AI): {actual_combined_effect:+.6f}")
-        
         synergy = actual_combined_effect - expected_sum
-        print_func(f"Synergy:              {synergy:+.6f}")
-        
-        if abs(synergy) < abs(expected_sum) * 0.2:  # Within 20%
-            print_func("✅ Approximately additive (small synergy)")
-        else:
-            print_func("⚠️  Non-additive (large synergy/interference)")
         
         validation_summary['synergy'] = synergy
     
@@ -1633,6 +1790,8 @@ parser.add_argument('--log_filename', action='store', type=str,
                     help='Name of the log file')
 parser.add_argument('--checkpoint_interval', action='store', type=int, default=20,
                     help='Save IG checkpoint every N steps (0 = no checkpointing)')
+parser.add_argument('--enumerated_pathways_path', action='store', type=str,
+                    help='Pickle file containing enumerated pathways for each model. The dictionary is labeled using model IDs and each element is a list of pathways as lists of nodes.')
 parser.add_argument('--resume_from_checkpoint', action='store_true',
                     help='Resume from existing checkpoint if available')
 parser.add_argument('--clear_checkpoints', action='store_true',
@@ -1647,8 +1806,8 @@ parser.add_argument('--ChemicalSims', action='store',type = str, default='../pre
 parser.add_argument('--PKN', action='store',type = str, default='../preprocessing/preprocessed_data/PKN/Hepatocytes-PKN-Model.tsv')
 parser.add_argument('--PknAnnotation', action='store',type = str, default='../preprocessing/preprocessed_data/PKN/Hepatocytes-PKN-Annotation.tsv')
 parser.add_argument('--infoPath', action='store',type = str, default='../preprocessing/preprocessed_data/TrainingValidationData/Hepatocytes_inputdataInfo.tsv')
-parser.add_argument('--res_dir', action='store',type = str, default='../results/') #'../results/2 hour/allmodels/'
-parser.add_argument('--out_dir', action='store',type = str, default='results/')
+parser.add_argument('--res_dir', action='store',type = str, default='../results/') #_'+timepoint
+parser.add_argument('--out_dir', action='store',type = str, default='results_24hr/') # 'results_2hr/' for 2 hour and 'results_24hr/' for 24 hour
 parser.add_argument('--number_DTLEMBAS_models', action='store',type = int, default=50)
 parser.add_argument('--modelPattern', action='store',type = str, default='hepatocytes_dtlembas')
 parser.add_argument('--ConvertToEmpProb', action='store',type = bool, default=False)
@@ -1663,10 +1822,10 @@ parser.add_argument('--drug_bn', action='store', default=0.2)
 parser.add_argument('--drug_drop', action='store', default=0.1)
 parser.add_argument('--X_invivo_path', action='store', help='Path to in vivo TF activities (.rds)', default='../data/Xh_tfs_govaere.rds')
 parser.add_argument('--Y_invivo_path', action='store', help='Path to in vivo phenotypes (.rds)', default='../data/Yh_tfs_govaere.rds')
-parser.add_argument('--max_path_length', action='store',type = int, default=20)
+parser.add_argument('--max_path_length', action='store',type = int, default=8)
 parser.add_argument('--stimulation_strength', action='store',type=float, default=3000)
 parser.add_argument('--num_steps_ig', action='store',type = float, default=100) #make it at least 50
-parser.add_argument('--GRADIENT_THRESHOLD', action='store',type = float, default=7.4e-3) # NEW ARGUMENT
+parser.add_argument('--GRADIENT_THRESHOLD', action='store',type = float, default=8e-3) # NEW ARGUMENT
 parser.add_argument('--EDGE_FREQ_MIN', action='store',type = float, default=0.5)
 parser.add_argument('--NODE_FREQ_MIN', action='store',type = float, default=0.5)
 
@@ -1690,6 +1849,7 @@ max_path_length = args.max_path_length
 num_steps_ig =  args.num_steps_ig
 out_dir = args.out_dir
 GRADIENT_THRESHOLD = args.GRADIENT_THRESHOLD
+enumerated_pathways_path = args.enumerated_pathways_path
 
 
 print2log, log_file_path = setup_dual_logging(log_filename=args.log_filename, use_timestamp=True)
@@ -1751,7 +1911,7 @@ all_drugTargets_list = []
 nodeNames_list = []
 all_nodes_list = []
 all_tfs_list = []
-for timepoint in ['8 hour']:  # or ['2 hour','8 hour','24 hour']
+for timepoint in ['24 hour']:  # or ['2 hour','8 hour','24 hour']
     print2log(f'Processing timepoint {timepoint}')
     
     if timepoint == '8 hour':
@@ -1805,6 +1965,17 @@ for timepoint in ['8 hour']:  # or ['2 hour','8 hour','24 hour']
     intercept = ridge.best_estimator_.intercept_
     pheno = FrozenLinear(coefs[np.newaxis, :], intercept, dtype=torch.double, device=device)
     pheno.eval()
+
+    ## check if paths have been already enumated by looking for the pickle file
+    ## See if there is already a enumerated_pathways_path file
+    enumerated_pathways_path_timepoint = enumerated_pathways_path + '_' + timepoint + '.pkl'
+    if os.path.exists(enumerated_pathways_path_timepoint):
+        print2log("Enumerated pathways already exist, loading...")
+        enumeration_flag = True
+        with open(enumerated_pathways_path_timepoint, 'rb') as f:
+            enumerated_pathways = pickle.load(f)
+    else:
+        enumeration_flag = False
     
     for model_no in range(number_DTLEMBAS_models):
         print2log(f"\n{'='*70}")
@@ -1882,87 +2053,74 @@ for timepoint in ['8 hour']:  # or ['2 hour','8 hour','24 hour']
         print2log('\n' + '='*70)
         print2log('STEP 1: DEFINING TARGET PATHS')
         print2log('='*70)
-        # First, compute edge gradients to identify active edges
-        print2log("\n Computing edge gradients for all edges in the network...")
-        # Use a representative stimulation (e.g., combined stimulation)
-        AI_idx = 3  # Combined stimulation
-        x_stim_representative = Xin_critical[AI_idx:AI_idx+1, :]
+        if not enumeration_flag:
+            # First, compute edge gradients to identify active edges
+            print2log("\n Computing edge gradients for all edges in the network...")
+            # Use a representative stimulation (e.g., combined stimulation)
+            AI_idx = 3  # Combined stimulation
+            x_stim_representative = Xin_critical[AI_idx:AI_idx+1, :]
 
-        edge_gradients = compute_edge_gradients_grid(
-            model=model,
-            node_idx_map=mod.node_idx_map,
-            sources=sources,
-            pheno_coefs=torch.tensor(coefs, dtype=torch.double, device=device),
-            outName=outName,
-            stimulation_strength=stimulation_strength,
-            num_steps=11,  # 10x10 grid = 100 conditions
-            aggregation='range',  # max(Y) - min(Y)
-            print_func=print2log
-        )
-        all_grads = list(edge_gradients.values())
-        print2log(f"   Edges with |gradient| > {GRADIENT_THRESHOLD:.1e}: {sum(1 for g in all_grads if g > GRADIENT_THRESHOLD)}")
+            edge_gradients = compute_edge_gradients_grid(
+                model=model,
+                node_idx_map=mod.node_idx_map,
+                sources=sources,
+                pheno_coefs=torch.tensor(coefs, dtype=torch.double, device=device),
+                outName=outName,
+                stimulation_strength=stimulation_strength,
+                num_steps=21,  # 10x10 grid = 100 conditions
+                aggregation='range',  # max(Y) - min(Y)
+                print_func=print2log
+            )
+            all_grads = list(edge_gradients.values())
+            print2log(f"   Edges with |gradient| > {GRADIENT_THRESHOLD:.1e}: {sum(1 for g in all_grads if g > GRADIENT_THRESHOLD)}")
 
-        # Filter the graph G to keep only edges with high gradient magnitude
-        # Collect active signaling network edges (u -> v, excluding TF->Phenotype)
-        active_signaling_edges = [
-            (u, v, {'weight': grad})
-            for (u, v), grad in edge_gradients.items()
-            if v != 'fibrosis' and G.has_edge(u, v) and grad >= GRADIENT_THRESHOLD
-        ]
-        # Collect active TF -> Phenotype edges
-        active_tf_edges = [
-            (tf_name, 'fibrosis', {'weight': edge_gradients[(tf_name, 'fibrosis')]})
-            for tf_name in outName
-            if edge_gradients.get((tf_name, 'fibrosis'), 0.0) >= GRADIENT_THRESHOLD
-        ]
-        # Construct the filtered graph in a single step
-        G_filtered = nx.DiGraph(active_signaling_edges + active_tf_edges)
-
-        # --- DIAGNOSTIC CHECK FOR SPECIFIC EDGES ---
-        print2log("\n   *** DIAGNOSTIC CHECK: P36897 -> Q9H3D4 -> fibrosis ***")
-        edge_1 = ('P36897', 'Q9H3D4')
-        edge_2 = ('Q9H3D4', 'fibrosis')
-        grad_1 = edge_gradients.get(edge_1, 0.0)
-        grad_2 = edge_gradients.get(edge_2, 0.0)
-        is_in_G_1 = G_filtered.has_edge(*edge_1)
-        is_in_G_2 = G_filtered.has_edge(*edge_2)
-        print2log(f"   Threshold (T): {GRADIENT_THRESHOLD:.2e}")
-        print2log(f"   Edge 1: {edge_1[0]} -> {edge_1[1]}")
-        print2log(f"     |Gradient|: {grad_1:.4e} (Is >= T: {grad_1 >= GRADIENT_THRESHOLD})")
-        print2log(f"     In G_filtered: {is_in_G_1}")
-        print2log(f"   Edge 2: {edge_2[0]} -> {edge_2[1]}")
-        print2log(f"     |Gradient|: {grad_2:.4e} (Is >= T: {grad_2 >= GRADIENT_THRESHOLD})")
-        print2log(f"     In G_filtered: {is_in_G_2}")
-        print2log("   *** END DIAGNOSTIC CHECK ***\n")
-        
-        # # Find gradient-weighted paths
-        # all_paths = []
-        # paths_per_source = 20
-        # for source_node in sources:
-        #     print2log(f"Finding paths from {source_node}...")
-        #     source_paths = find_top_gradient_weighted_paths(
-        #         G=G,
-        #         edge_gradients=edge_gradients,
-        #         source=source_node,
-        #         target='fibrosis',
-        #         top_k=paths_per_source,
-        #         print_func=print2log
-        #     )
-        #     for path_edges in source_paths:
-        #         if path_edges not in all_paths:
-        #             all_paths.append(path_edges)
-        # print2log(f"\n✅ Found {len(all_paths)} unique gradient-weighted paths to score")
-        all_paths = []
-        for source_node in sources:
-            print2log(f"Finding paths from {source_node}...")
-            # Use all_simple_paths with islice for a controlled path search
-            paths_gen = nx.all_simple_paths(G_filtered, source=source_node, target='fibrosis', cutoff=args.max_path_length)
-            top_k_paths = list(islice(paths_gen, 500)) # Limit to 100 paths per source for runtime safety
-            for path in top_k_paths:
-                path_edges = tuple(nx.utils.pairwise(path))
-                if path_edges not in all_paths:
-                    all_paths.append(path_edges)
-        print2log(f"\n✅ Enumerated {len(all_paths)} unique paths to score")
+            # Filter the graph G to keep only edges with high gradient magnitude
+            # Collect active signaling network edges (u -> v, excluding TF->Phenotype)
+            active_signaling_edges = [
+                (u, v, {'weight': grad})
+                for (u, v), grad in edge_gradients.items()
+                if v != 'fibrosis' and G.has_edge(u, v) and grad >= GRADIENT_THRESHOLD
+            ]
+            # Collect active TF -> Phenotype edges
+            active_tf_edges = [
+                (tf_name, 'fibrosis', {'weight': edge_gradients[(tf_name, 'fibrosis')]})
+                for tf_name in outName
+                if edge_gradients.get((tf_name, 'fibrosis'), 0.0) >= GRADIENT_THRESHOLD
+            ]
+            # Construct the filtered graph in a single step
+            G_filtered = nx.DiGraph(active_signaling_edges + active_tf_edges)
+            
+            # # Find gradient-weighted paths
+            # all_paths = []
+            # paths_per_source = 20
+            # for source_node in sources:
+            #     print2log(f"Finding paths from {source_node}...")
+            #     source_paths = find_top_gradient_weighted_paths(
+            #         G=G,
+            #         edge_gradients=edge_gradients,
+            #         source=source_node,
+            #         target='fibrosis',
+            #         top_k=paths_per_source,
+            #         print_func=print2log
+            #     )
+            #     for path_edges in source_paths:
+            #         if path_edges not in all_paths:
+            #             all_paths.append(path_edges)
+            # print2log(f"\n✅ Found {len(all_paths)} unique gradient-weighted paths to score")
+            all_paths = []
+            for source_node in sources:
+                print2log(f"Finding paths from {source_node}...")
+                # Use all_simple_paths with islice for a controlled path search
+                paths_gen = nx.all_simple_paths(G_filtered, source=source_node, target='fibrosis', cutoff=args.max_path_length)
+                top_k_paths = list(islice(paths_gen, 1200))
+                print2log(f"   Found {len(top_k_paths)} paths from {source_node}")
+                for path in top_k_paths:
+                    path_edges = tuple(nx.utils.pairwise(path))
+                    if path_edges not in all_paths:
+                        all_paths.append(path_edges)
+            print2log(f"\n✅ Enumerated {len(all_paths)} unique paths to score")
+        else:
+            all_paths = enumerated_pathways[model_no]
                 
         # --- STEP 2: Score paths across CRITICAL batch ---
         print2log('\n' + '='*70)
@@ -1997,33 +2155,16 @@ for timepoint in ['8 hour']:  # or ['2 hour','8 hour','24 hour']
             print_func=print2log
         )
 
-        # --- DIAGNOSTIC: Print score for target path ---
-        A_idx = 1
-        target_path_tuple = (('P36897', 'Q9H3D4'), ('Q9H3D4', 'fibrosis'))
-        if target_path_tuple in grid_path_scores_vector:
-            scores = grid_path_scores_vector[target_path_tuple]
-            print2log("\n" + "-"*70)
-            print2log(f"*** PATH SCORE LOOKUP: P36897 -> Q9H3D4 -> fibrosis ***")
-            print2log(f"   TGFBR1 Only (A) Score: {format_score(scores[A_idx])}")
-            print2log(f"   Combined (AI) Score: {format_score(scores[AI_idx])}")
-            print2log("-" * 70 + "\n")
-        else:
-            print2log("\n" + "-"*70)
-            print2log(f"*** PATH SCORE LOOKUP: P36897 -> Q9H3D4 -> fibrosis ***")
-            print2log(f"   ⚠️  Path not found in enumerated list. (It may have been filtered out.)")
-            print2log("-" * 70 + "\n")
-        # --- END DIAGNOSTIC: Print score for target path ---
-
-        print2log("\n" + "="*70)
-        print2log("🔬 VALIDATING PATH SCORES WITH CAPTUM (MASKED MODEL TEST)")
-        print2log("="*70)
-        print2log("\nThis test will:")
-        print2log("  1. Take the top TGFBR1 path")
-        print2log("  2. Mask the model to ONLY use edges in that path")
-        print2log("  3. Compute IG with Captum on the masked model")
-        print2log("  4. Compare to your chain-rule method")
-        print2log("\nIf Captum also gives ~zero → Path has no gradient flow (path selection issue)")
-        print2log("If Captum gives non-zero → Your chain-rule has a bug\n")
+        # print2log("\n" + "="*70)
+        # print2log("🔬 VALIDATING PATH SCORES WITH CAPTUM (MASKED MODEL TEST)")
+        # print2log("="*70)
+        # print2log("\nThis test will:")
+        # print2log("  1. Take the top TGFBR1 path")
+        # print2log("  2. Mask the model to ONLY use edges in that path")
+        # print2log("  3. Compute IG with Captum on the masked model")
+        # print2log("  4. Compare to your chain-rule method")
+        # print2log("\nIf Captum also gives ~zero → Path has no gradient flow (path selection issue)")
+        # print2log("If Captum gives non-zero → Your chain-rule has a bug\n")
 
         # Get the top TGFBR1 path
         A_idx = 1  # TGFBR1 only stimulation
@@ -2038,10 +2179,10 @@ for timepoint in ['8 hour']:  # or ['2 hour','8 hour','24 hour']
             
             your_method_score = top_tgfbr1_scores[A_idx]
             
-            print2log(f"Testing TOP TGFBR1 path:")
-            print2log(f"  Path length: {len(top_tgfbr1_path_edges)} edges")
-            print2log(f"  Path: {' → '.join([e[0] for e in top_tgfbr1_path_edges[:3]])} ... → fibrosis")
-            print2log(f"  Your method score: {your_method_score:+.6e}")
+            # print2log(f"Testing TOP TGFBR1 path:")
+            # print2log(f"  Path length: {len(top_tgfbr1_path_edges)} edges")
+            # print2log(f"  Path: {' → '.join([e[0] for e in top_tgfbr1_path_edges[:3]])} ... → fibrosis")
+            # print2log(f"  Your method score: {your_method_score:+.6e}")
             
             # Extract the correct batch inputs for TGFBR1 only
             x_baseline_A = x_baseline_batch[A_idx:A_idx+1, :]
@@ -2058,43 +2199,43 @@ for timepoint in ['8 hour']:  # or ['2 hour','8 hour','24 hour']
                 print_func=print2log
             )
             
-            print2log("\n" + "-"*70)
-            print2log("DIAGNOSIS:")
-            print2log("-"*70)
+            # print2log("\n" + "-"*70)
+            # print2log("DIAGNOSIS:")
+            # print2log("-"*70)
             
-            if abs(captum_score) < 1e-10 and abs(your_method_score) < 1e-10:
-                print2log("❌ BOTH methods give ~zero")
-                print2log("   → This path has NO GRADIENT FLOW in the model")
-                print2log("   → Your path finding method is selecting inactive paths")
-                print2log("   → SOLUTION: Use gradient-weighted path finding")
+            # if abs(captum_score) < 1e-10 and abs(your_method_score) < 1e-10:
+            #     print2log("❌ BOTH methods give ~zero")
+            #     print2log("   → This path has NO GRADIENT FLOW in the model")
+            #     print2log("   → Your path finding method is selecting inactive paths")
+            #     print2log("   → SOLUTION: Use gradient-weighted path finding")
                 
-            elif abs(captum_score) < 1e-10 and abs(your_method_score) > 1e-10:
-                print2log("⚠️  Captum gives zero, but your method gives non-zero")
-                print2log("   → Something is wrong with your implementation")
-                print2log("   → (Captum should be ground truth)")
+            # elif abs(captum_score) < 1e-10 and abs(your_method_score) > 1e-10:
+            #     print2log("⚠️  Captum gives zero, but your method gives non-zero")
+            #     print2log("   → Something is wrong with your implementation")
+            #     print2log("   → (Captum should be ground truth)")
                 
-            elif abs(captum_score) > 1e-10:
-                print2log(f"✅ Path HAS gradient flow! Captum score: {captum_score:+.6e}")
+            # elif abs(captum_score) > 1e-10:
+            #     print2log(f"✅ Path HAS gradient flow! Captum score: {captum_score:+.6e}")
                 
-                if abs(your_method_score) < 1e-10:
-                    print2log("❌ But your method gives ~zero")
-                    print2log("   → BUG in your chain-rule implementation")
-                    print2log("   → Check log-space conversion and accumulation")
-                else:
-                    ratio = your_method_score / captum_score
-                    error = abs(ratio - 1.0)
+            #     if abs(your_method_score) < 1e-10:
+            #         print2log("❌ But your method gives ~zero")
+            #         print2log("   → BUG in your chain-rule implementation")
+            #         print2log("   → Check log-space conversion and accumulation")
+            #     else:
+            #         ratio = your_method_score / captum_score
+            #         error = abs(ratio - 1.0)
                     
-                    print2log(f"\n   Ratio (your / Captum): {ratio:.4e}")
-                    print2log(f"   Relative error: {error:.2%}")
+            #         print2log(f"\n   Ratio (your / Captum): {ratio:.4e}")
+            #         print2log(f"   Relative error: {error:.2%}")
                     
-                    if error < 0.1:
-                        print2log("   ✅ EXCELLENT - Your method is correct!")
-                    elif error < 0.5:
-                        print2log("   ⚠️  Close but not exact - minor numerical issue")
-                    else:
-                        print2log("   ❌ Large discrepancy - check implementation")
+            #         if error < 0.1:
+            #             print2log("   ✅ EXCELLENT - Your method is correct!")
+            #         elif error < 0.5:
+            #             print2log("   ⚠️  Close but not exact - minor numerical issue")
+            #         else:
+            #             print2log("   ❌ Large discrepancy - check implementation")
             
-            print2log("="*70 + "\n")
+            # print2log("="*70 + "\n")
             
         else:
             print2log("❌ No TGFBR1 paths found to test!\n")
@@ -2110,37 +2251,67 @@ for timepoint in ['8 hour']:  # or ['2 hour','8 hour','24 hour']
         # Print results
         # print_competition_results(competitive_paths, print2log, top_n=10)
 
-        # Biological sanity check
-        validation_results = validate_biological_sanity(
-            grid_path_scores_vector=grid_path_scores_vector,
-            print_func=print2log,
-            sources=sources)
+        # # Biological sanity check
+        # validation_results = validate_biological_sanity(
+        #     grid_path_scores_vector=grid_path_scores_vector,
+        #     print_func=print2log,
+        #     sources=sources)
         
-        # Validate path decomposition (sum of paths = global gradient)
-        validation_summary = validate_path_decomposition(
-            grid_path_scores_vector=grid_path_scores_vector,
-            model=model,
-            x_baseline_batch=x_baseline_batch,
-            x_stim_batch=Xin_critical,
-            mod=mod,
-            print_func=print2log
-        )
+        # # Validate path decomposition (sum of paths = global gradient)
+        # validation_summary = validate_path_decomposition(
+        #     grid_path_scores_vector=grid_path_scores_vector,
+        #     model=model,
+        #     x_baseline_batch=x_baseline_batch,
+        #     x_stim_batch=Xin_critical,
+        #     mod=mod,
+        #     print_func=print2log
+        # )
         
-        allpaths_validation_results = allpaths_biological_sanity_check(
+        # allpaths_validation_results = allpaths_biological_sanity_check(
+        #     grid_path_scores_vector=grid_path_scores_vector,
+        #     validation_summary=validation_summary,
+        #     print_func=print2log
+        # )
+
+        grid_path_scores_norm = analyze_paths_with_normalization(
             grid_path_scores_vector=grid_path_scores_vector,
-            validation_summary=validation_summary,
             print_func=print2log
         )
 
-        # Visualize
+        path_selection_results = select_top_paths_with_rank_tracking(
+            grid_path_scores_raw=grid_path_scores_vector,
+            grid_path_scores_norm=grid_path_scores_norm,
+            print_func=print2log
+        )
+
+        # Choose which paths to visualize:
+        #   - Use normalized-top paths, but plot RAW scores for those paths
+        tgf_res = path_selection_results.get('tgfbr1')
+        if tgf_res is not None:
+            top_tgfbr1_path_for_plot = (tgf_res['path'], tgf_res['raw_scores'])
+        else:
+            # Fallback: use the Captum test path (raw TGFBR1-only top)
+            top_tgfbr1_path_for_plot = (top_tgfbr1_path_edges, top_tgfbr1_scores)
+
+        ifn_res = path_selection_results.get('ifnar1')
+        if ifn_res is not None:
+            top_ifnar1_path_for_plot = (ifn_res['path'], ifn_res['raw_scores'])
+        else:
+            top_ifnar1_path_for_plot = (None, None)
+
+        # ------------------------------------------------------------------
+        # Visualize using the NORMALIZED-selected top paths (RAW values)
+        # ------------------------------------------------------------------
         visualize_critical_paths_bar_TOP(
-            top_tgfbr1_path=(top_tgfbr1_path_edges, top_tgfbr1_scores),  # From masked model test
-            top_ifnar1_path=(None, None),  # Add IFNAR1 if needed
+            top_tgfbr1_path=top_tgfbr1_path_for_plot,
+            top_ifnar1_path=top_ifnar1_path_for_plot,
             grid_path_scores_vector=grid_path_scores_vector,
             out_dir=out_dir,
             model_no=model_no,
             print_func=print2log
         )
+
+        # Captum validation still uses the raw TGFBR1-only top path
         visualize_top_path_captum_validation(
             top_path_edges=top_tgfbr1_path_edges,
             your_score=your_method_score,
@@ -2159,36 +2330,38 @@ for timepoint in ['8 hour']:  # or ['2 hour','8 hour','24 hour']
             path_ig_sum[path_edges] += score
             path_ig_count[path_edges] += 1
 
-        # Track biological validation results across models
-        if 'validation_tracker' not in locals():
-            validation_tracker = {
-                'tgfbr1_total_profibrotic_count': 0,
-                'tgfbr1_top_profibrotic_count': 0,
-                'captum_top_profibrotic_count': 0,
-                'decomposition_valid_count': 0,
-                'total_models': 0,
-                'failed_models_total': [],
-                'failed_models_top': [],
-                'decomposition_failed': []
-            }
+        # # Track biological validation results across models
+        # if 'validation_tracker' not in locals():
+        #     validation_tracker = {
+        #         'tgfbr1_total_profibrotic_count': 0,
+        #         'tgfbr1_top_profibrotic_count': 0,
+        #         'captum_top_profibrotic_count': 0,
+        #         'decomposition_valid_count': 0,
+        #         'total_models': 0,
+        #         'failed_models_total': [],
+        #         'failed_models_top': [],
+        #         'decomposition_failed': [],
+        #         'top_path_sign_agreement_count': 0,
+        #         'top_path_sign_disagreement_count': 0
+        #     }
 
-        validation_tracker['total_models'] += 1
+        # validation_tracker['total_models'] += 1
 
-        # Check TOTAL contribution (for sanity)
-        if allpaths_validation_results.get('tgfbr1_passes', False):
-            validation_tracker['tgfbr1_total_profibrotic_count'] += 1
-        else:
-            validation_tracker['failed_models_total'].append(model_no)
+        # # Check TOTAL contribution (for sanity)
+        # if allpaths_validation_results.get('tgfbr1_passes', False):
+        #     validation_tracker['tgfbr1_total_profibrotic_count'] += 1
+        # else:
+        #     validation_tracker['failed_models_total'].append(model_no)
 
-        # Check TOP path (your method)
-        if allpaths_validation_results.get('tgfbr1_top_profibrotic', False):
-            validation_tracker['tgfbr1_top_profibrotic_count'] += 1
-        else:
-            validation_tracker['failed_models_top'].append(model_no)
+        # # Check TOP path (your method)
+        # if allpaths_validation_results.get('tgfbr1_top_profibrotic', False):
+        #     validation_tracker['tgfbr1_top_profibrotic_count'] += 1
+        # else:
+        #     validation_tracker['failed_models_top'].append(model_no)
 
-        # Check if Captum also finds pro-fibrotic TOP path
-        if captum_score > 0:
-            validation_tracker['captum_top_profibrotic_count'] += 1
+        # # Check if Captum also finds pro-fibrotic TOP path
+        # if captum_score > 0:
+        #     validation_tracker['captum_top_profibrotic_count'] += 1
         
         # --- STEP 3: Extract top path subgraph (Uses the Combined (AI) score) ---
         top_ifnar1_path, top_tgfbr1_path, result_graph, subgraph_df = extract_and_save_top_path_subgraph(
@@ -2204,17 +2377,29 @@ for timepoint in ['8 hour']:  # or ['2 hour','8 hour','24 hour']
             print_func=print2log,
             sources=sources
         )
+
+        # if 'path_selection_results' in locals():
+        #     A_idx, I_idx, AI_idx = 1, 2, 3
+        #     for receptor_key in ('tgfbr1', 'ifnar1'):
+        #         res = path_selection_results.get(receptor_key)
+        #         if res is None:
+        #             continue
+        #         raw_scores = res['raw_scores']
+        #         norm_scores = res['norm_scores']
+        #         raw_val = raw_scores[AI_idx]
+        #         norm_val = norm_scores[AI_idx]
+        #         if raw_val == 0 or norm_val == 0:
+        #             continue
+        #         if np.sign(raw_val) == np.sign(norm_val):
+        #             validation_tracker['top_path_sign_agreement_count'] += 1
+        #         else:
+        #             validation_tracker['top_path_sign_disagreement_count'] += 1
         
         print2log(f"\n{'='*70}")
         print2log(f"✓ COMPLETED MODEL {model_no+1}/{number_DTLEMBAS_models}")
         print2log(f"{'='*70}\n")
     
     # AGGREGATE ACROSS ALL MODELS
-    print2log('\n' + '='*70)
-    print2log('FINAL: AGGREGATING RESULTS ACROSS ALL MODELS')
-    print2log('='*70)
-
-    # Aggregate subgraph edges
     aggregated_edges, df_aggregated = aggregate_subgraph_edges(
         edge_models=edge_models,
         edge_weight_sum=edge_weight_sum,
@@ -2255,42 +2440,62 @@ for timepoint in ['8 hour']:  # or ['2 hour','8 hour','24 hour']
         print_func=print2log
     )
 
-    print2log('\n' + '='*70)
-    print2log('FINAL VALIDATION SUMMARY')
-    print2log('='*70)
+    # print2log('\n' + '='*70)
+    # print2log('FINAL VALIDATION SUMMARY')
+    # print2log('='*70)
 
-    # Biological validation
-    profibrotic_total_percent = (validation_tracker['tgfbr1_total_profibrotic_count'] / 
-                             validation_tracker['total_models'] * 100)
-    profibrotic_top_percent = (validation_tracker['tgfbr1_top_profibrotic_count'] / 
-                            validation_tracker['total_models'] * 100)
-    captum_top_percent = (validation_tracker['captum_top_profibrotic_count'] / 
-                        validation_tracker['total_models'] * 100)
+    # # Biological validation
+    # profibrotic_total_percent = (validation_tracker['tgfbr1_total_profibrotic_count'] / 
+    #                          validation_tracker['total_models'] * 100)
+    # profibrotic_top_percent = (validation_tracker['tgfbr1_top_profibrotic_count'] / 
+    #                         validation_tracker['total_models'] * 100)
+    # captum_top_percent = (validation_tracker['captum_top_profibrotic_count'] / 
+    #                     validation_tracker['total_models'] * 100)
 
-    print2log(f"\n1. SANITY CHECK - TGFBR1 Total Contribution (All Paths):")
-    print2log(f"   {validation_tracker['tgfbr1_total_profibrotic_count']}/{validation_tracker['total_models']} models ({profibrotic_total_percent:.1f}%) have pro-fibrotic total effect")
+    # print2log(f"\n1. SANITY CHECK - TGFBR1 Total Contribution (All Paths):")
+    # print2log(f"   {validation_tracker['tgfbr1_total_profibrotic_count']}/{validation_tracker['total_models']} models ({profibrotic_total_percent:.1f}%) have pro-fibrotic total effect")
 
-    if profibrotic_total_percent >= 90:
-        print2log(f"   ✅ EXCELLENT - High consistency with biological knowledge!")
-    elif profibrotic_total_percent >= 70:
-        print2log(f"   ⚠️  MODERATE - Some models show unexpected total effects")
-    else:
-        print2log(f"   ❌ POOR - Many models contradict known TGFB biology")
+    # if profibrotic_total_percent >= 90:
+    #     print2log(f"   ✅ EXCELLENT - High consistency with biological knowledge!")
+    # elif profibrotic_total_percent >= 70:
+    #     print2log(f"   ⚠️  MODERATE - Some models show unexpected total effects")
+    # else:
+    #     print2log(f"   ❌ POOR - Many models contradict known TGFB biology")
 
-    print2log(f"\n2. TOP PATH COMPARISON (The King!):")
-    print2log(f"   My method (top path):      {validation_tracker['tgfbr1_top_profibrotic_count']}/{validation_tracker['total_models']} models ({profibrotic_top_percent:.1f}%) have pro-fibrotic TGFBR1 top path")
-    print2log(f"   Captum (top path, masked): {validation_tracker['captum_top_profibrotic_count']}/{validation_tracker['total_models']} models ({captum_top_percent:.1f}%) have pro-fibrotic TGFBR1 top path")
+    # print2log(f"\n2. TOP PATH COMPARISON (The King!):")
+    # print2log(f"   My method (top path):      {validation_tracker['tgfbr1_top_profibrotic_count']}/{validation_tracker['total_models']} models ({profibrotic_top_percent:.1f}%) have pro-fibrotic TGFBR1 top path")
+    # print2log(f"   Captum (top path, masked): {validation_tracker['captum_top_profibrotic_count']}/{validation_tracker['total_models']} models ({captum_top_percent:.1f}%) have pro-fibrotic TGFBR1 top path")
 
-    # Compare top path consistency
-    if abs(profibrotic_top_percent - captum_top_percent) < 10:
-        print2log(f"\n   ✅ EXCELLENT - Your top path and Captum agree ({abs(profibrotic_top_percent - captum_top_percent):.1f}% difference)")
-    elif abs(profibrotic_top_percent - captum_top_percent) < 30:
-        print2log(f"\n   ⚠️  MODERATE - Some discrepancy between methods ({abs(profibrotic_top_percent - captum_top_percent):.1f}% difference)")
-    else:
-        print2log(f"\n   ❌ POOR - Large discrepancy between methods ({abs(profibrotic_top_percent - captum_top_percent):.1f}% difference)")
+    # # Compare top path consistency
+    # if abs(profibrotic_top_percent - captum_top_percent) < 10:
+    #     print2log(f"\n   ✅ EXCELLENT - Your top path and Captum agree ({abs(profibrotic_top_percent - captum_top_percent):.1f}% difference)")
+    # elif abs(profibrotic_top_percent - captum_top_percent) < 30:
+    #     print2log(f"\n   ⚠️  MODERATE - Some discrepancy between methods ({abs(profibrotic_top_percent - captum_top_percent):.1f}% difference)")
+    # else:
+    #     print2log(f"\n   ❌ POOR - Large discrepancy between methods ({abs(profibrotic_top_percent - captum_top_percent):.1f}% difference)")
 
-    if validation_tracker['failed_models_top']:
-        print2log(f"\n   Models with anti-fibrotic TOP path: {validation_tracker['failed_models_top'][:10]}")
+    # if validation_tracker['failed_models_top']:
+    #     print2log(f"\n   Models with anti-fibrotic TOP path: {validation_tracker['failed_models_top'][:10]}")
+
+    # # RAW vs NORMALIZED TOP PATH SIGN CHECK
+    # agree = validation_tracker.get('top_path_sign_agreement_count', 0)
+    # disagree = validation_tracker.get('top_path_sign_disagreement_count', 0)
+    # total_sign = agree + disagree
+    # print2log(f"\n RAW vs NORMALIZED TOP PATH SIGN CHECK:")
+    # if total_sign == 0:
+    #     print2log("   (No receptor–model pairs with both raw and normalized top-path signs available.)")
+    # else:
+    #     frac = 100.0 * agree / total_sign
+    #     print2log(
+    #         f"   Agreement in combined-effect sign for selected top paths: "
+    #         f"{agree}/{total_sign} receptor–model pairs ({frac:.1f}%)"
+    #     )
+    #     if frac >= 90:
+    #         print2log("   ✅ EXCELLENT - Normalization preserves the biological direction of the top paths.")
+    #     elif frac >= 70:
+    #         print2log("   ⚠️  MODERATE - Some top paths flip sign after normalization; interpret with care.")
+    #     else:
+    #         print2log("   ❌ POOR - Normalization often reverses the top path direction; reconsider the ranking strategy.")
     
     print2log("\n" + "="*70)
     print2log(f"Finished timepoint: {timepoint}")
