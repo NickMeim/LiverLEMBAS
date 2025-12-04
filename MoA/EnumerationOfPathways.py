@@ -12,6 +12,7 @@ from utility import *
 import networkx as nx
 import pyreadr
 from sklearn.linear_model import Ridge
+from sklearn.cross_decomposition import PLSRegression
 from sklearn.model_selection import GridSearchCV, RepeatedKFold
 from itertools import islice
 from tqdm import tqdm
@@ -342,6 +343,11 @@ for timepoint in ['8 hour']:
     Yh = pyreadr.read_r(args.Y_invivo_path)[None].to_numpy()[:,1]
     
     # Updated Grid Search parameters to match PathwayScoring script
+    # pls = PLSRegression(n_components=8, scale=False)
+    # pls.fit(Xh, Yh.reshape(-1, 1))
+    # coefs = pls.coef_
+    # intercept = pls.intercept_
+    # pheno = FrozenLinear(coefs, intercept, dtype=torch.double, device=device)
     params = {'alpha': [0.001,0.01,0.1,0.2,0.5,1,2,5,10,20,50,100,500,1000]}
     ridge = GridSearchCV(estimator=Ridge(), param_grid=params, cv=RepeatedKFold(n_splits=10, n_repeats=10), n_jobs=-1)
     ridge.fit(Xh, Yh)
