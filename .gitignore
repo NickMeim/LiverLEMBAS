@@ -1,3 +1,5 @@
+archive
+archive/*
 chemical_screening
 chemical_screening/*
 postprocessing/__pycache__
