@@ -1829,7 +1829,6 @@ parser.add_argument('--GRADIENT_THRESHOLD', action='store',type = float, default
 parser.add_argument('--EDGE_FREQ_MIN', action='store',type = float, default=0.5)
 parser.add_argument('--NODE_FREQ_MIN', action='store',type = float, default=0.5)
 
-fibrosis_output_idx = 0
 args = parser.parse_args()
 DrugsIn = args.DrugsIn
 TargetsIn = args.TargetsIn

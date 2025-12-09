@@ -2,102 +2,45 @@ import os
 import numpy as np
 import pandas as pd
 import torch
-import torch.nn as nn
 import sys 
 # gpu_lembas_path = '/nobackup/users/meimetis/LEMBAS-main'
 gpu_lembas_path = 'C:/Users/nmeim/Documents/Artificial-Signaling-Network/LEMBAS-main'
 sys.path.insert(1,os.path.join(gpu_lembas_path))
 import argparse
 from utility import *
-import networkx as nx
-import pyreadr
-from sklearn.linear_model import Ridge
-from sklearn.model_selection import GridSearchCV,RepeatedKFold
 from collections import defaultdict
-import time
 
-class FrozenLinear(nn.Module):
-    def __init__(self, W_np: np.ndarray, b_np: np.ndarray | float, dtype=torch.double, device="gpu"):
-        """
-        W_np: (out_features, in_features)
-        b_np: (out_features,) or scalar
-        """
-        super().__init__()
-        out_features, in_features = W_np.shape
-        self.lin = nn.Linear(in_features, out_features, bias=True).to(device=device, dtype=dtype)
-        # copy weights/bias
-        with torch.no_grad():
-            self.lin.weight.copy_(torch.as_tensor(W_np, dtype=dtype, device=device))
-            self.lin.bias.copy_(torch.as_tensor(np.atleast_1d(b_np), dtype=dtype, device=device))
-    def forward(self, x):
-        return self.lin(x)
+logging.basicConfig(level=logging.INFO, format='%(message)s')
+logger = logging.getLogger()
+print2log = logger.info
 
-def setup_dual_logging(out_dir='.', log_filename='pathway_scoring.log', use_timestamp=True):
-    """
-    Setup logging to both console and file with different formats.
-    
-    Args:
-        out_dir: Directory to save log file
-        log_filename: Base name of log file
-        use_timestamp: If True, add timestamp to filename
-    
-    Returns:
-        print2log: Function to use for all print statements
-    """
-    import logging
-    from pathlib import Path
-    
-    # Create output directory if it doesn't exist
-    Path(out_dir).mkdir(parents=True, exist_ok=True)
-    
-    # Add timestamp to filename if requested
-    if use_timestamp:
-        timestamp = time.strftime("%Y%m%d_%H%M%S")
-        base, ext = os.path.splitext(log_filename)
-        log_filename = f"{base}_{timestamp}{ext}"
-    
-    # Create logger
-    logger = logging.getLogger('PathwayScoring')
-    logger.setLevel(logging.INFO)
-    
-    # Remove any existing handlers
-    logger.handlers = []
-    logger.propagate = False
-    
-    # Create formatters
-    file_formatter = logging.Formatter(
-        fmt='%(asctime)s | %(levelname)s | %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-    )
-    
-    console_formatter = logging.Formatter('%(message)s')
-    
-    # File handler
-    log_path = os.path.join(out_dir, log_filename)
-    file_handler = logging.FileHandler(log_path, mode='w', encoding='utf-8')
-    file_handler.setLevel(logging.INFO)
-    file_handler.setFormatter(file_formatter)
-    logger.addHandler(file_handler)
-    
-    # Console handler
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.INFO)
-    console_handler.setFormatter(console_formatter)
-    logger.addHandler(console_handler)
-    
-    # Log the setup
-    logger.info("="*70)
-    logger.info("PATHWAY SCORING ANALYSIS - LOGGING STARTED")
-    logger.info("="*70)
-    logger.info(f"Log file: {log_path}")
-    logger.info(f"Logger directory: {out_dir}")
-    logger.info("="*70 + "\n")
-    
-    return logger.info, log_path
+def make_allowed_edges_uniprot_from_core(core_net: pd.DataFrame, sym2id: dict) -> set:
+    PHENOS = {'fibrosis','MAS','Fibrosis','NAS','mas','nas'}
+    # 1) drop phenotype edges
+    core_f = core_net[
+        ~core_net["source_symbol"].isin(PHENOS) &
+        ~core_net["target_symbol"].isin(PHENOS)
+    ].copy()
+
+    # 2) map symbols -> uniprot
+    src_u = core_f["source_symbol"].map(sym2id)
+    tgt_u = core_f["target_symbol"].map(sym2id)
+
+    # 3) sanity check missing mappings
+    missing = core_f[src_u.isna() | tgt_u.isna()][["source_symbol", "target_symbol"]]
+    if len(missing) > 0:
+        # If you *know* everything should map, fail loudly
+        raise ValueError(
+            "Some core symbols could not be mapped to UniProt. Examples:\n"
+            + missing.head(20).to_string(index=False)
+        )
+
+    allowed_edges_uniprot = set(zip(src_u.astype(str), tgt_u.astype(str)))
+    return allowed_edges_uniprot
 
 parser = argparse.ArgumentParser(prog='Hepatocyte simulation')
 parser.add_argument('--log_filename', action='store', type=str, 
-                    default='pathway_scoring.log',
+                    default='trimmed_simulation.log',
                     help='Name of the log file')
 parser.add_argument('--AnnotationCSV', action='store', type=str,
                     default='../data/annotation.csv',
@@ -123,13 +66,13 @@ parser.add_argument('--MoAFactor', action='store',type = float, default=0.1)
 parser.add_argument('--spectralFactor', action='store', default=1e-3)
 parser.add_argument('--drug_bn', action='store', default=0.2)
 parser.add_argument('--drug_drop', action='store', default=0.1)
-parser.add_argument('--X_invivo_path', action='store', help='Path to in vivo TF activities (.rds)', default='../data/Xh_tfs_govaere.rds')
-parser.add_argument('--Y_invivo_path', action='store', help='Path to in vivo phenotypes (.rds)', default='../data/Yh_tfs_govaere.rds')
 parser.add_argument('--stimulation_strength', action='store',type=float, default=3000)
-parser.add_argument('--EDGE_FREQ_MIN', action='store',type = float, default=0.5)
-parser.add_argument('--NODE_FREQ_MIN', action='store',type = float, default=0.5)
+parser.add_argument('--num_steps', action='store',type = float, default=101)
+parser.add_argument('--selected_signaling_nodes', metavar='N', type=str, nargs='*', action='store', 
+                    help='Selected signaling nodes to predict and save their activity',
+                    default=['P36897','P17181'])
 
-fibrosis_output_idx = 0
+
 args = parser.parse_args()
 DrugsIn = args.DrugsIn
 TargetsIn = args.TargetsIn
@@ -145,14 +88,9 @@ projection_amplitude_out = args.projectionAmplitude
 ConvertToEmpProb = args.ConvertToEmpProb
 number_DTLEMBAS_models = args.number_DTLEMBAS_models
 stimulation_strength=args.stimulation_strength
-max_path_length = args.max_path_length
-num_steps_ig =  args.num_steps_ig
 out_dir = args.out_dir
-GRADIENT_THRESHOLD = args.GRADIENT_THRESHOLD
-enumerated_pathways_path = args.enumerated_pathways_path
-
-
-print2log, log_file_path = setup_dual_logging(log_filename=args.log_filename, use_timestamp=True)
+selected_signaling_nodes = np.array(args.selected_signaling_nodes)
+num_steps = args.num_steps
 
 n_cores = 12
 utils.set_cores(n_cores)
@@ -204,8 +142,13 @@ net = format_network(net, weight_label = weight_label, stimulation_label = stimu
 nodeNames = np.union1d(net.source.values,net.target.values)
 
 core_net = pd.read_csv(os.path.join(out_dir, 'aggregated_subgraph_edges.csv'),index_col=None)
+allowed_edges_uniprot = make_allowed_edges_uniprot_from_core(core_net, sym2id)
+allowed_nodes_uniprot = set()
+for u, v in allowed_edges_uniprot:
+    allowed_nodes_uniprot.add(u)
+    allowed_nodes_uniprot.add(v)
 
-for timepoint in ['24 hour']:  # or ['2 hour','8 hour','24 hour']
+for timepoint in ['8 hour']:  # or ['2 hour','8 hour','24 hour']
     print2log(f'Processing timepoint {timepoint}')
     
     if timepoint == '8 hour':
@@ -246,24 +189,10 @@ for timepoint in ['24 hour']:  # or ['2 hour','8 hour','24 hour']
     bionet_params = {'target_steps': 100, 'max_steps': args.max_LEMBAS_iterations, 
                     'exp_factor':50, 'tolerance': args.LEMBAS_tolerance, 
                     'leak':args.LEMBAS_leak}
-    
-    print2log("Train TFs ---> Phenotype model...")
-    Xh = pyreadr.read_r(args.X_invivo_path)[None]
-    Xh = Xh.loc[:,outName].to_numpy()
-    Yh = pyreadr.read_r(args.Y_invivo_path)[None].to_numpy()
-    Yh = Yh[:,1]
-    params = {'alpha': [0.001,0.01,0.1,0.2,0.5,1,2,5,10,20,50,100,500,1000]}
-    ridge = GridSearchCV(estimator=Ridge(),param_grid=params, cv=RepeatedKFold(n_splits=10, n_repeats=10), n_jobs=-1)
-    ridge.fit(Xh, Yh)
-    coefs = ridge.best_estimator_.coef_
-    intercept = ridge.best_estimator_.intercept_
-    pheno = FrozenLinear(coefs[np.newaxis, :], intercept, dtype=torch.double, device=device)
-    pheno.eval()
-    
+    results_all = pd.DataFrame({})  
+    results_control = pd.DataFrame({})  
     for model_no in range(number_DTLEMBAS_models):
-        print2log(f"\n{'='*70}")
         print2log(f"MODEL {model_no+1}/{number_DTLEMBAS_models}")
-        print2log(f"{'='*70}")
         
         # Load model
         mod = SignalingModel(net=net,
@@ -296,18 +225,63 @@ for timepoint in ['24 hour']:  # or ['2 hour','8 hour','24 hour']
             if u in node_idx_map:
                 idx = node_idx_map[u]
                 bias_keep_mask[idx] = True
-        mod.signaling_network.weights.data.masked_fill_(mask=~keep_mask, value=0.0)
-        mod.signaling_network.bias.masked_fill_(~bias_keep_mask, 0.0)
+        with torch.no_grad():
+            mod.signaling_network.weights.data.masked_fill_(mask=~keep_mask, value=0.0)
+            bias = mod.signaling_network.bias
+            mask = ~bias_keep_mask
+            if bias.dim() == 2 and bias.shape[1] == 1:
+                mask = mask.view(-1, 1)
+            mod.signaling_network.bias.masked_fill_(~mask, 0.0)
+        mod.eval()
+
+        # Prepare stimulation input
+        all_nodes = np.array(list(mod.node_idx_map.keys()))
+        # indices for the two selected nodes
+        subset_nodes = {key: mod.node_idx_map[key] for key in selected_signaling_nodes if key in mod.node_idx_map}
+        subset_nodes_inds = np.array(list(subset_nodes.values()))
+        if len(subset_nodes_inds) != 2:
+            raise ValueError("Could not find both P36897 and P17181 in mod.node_idx_map.")
+
+        # one-hot basis vectors for each receptor (same approach as Xin_combined script)
+        with torch.no_grad():
+            Xin = torch.eye(len(all_nodes), dtype=torch.double).to(device)
+            Xin_1 = Xin[subset_nodes_inds[0], :].unsqueeze(0)
+            Xin_2 = Xin[subset_nodes_inds[1], :].unsqueeze(0)
+            # stimulation grid values
+            stim_range = torch.linspace(-stimulation_strength, stimulation_strength, int(num_steps))
+            grid_Xin1, grid_Xin2 = torch.meshgrid(stim_range, stim_range, indexing='ij')
+            # flatten to (num_steps^2, 1)
+            grid_Xin1 = grid_Xin1.flatten().view(-1, 1)
+            grid_Xin2 = grid_Xin2.flatten().view(-1, 1)
+            # expand to full node dimension
+            grid_Xin1 = grid_Xin1.repeat(1, Xin_1.shape[1])
+            grid_Xin2 = grid_Xin2.repeat(1, Xin_2.shape[1])
+            # scale the one-hot vectors and combine
+            Xin_1_grid = Xin_1 * grid_Xin1.to(device).double()
+            Xin_2_grid = Xin_2 * grid_Xin2.to(device).double()
+            x_stim = Xin_1_grid + Xin_2_grid
         
-        Yfull = mod.signaling_network(x_stim)
-        YTF = mod.output_layer(Yfull)
+        # Run simulation
+        with torch.no_grad():
+            Yfull = mod.signaling_network(x_stim)
+            YTF = mod.output_layer(Yfull)
+            x0 = torch.zeros(1, drugTargets.shape[1], dtype=torch.double).to(device)
+            TF0, _ = mod(x0) 
         YTF = YTF.detach().cpu().numpy()
-        YTF = pd.DataFrame(YTF, columns=TFOutput_tmp.columns.values)
-        YTF['IFNAR1'] = x_stim[:,mod.node_idx_map['P17181']]
-        YTF['TGFBR1'] = x_stim[:,mod.node_idx_map['P36897']]
-        YTF.to_csv(os.path.join(out_dir ,'Ytf_'+ str(model_no+1)+'.csv'))
-        
-    
+        df = pd.DataFrame(YTF, columns=TFOutput_tmp.columns.values)
+        df['IFNAR1'] = x_stim[:,mod.node_idx_map['P17181']].detach().cpu().numpy()
+        df['TGFBR1'] = x_stim[:,mod.node_idx_map['P36897']].detach().cpu().numpy()
+        df['type'] = 'stimuli'
+        df['model_no'] = model_no
+        results_all = pd.concat([results_all, df], axis=0, ignore_index=True)
+
+        df_control = pd.DataFrame(TF0.detach().cpu().numpy(), columns=TFOutput_tmp.columns.values)
+        df_control['type'] = 'untreated'
+        df_control['model_no'] = model_no
+        results_control = pd.concat([results_control, df_control], axis=0, ignore_index=True)
+
+    results_all.to_csv(os.path.join(out_dir ,'TrimmedSimulation_'+ timepoint+'.csv'))
+    results_control.to_csv(os.path.join(out_dir, 'TrimmedSimulation_control_' + timepoint + '.csv'))
     print2log("\n" + "="*70)
     print2log(f"Finished timepoint: {timepoint}")
     print2log("="*70)

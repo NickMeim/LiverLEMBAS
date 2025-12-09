@@ -114,6 +114,18 @@ mean_control_mas <- mean(Ycontrol[,1])
 se_control_mas <- sd(Ycontrol[,1])/sqrt(50)
 mean_control_fib <- mean(Ycontrol[,2]) 
 se_control_fib <- mean(Ycontrol[,2]) /sqrt(50)
+## save a centered version
+Ycontrol <- as.data.frame(Ycontrol) %>% mutate(model_no=seq(0,49,1))
+Yinsilico_centered <- left_join(Ycontrol,Yinsilico,by = 'model_no')
+Yinsilico_centered <- Yinsilico_centered %>% mutate(NAS = NAS.y - NAS.x)
+Yinsilico_centered <- Yinsilico_centered %>% mutate(fibrosis = fibrosis.y-fibrosis.x)
+Yinsilico_centered <- Yinsilico_centered %>% 
+  select(c("IFNAR1"="IFNa"),c("TGFBR1"="TGFb"),model_no,NAS,fibrosis)
+saveRDS(Yinsilico_centered,'../results/allmodels/combo_simulation_expanded/Yinsilico_centered.rds')
+
+# Yinsilico_centered2 <- Yinsilico_centered%>% gather('phenotype','score',-model_no,-IFNAR1,-TGFBR1) %>%
+#   group_by(phenotype,IFNAR1,TGFBR1) %>% mutate(mu = mean(score)) %>% mutate(se=sd(score)/sqrt(50))
+
 Yinsilico <- Yinsilico %>% gather('phenotype','score',-model_no,-IFNa,-TGFb) %>%
   group_by(phenotype,IFNa,TGFb) %>% mutate(mu = mean(score)) %>% mutate(se=sd(score)/sqrt(50))
 
