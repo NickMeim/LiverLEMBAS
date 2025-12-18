@@ -1,0 +1,240 @@
+2025-12-18 16:39:04,854 | INFO | Running on cuda
+2025-12-18 16:39:05,051 | INFO | Processing timepoint 8 hour
+2025-12-18 16:39:10,290 | INFO | MODEL 1/50
+2025-12-18 16:39:13,656 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 16:39:19,999 | INFO |    P36897: Found 264 paths (Did not max out). Keeping all.
+2025-12-18 16:39:20,002 | INFO |    P17181: Found 147 paths (Did not max out). Keeping all.
+2025-12-18 16:39:20,003 | INFO | MODEL 2/50
+2025-12-18 16:39:20,595 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 16:39:23,547 | INFO |    P36897: Found 472 paths (Did not max out). Keeping all.
+2025-12-18 16:39:23,559 | INFO |    P17181: Found 1135 paths (Did not max out). Keeping all.
+2025-12-18 16:39:23,564 | INFO | MODEL 3/50
+2025-12-18 16:39:24,367 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 16:39:27,536 | INFO |    P36897: Found 8 paths (Did not max out). Keeping all.
+2025-12-18 16:39:27,537 | INFO |    P17181: Found 14 paths (Did not max out). Keeping all.
+2025-12-18 16:39:27,542 | INFO | MODEL 4/50
+2025-12-18 16:39:28,323 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 16:39:31,496 | INFO |    P36897: Found 12 paths (Did not max out). Keeping all.
+2025-12-18 16:39:31,497 | INFO |    P17181: Found 21 paths (Did not max out). Keeping all.
+2025-12-18 16:39:31,501 | INFO | MODEL 5/50
+2025-12-18 16:39:32,247 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 16:39:35,451 | INFO |    P36897: Found 76 paths (Did not max out). Keeping all.
+2025-12-18 16:39:35,454 | INFO |    P17181: Found 92 paths (Did not max out). Keeping all.
+2025-12-18 16:39:35,461 | INFO | MODEL 6/50
+2025-12-18 16:39:36,252 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 16:39:39,379 | INFO |    P36897: Found 51 paths (Did not max out). Keeping all.
+2025-12-18 16:39:39,382 | INFO |    P17181: Found 190 paths (Did not max out). Keeping all.
+2025-12-18 16:39:39,385 | INFO | MODEL 7/50
+2025-12-18 16:39:40,167 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 16:39:43,286 | INFO |    P36897: Found 8 paths (Did not max out). Keeping all.
+2025-12-18 16:39:43,299 | INFO |    P17181: Maxed out initial batch (1200). Starting batch-wise pruning.
+2025-12-18 16:40:47,157 | INFO |      ...Batch 1: Kept 250 paths.
+2025-12-18 16:41:07,151 | INFO |      ...Batch 2 (344 paths): Kept 250 paths.
+2025-12-18 16:41:07,152 | INFO |    P17181: Finished pruning. Kept 508 paths so far (including previous sources).
+2025-12-18 16:41:07,158 | INFO | MODEL 8/50
+2025-12-18 16:41:07,690 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 16:41:10,495 | INFO |    P36897: Maxed out initial batch (1200). Starting batch-wise pruning.
+2025-12-18 16:42:11,052 | INFO |      ...Batch 1: Kept 250 paths.
+2025-12-18 16:42:26,199 | INFO |      ...Batch 2 (248 paths): Kept 248 paths.
+2025-12-18 16:42:26,200 | INFO |    P36897: Finished pruning. Kept 498 paths so far (including previous sources).
+2025-12-18 16:42:26,212 | INFO |    P17181: Found 915 paths (Did not max out). Keeping all.
+2025-12-18 16:42:26,220 | INFO | MODEL 9/50
+2025-12-18 16:42:26,729 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 16:42:29,443 | INFO |    P36897: Found 348 paths (Did not max out). Keeping all.
+2025-12-18 16:42:29,444 | INFO |    P17181: Found 66 paths (Did not max out). Keeping all.
+2025-12-18 16:42:29,451 | INFO | MODEL 10/50
+2025-12-18 16:42:30,116 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 16:42:33,109 | INFO |    P36897: Maxed out initial batch (1200). Starting batch-wise pruning.
+2025-12-18 16:43:38,169 | INFO |      ...Batch 1: Kept 250 paths.
+2025-12-18 16:44:42,824 | INFO |      ...Batch 2 (1200 paths): Kept 250 paths.
+2025-12-18 16:45:47,374 | INFO |      ...Batch 3 (1200 paths): Kept 250 paths.
+2025-12-18 16:46:51,317 | INFO |      ...Batch 4 (1200 paths): Kept 250 paths.
+2025-12-18 16:47:56,160 | INFO |      ...Batch 5 (1200 paths): Kept 250 paths.
+2025-12-18 16:49:03,719 | INFO |      ...Batch 6 (1200 paths): Kept 250 paths.
+2025-12-18 16:50:10,693 | INFO |      ...Batch 7 (1200 paths): Kept 250 paths.
+2025-12-18 16:51:17,834 | INFO |      ...Batch 8 (1200 paths): Kept 250 paths.
+2025-12-18 16:52:23,756 | INFO |      ...Batch 9 (1200 paths): Kept 250 paths.
+2025-12-18 16:53:29,641 | INFO |      ...Batch 10 (1200 paths): Kept 250 paths.
+2025-12-18 16:53:29,642 | INFO |    P36897: Finished pruning. Kept 2500 paths so far (including previous sources).
+2025-12-18 16:53:29,660 | INFO |    P17181: Maxed out initial batch (1200). Starting batch-wise pruning.
+2025-12-18 16:54:39,133 | INFO |      ...Batch 1: Kept 250 paths.
+2025-12-18 16:55:49,947 | INFO |      ...Batch 2 (1200 paths): Kept 250 paths.
+2025-12-18 16:56:55,760 | INFO |      ...Batch 3 (1200 paths): Kept 250 paths.
+2025-12-18 16:58:00,844 | INFO |      ...Batch 4 (1200 paths): Kept 250 paths.
+2025-12-18 16:59:06,003 | INFO |      ...Batch 5 (1200 paths): Kept 250 paths.
+2025-12-18 17:00:14,477 | INFO |      ...Batch 6 (1200 paths): Kept 250 paths.
+2025-12-18 17:01:28,069 | INFO |      ...Batch 7 (1200 paths): Kept 250 paths.
+2025-12-18 17:02:40,999 | INFO |      ...Batch 8 (1200 paths): Kept 250 paths.
+2025-12-18 17:03:54,961 | INFO |      ...Batch 9 (1200 paths): Kept 250 paths.
+2025-12-18 17:05:02,959 | INFO |      ...Batch 10 (1200 paths): Kept 250 paths.
+2025-12-18 17:05:02,960 | INFO |    P17181: Finished pruning. Kept 5000 paths so far (including previous sources).
+2025-12-18 17:05:02,974 | INFO | MODEL 11/50
+2025-12-18 17:05:03,540 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 17:05:06,373 | INFO |    P36897: Maxed out initial batch (1200). Starting batch-wise pruning.
+2025-12-18 17:06:11,351 | INFO |      ...Batch 1: Kept 250 paths.
+2025-12-18 17:07:16,296 | INFO |      ...Batch 2 (1200 paths): Kept 250 paths.
+2025-12-18 17:08:21,647 | INFO |      ...Batch 3 (1200 paths): Kept 250 paths.
+2025-12-18 17:09:27,283 | INFO |      ...Batch 4 (1200 paths): Kept 250 paths.
+2025-12-18 17:10:33,480 | INFO |      ...Batch 5 (1200 paths): Kept 250 paths.
+2025-12-18 17:11:42,254 | INFO |      ...Batch 6 (1200 paths): Kept 250 paths.
+2025-12-18 17:12:53,365 | INFO |      ...Batch 7 (1200 paths): Kept 250 paths.
+2025-12-18 17:13:01,158 | INFO |      ...Batch 8 (64 paths): Kept 64 paths.
+2025-12-18 17:13:01,158 | INFO |    P36897: Finished pruning. Kept 1814 paths so far (including previous sources).
+2025-12-18 17:13:01,179 | INFO |    P17181: Found 1186 paths (Did not max out). Keeping all.
+2025-12-18 17:13:01,203 | INFO | MODEL 12/50
+2025-12-18 17:13:01,793 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 17:13:05,127 | INFO |    P36897: Found 10 paths (Did not max out). Keeping all.
+2025-12-18 17:13:05,132 | INFO |    P17181: Found 128 paths (Did not max out). Keeping all.
+2025-12-18 17:13:05,166 | INFO | MODEL 13/50
+2025-12-18 17:13:06,067 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 17:13:09,126 | INFO |    P36897: Found 11 paths (Did not max out). Keeping all.
+2025-12-18 17:13:09,128 | INFO |    P17181: Found 28 paths (Did not max out). Keeping all.
+2025-12-18 17:13:09,149 | INFO | MODEL 14/50
+2025-12-18 17:13:09,995 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 17:13:13,314 | INFO |    P36897: Maxed out initial batch (1200). Starting batch-wise pruning.
+2025-12-18 17:14:25,017 | INFO |      ...Batch 1: Kept 250 paths.
+2025-12-18 17:15:32,221 | INFO |      ...Batch 2 (1200 paths): Kept 250 paths.
+2025-12-18 17:16:41,861 | INFO |      ...Batch 3 (1200 paths): Kept 250 paths.
+2025-12-18 17:17:50,778 | INFO |      ...Batch 4 (1200 paths): Kept 250 paths.
+2025-12-18 17:18:59,940 | INFO |      ...Batch 5 (1200 paths): Kept 250 paths.
+2025-12-18 17:19:11,368 | INFO |      ...Batch 6 (135 paths): Kept 135 paths.
+2025-12-18 17:19:11,368 | INFO |    P36897: Finished pruning. Kept 1385 paths so far (including previous sources).
+2025-12-18 17:19:11,389 | INFO |    P17181: Maxed out initial batch (1200). Starting batch-wise pruning.
+2025-12-18 17:20:19,308 | INFO |      ...Batch 1: Kept 250 paths.
+2025-12-18 17:21:20,998 | INFO |      ...Batch 2 (1146 paths): Kept 250 paths.
+2025-12-18 17:21:20,998 | INFO |    P17181: Finished pruning. Kept 1885 paths so far (including previous sources).
+2025-12-18 17:21:21,020 | INFO | MODEL 15/50
+2025-12-18 17:21:21,580 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 17:21:24,400 | INFO |    P36897: Found 157 paths (Did not max out). Keeping all.
+2025-12-18 17:21:24,405 | INFO |    P17181: Found 381 paths (Did not max out). Keeping all.
+2025-12-18 17:21:24,426 | INFO | MODEL 16/50
+2025-12-18 17:21:25,143 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 17:21:28,158 | INFO |    P36897: Found 1135 paths (Did not max out). Keeping all.
+2025-12-18 17:21:28,169 | INFO |    P17181: Found 940 paths (Did not max out). Keeping all.
+2025-12-18 17:21:28,195 | INFO | MODEL 17/50
+2025-12-18 17:21:28,871 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 17:21:31,771 | INFO |    P36897: Found 79 paths (Did not max out). Keeping all.
+2025-12-18 17:21:31,772 | INFO |    P17181: Found 5 paths (Did not max out). Keeping all.
+2025-12-18 17:21:31,797 | INFO | MODEL 18/50
+2025-12-18 17:21:32,476 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 17:21:35,448 | INFO |    P36897: Found 26 paths (Did not max out). Keeping all.
+2025-12-18 17:21:35,450 | INFO |    P17181: Found 41 paths (Did not max out). Keeping all.
+2025-12-18 17:21:35,475 | INFO | MODEL 19/50
+2025-12-18 17:21:36,175 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 17:21:39,153 | INFO |    P36897: Found 43 paths (Did not max out). Keeping all.
+2025-12-18 17:21:39,155 | INFO |    P17181: Found 149 paths (Did not max out). Keeping all.
+2025-12-18 17:21:39,182 | INFO | MODEL 20/50
+2025-12-18 17:21:39,858 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 17:21:42,783 | INFO |    P36897: Found 35 paths (Did not max out). Keeping all.
+2025-12-18 17:21:42,784 | INFO |    P17181: Found 14 paths (Did not max out). Keeping all.
+2025-12-18 17:21:42,812 | INFO | MODEL 21/50
+2025-12-18 17:21:43,666 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 17:21:46,725 | INFO |    P36897: Found 172 paths (Did not max out). Keeping all.
+2025-12-18 17:21:46,727 | INFO |    P17181: Found 189 paths (Did not max out). Keeping all.
+2025-12-18 17:21:46,752 | INFO | MODEL 22/50
+2025-12-18 17:21:47,538 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 17:21:50,770 | INFO |    P36897: Found 1165 paths (Did not max out). Keeping all.
+2025-12-18 17:21:50,795 | INFO |    P17181: Maxed out initial batch (1200). Starting batch-wise pruning.
+2025-12-18 17:22:58,227 | INFO |      ...Batch 1: Kept 250 paths.
+2025-12-18 17:23:48,780 | INFO |      ...Batch 2 (913 paths): Kept 250 paths.
+2025-12-18 17:23:48,781 | INFO |    P17181: Finished pruning. Kept 1665 paths so far (including previous sources).
+2025-12-18 17:23:48,808 | INFO | MODEL 23/50
+2025-12-18 17:23:49,353 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 17:23:52,140 | INFO |    P36897: Found 84 paths (Did not max out). Keeping all.
+2025-12-18 17:23:52,147 | INFO |    P17181: Found 480 paths (Did not max out). Keeping all.
+2025-12-18 17:23:52,175 | INFO | MODEL 24/50
+2025-12-18 17:23:52,849 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 17:23:56,137 | INFO |    P36897: Found 249 paths (Did not max out). Keeping all.
+2025-12-18 17:23:56,139 | INFO |    P17181: Found 166 paths (Did not max out). Keeping all.
+2025-12-18 17:23:56,170 | INFO | MODEL 25/50
+2025-12-18 17:23:56,986 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 17:23:59,878 | INFO |    P36897: Found 7 paths (Did not max out). Keeping all.
+2025-12-18 17:23:59,882 | INFO |    P17181: Found 372 paths (Did not max out). Keeping all.
+2025-12-18 17:23:59,909 | INFO | MODEL 26/50
+2025-12-18 17:24:00,585 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 17:24:03,896 | INFO |    P36897: Maxed out initial batch (1200). Starting batch-wise pruning.
+2025-12-18 17:25:12,166 | INFO |      ...Batch 1: Kept 250 paths.
+2025-12-18 17:26:18,133 | INFO |      ...Batch 2 (1200 paths): Kept 250 paths.
+2025-12-18 17:27:28,259 | INFO |      ...Batch 3 (1200 paths): Kept 250 paths.
+2025-12-18 17:28:50,040 | INFO |      ...Batch 4 (1200 paths): Kept 250 paths.
+2025-12-18 17:30:09,529 | INFO |      ...Batch 5 (1200 paths): Kept 250 paths.
+2025-12-18 17:31:25,953 | INFO |      ...Batch 6 (1200 paths): Kept 250 paths.
+2025-12-18 17:32:37,561 | INFO |      ...Batch 7 (1200 paths): Kept 250 paths.
+2025-12-18 17:33:46,076 | INFO |      ...Batch 8 (1200 paths): Kept 250 paths.
+2025-12-18 17:34:58,634 | INFO |      ...Batch 9 (1200 paths): Kept 250 paths.
+2025-12-18 17:36:09,312 | INFO |      ...Batch 10 (1200 paths): Kept 250 paths.
+2025-12-18 17:36:09,312 | INFO |    P36897: Finished pruning. Kept 2500 paths so far (including previous sources).
+2025-12-18 17:36:09,343 | INFO |    P17181: Maxed out initial batch (1200). Starting batch-wise pruning.
+2025-12-18 17:37:23,084 | INFO |      ...Batch 1: Kept 250 paths.
+2025-12-18 17:38:32,463 | INFO |      ...Batch 2 (1200 paths): Kept 250 paths.
+2025-12-18 17:39:44,373 | INFO |      ...Batch 3 (1200 paths): Kept 250 paths.
+2025-12-18 17:40:58,595 | INFO |      ...Batch 4 (1200 paths): Kept 250 paths.
+2025-12-18 17:42:14,621 | INFO |      ...Batch 5 (1200 paths): Kept 250 paths.
+2025-12-18 17:43:33,381 | INFO |      ...Batch 6 (1200 paths): Kept 250 paths.
+2025-12-18 17:44:48,414 | INFO |      ...Batch 7 (1200 paths): Kept 250 paths.
+2025-12-18 17:46:03,534 | INFO |      ...Batch 8 (1200 paths): Kept 250 paths.
+2025-12-18 17:47:20,267 | INFO |      ...Batch 9 (1200 paths): Kept 250 paths.
+2025-12-18 17:48:37,546 | INFO |      ...Batch 10 (1200 paths): Kept 250 paths.
+2025-12-18 17:48:37,546 | INFO |    P17181: Finished pruning. Kept 5000 paths so far (including previous sources).
+2025-12-18 17:48:37,599 | INFO | MODEL 27/50
+2025-12-18 17:48:38,232 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 17:48:41,390 | INFO |    P36897: Found 786 paths (Did not max out). Keeping all.
+2025-12-18 17:48:41,397 | INFO |    P17181: Found 340 paths (Did not max out). Keeping all.
+2025-12-18 17:48:41,442 | INFO | MODEL 28/50
+2025-12-18 17:48:42,280 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 17:48:45,641 | INFO |    P36897: Found 10 paths (Did not max out). Keeping all.
+2025-12-18 17:48:45,642 | INFO |    P17181: Found 138 paths (Did not max out). Keeping all.
+2025-12-18 17:48:45,691 | INFO | MODEL 29/50
+2025-12-18 17:48:46,521 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 17:48:49,797 | INFO |    P36897: Maxed out initial batch (1200). Starting batch-wise pruning.
+2025-12-18 17:50:02,552 | INFO |      ...Batch 1: Kept 250 paths.
+2025-12-18 17:51:13,419 | INFO |      ...Batch 2 (1200 paths): Kept 250 paths.
+2025-12-18 17:52:25,017 | INFO |      ...Batch 3 (1200 paths): Kept 250 paths.
+2025-12-18 17:52:50,247 | INFO |      ...Batch 4 (378 paths): Kept 250 paths.
+2025-12-18 17:52:50,248 | INFO |    P36897: Finished pruning. Kept 1000 paths so far (including previous sources).
+2025-12-18 17:52:50,267 | INFO |    P17181: Maxed out initial batch (1200). Starting batch-wise pruning.
+2025-12-18 17:54:03,104 | INFO |      ...Batch 1: Kept 250 paths.
+2025-12-18 17:54:32,266 | INFO |      ...Batch 2 (445 paths): Kept 250 paths.
+2025-12-18 17:54:32,267 | INFO |    P17181: Finished pruning. Kept 1500 paths so far (including previous sources).
+2025-12-18 17:54:32,328 | INFO | MODEL 30/50
+2025-12-18 17:54:32,985 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 17:54:36,100 | INFO |    P36897: Found 1 paths (Did not max out). Keeping all.
+2025-12-18 17:54:36,102 | INFO |    P17181: Found 79 paths (Did not max out). Keeping all.
+2025-12-18 17:54:36,145 | INFO | MODEL 31/50
+2025-12-18 17:54:36,996 | INFO | 
+🔬 Computing edge gradients over 21x21 stimulation grid...
+2025-12-18 17:54:40,349 | INFO |    P36897: Maxed out initial batch (1200). Starting batch-wise pruning.
+2025-12-18 17:55:54,282 | INFO |      ...Batch 1: Kept 250 paths.
+2025-12-18 17:57:09,196 | INFO |      ...Batch 2 (1200 paths): Kept 250 paths.
+2025-12-18 17:58:23,505 | INFO |      ...Batch 3 (1200 paths): Kept 250 paths.
+2025-12-18 17:59:37,132 | INFO |      ...Batch 4 (1200 paths): Kept 250 paths.
