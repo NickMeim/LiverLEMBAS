@@ -289,7 +289,7 @@ parser.add_argument('--Y_invivo_path', action='store', help='Path to in vivo phe
 parser.add_argument('--max_path_length', action='store',type = int, default=8)
 parser.add_argument('--stimulation_strength', action='store',type=float, default=3000)
 parser.add_argument('--num_steps_ig', action='store',type = float, default=100)
-parser.add_argument('--GRADIENT_THRESHOLD', action='store',type = float, default=8e-3)
+parser.add_argument('--GRADIENT_THRESHOLD', action='store',type = float, default=3e-2)
 
 args = parser.parse_args()
 
@@ -314,7 +314,7 @@ TFOutput = TFOutput.loc[drugInput.index,:]
 net = format_network(net, weight_label='mode_of_action', stimulation_label='stimulation', inhibition_label='inhibition')
 nodeNames = np.union1d(net.source.values, net.target.values)
 
-for timepoint in ['8 hour']:
+for timepoint in ['24 hour']:
     print2log(f'Processing timepoint {timepoint}')
     enumerated_pathways = {}
     enumerated_pathways_path_timepoint = args.enumerated_pathways_path + '_' + timepoint + '.pkl'
@@ -408,7 +408,23 @@ for timepoint in ['8 hour']:
             (u, v, {'weight': grad}) for (u, v), grad in edge_gradients.items()
             if grad >= args.GRADIENT_THRESHOLD and (v != 'MAS' and G.has_edge(u, v) or v == 'MAS')
         ])
-        
+
+        old_threshold = args.GRADIENT_THRESHOLD
+        while 'P36897' not in G_filtered.nodes or 'P17181' not in G_filtered.nodes:
+            print2log("   Warning: One of the source nodes is missing after filtering. Lowering GRADIENT_THRESHOLD.")
+            args.GRADIENT_THRESHOLD *= 0.8
+            G_filtered = nx.DiGraph([
+                (u, v, {'weight': grad}) for (u, v), grad in edge_gradients.items()
+                if grad >= args.GRADIENT_THRESHOLD and (v != 'MAS' and G.has_edge(u, v) or v == 'MAS')
+            ])
+        while len(list(islice(nx.all_simple_paths(G_filtered, 'P36897', 'MAS', cutoff=args.max_path_length), MAX_PATHS_PER_BATCH)))==0 or len(list(islice(nx.all_simple_paths(G_filtered, 'P17181', 'MAS', cutoff=args.max_path_length), MAX_PATHS_PER_BATCH)))==0:
+            print2log("   Warning: No paths found from one of the sources after filtering. Lowering GRADIENT_THRESHOLD.")
+            args.GRADIENT_THRESHOLD *= 0.95
+            G_filtered = nx.DiGraph([
+                (u, v, {'weight': grad}) for (u, v), grad in edge_gradients.items()
+                if grad >= args.GRADIENT_THRESHOLD and (v != 'MAS' and G.has_edge(u, v) or v == 'MAS')
+            ])
+        args.GRADIENT_THRESHOLD = old_threshold  # Reset to original threshold
         final_paths_for_model = []
         
         for source in ['P36897', 'P17181']:
