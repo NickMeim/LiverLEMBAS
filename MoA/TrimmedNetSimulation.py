@@ -52,8 +52,11 @@ parser.add_argument('--ChemicalSims', action='store',type = str, default='../pre
 parser.add_argument('--PKN', action='store',type = str, default='../preprocessing/preprocessed_data/PKN/Hepatocytes-PKN-Model.tsv')
 parser.add_argument('--PknAnnotation', action='store',type = str, default='../preprocessing/preprocessed_data/PKN/Hepatocytes-PKN-Annotation.tsv')
 parser.add_argument('--infoPath', action='store',type = str, default='../preprocessing/preprocessed_data/TrainingValidationData/Hepatocytes_inputdataInfo.tsv')
-parser.add_argument('--res_dir', action='store',type = str, default='../results/') #_'+timepoint
-parser.add_argument('--out_dir', action='store',type = str, default='results/') # 'results_2hr/' for 2 hour and 'results_24hr/' for 24 hour
+parser.add_argument('--res_dir', action='store',type = str, default='../results/')
+parser.add_argument('--out_dir', action='store',type = str, default='TrimmedSimulationResults/')
+parser.add_argument('--saved_fibrosis_MoA_dir', action='store',type = str, default='results/') # 'results_2hr/' for 2 hour and 'results_24hr/' for 24 hour
+parser.add_argument('--saved_MAS_MoA_dir', action='store',type = str, default='resultsMAS/results_8hr/')
+parser.add_argument('--timepoint', type=str, action='store', help='Timepoint to simulate',default='8 hour')
 parser.add_argument('--number_DTLEMBAS_models', action='store',type = int, default=50)
 parser.add_argument('--modelPattern', action='store',type = str, default='hepatocytes_dtlembas')
 parser.add_argument('--ConvertToEmpProb', action='store',type = bool, default=False)
@@ -89,8 +92,13 @@ ConvertToEmpProb = args.ConvertToEmpProb
 number_DTLEMBAS_models = args.number_DTLEMBAS_models
 stimulation_strength=args.stimulation_strength
 out_dir = args.out_dir
+saved_fibrosis_MoA_dir = args.saved_fibrosis_MoA_dir
+saved_MAS_MoA_dir = args.saved_MAS_MoA_dir
 selected_signaling_nodes = np.array(args.selected_signaling_nodes)
 num_steps = args.num_steps
+timepoint = args.timepoint
+if not os.path.exists(out_dir):
+    os.makedirs(out_dir)
 
 n_cores = 12
 utils.set_cores(n_cores)
@@ -141,151 +149,147 @@ target_label = 'target'
 net = format_network(net, weight_label = weight_label, stimulation_label = stimulation_label, inhibition_label = inhibition_label)
 nodeNames = np.union1d(net.source.values,net.target.values)
 
-core_net = pd.read_csv(os.path.join(out_dir, 'aggregated_subgraph_edges.csv'),index_col=None)
+core_net_fibrosis = pd.read_csv(os.path.join(saved_fibrosis_MoA_dir, 'aggregated_subgraph_edges.csv'),index_col=None)
+core_net_mas = pd.read_csv(os.path.join(saved_MAS_MoA_dir, 'aggregated_subgraph_edges.csv'),index_col=None)
+core_net = pd.concat([core_net_fibrosis, core_net_mas], axis=0, ignore_index=True)
 allowed_edges_uniprot = make_allowed_edges_uniprot_from_core(core_net, sym2id)
 allowed_nodes_uniprot = set()
 for u, v in allowed_edges_uniprot:
     allowed_nodes_uniprot.add(u)
     allowed_nodes_uniprot.add(v)
 
-for timepoint in ['8 hour']:  # or ['2 hour','8 hour','24 hour']
-    print2log(f'Processing timepoint {timepoint}')
+print2log(f'Processing timepoint {timepoint}')    
+if timepoint == '8 hour':
+    data_path = res_dir + 'allmodels/'
+else:
+    data_path = res_dir + timepoint + '/allmodels/'
     
-    if timepoint == '8 hour':
-        data_path = res_dir + 'allmodels/'
-    else:
-        data_path = res_dir + timepoint + '/allmodels/'
+# Load drugs information
+drugTargets = pd.read_csv(TargetsIn, sep='\t', low_memory=False, index_col=0)
+inputInfo = pd.read_csv(infoPath, sep='\t', low_memory=False, index_col=0)
+inputInfo = inputInfo[inputInfo['time']==timepoint]
+TFOutput_tmp = TFOutput.loc[inputInfo.index,:]
+drugInput_tmp = drugInput.loc[inputInfo.index,:]
     
-    # Load drugs information
-    drugTargets = pd.read_csv(TargetsIn, sep='\t', low_memory=False, index_col=0)
-    inputInfo = pd.read_csv(infoPath, sep='\t', low_memory=False, index_col=0)
-    inputInfo = inputInfo[inputInfo['time']==timepoint]
-    TFOutput_tmp = TFOutput.loc[inputInfo.index,:]
-    drugInput_tmp = drugInput.loc[inputInfo.index,:]
+# Subset input and output to intersecting nodes
+druginName = drugInput_tmp.columns.values
+inName = drugTargets.columns.values
+outconds = drugInput_tmp.index.values
+outName = TFOutput_tmp.columns.values
+inName = np.intersect1d(nodeNames, inName)
+outName = np.intersect1d(nodeNames, outName)
+TFOutput_tmp = TFOutput_tmp.loc[outconds,outName]
+drugTargets = drugTargets.loc[:,inName]
     
-    # Subset input and output to intersecting nodes
-    druginName = drugInput_tmp.columns.values
-    inName = drugTargets.columns.values
-    outconds = drugInput_tmp.index.values
-    outName = TFOutput_tmp.columns.values
-    inName = np.intersect1d(nodeNames, inName)
-    outName = np.intersect1d(nodeNames, outName)
-    TFOutput_tmp = TFOutput_tmp.loc[outconds,outName]
-    drugTargets = drugTargets.loc[:,inName]
+if ConvertToEmpProb==True:
+    print2log('Converted to Empirical probabilities')
+    TFOutput_tmp = 1/(1+np.exp(-TFOutput_tmp))
     
-    if ConvertToEmpProb==True:
-        print2log('Converted to Empirical probabilities')
-        TFOutput_tmp = 1/(1+np.exp(-TFOutput_tmp))
+drugTargets = drugTargets.loc[drugInput_tmp.columns.values,:]
+drugSim = pd.read_csv(ChemicalSims,index_col=0)
+drugSim = drugSim.loc[drugInput_tmp.columns.values,drugInput_tmp.columns.values]
+drugSim = torch.tensor(drugSim.values.copy(), dtype=torch.double)
+all_drugs = drugInput.columns
     
-    drugTargets = drugTargets.loc[drugInput_tmp.columns.values,:]
-    drugSim = pd.read_csv(ChemicalSims,index_col=0)
-    drugSim = drugSim.loc[drugInput_tmp.columns.values,drugInput_tmp.columns.values]
-    drugSim = torch.tensor(drugSim.values.copy(), dtype=torch.double)
-    all_drugs = drugInput.columns
-    
-    print2log("Prepare and load the SignalingModel and the Graph...")
-    tfs = list(outName)
-    mask_dt = torch.tensor(np.array(drugTargets)).transpose(0,1)
-    bionet_params = {'target_steps': 100, 'max_steps': args.max_LEMBAS_iterations, 
-                    'exp_factor':50, 'tolerance': args.LEMBAS_tolerance, 
-                    'leak':args.LEMBAS_leak}
-    results_all = pd.DataFrame({})  
-    results_control = pd.DataFrame({})  
-    for model_no in range(number_DTLEMBAS_models):
-        print2log(f"MODEL {model_no+1}/{number_DTLEMBAS_models}")
+print2log("Prepare and load the SignalingModel and the Graph...")
+tfs = list(outName)
+mask_dt = torch.tensor(np.array(drugTargets)).transpose(0,1)
+bionet_params = {'target_steps': 100, 'max_steps': args.max_LEMBAS_iterations, 
+                 'exp_factor':50, 'tolerance': args.LEMBAS_tolerance, 
+                 'leak':args.LEMBAS_leak}
+results_all = pd.DataFrame({})  
+results_control = pd.DataFrame({})  
+for model_no in range(number_DTLEMBAS_models):
+    print2log(f"MODEL {model_no+1}/{number_DTLEMBAS_models}")
         
-        # Load model
-        mod = SignalingModel(net=net,
-                            X_in=drugTargets,
-                            y_out=TFOutput_tmp, 
-                            projection_amplitude_in=projection_amplitude_in, 
-                            projection_amplitude_out=projection_amplitude_out,
-                            weight_label=weight_label, 
-                            source_label=source_label, 
-                            target_label=target_label,
-                            bionet_params=bionet_params, 
-                            dtype=torch.double, 
-                            device=device)
+    # Load model
+    mod = SignalingModel(net=net,
+                         X_in=drugTargets,
+                         y_out=TFOutput_tmp, 
+                         projection_amplitude_in=projection_amplitude_in, 
+                         projection_amplitude_out=projection_amplitude_out,
+                         weight_label=weight_label, 
+                         source_label=source_label, 
+                         target_label=target_label,
+                         bionet_params=bionet_params, 
+                         dtype=torch.double, 
+                         device=device)
         
-        mod.load_state_dict(torch.load(os.path.join(data_path, modelPattern + str(model_no+1)+'signal_state_dict_%s.pth'%(model_no+1))))
-        mod.eval()
-        mod.signaling_network.weights.data.masked_fill_(mask=mod.signaling_network.mask, value=0.0)
-        node_idx_map: dict[str, int] = mod.node_idx_map
-        num_nodes = len(node_idx_map)
-        keep_mask = torch.zeros_like(mod.signaling_network.weights, dtype=torch.bool)
-        for (u, v) in allowed_edges_uniprot:
-            if u in node_idx_map and v in node_idx_map:
-                s_idx = node_idx_map[u]
-                t_idx = node_idx_map[v]
-                # weights[t_idx, s_idx] corresponds to (u -> v)
-                keep_mask[t_idx, s_idx] = True
-        allowed_nodes_uniprot = {u for u in allowed_nodes_uniprot if u in node_idx_map}
-        bias_keep_mask = torch.zeros(num_nodes, dtype=torch.bool, device=mod.signaling_network.bias.device)
-        for u in allowed_nodes_uniprot:
-            if u in node_idx_map:
-                idx = node_idx_map[u]
-                bias_keep_mask[idx] = True
-        with torch.no_grad():
-            mod.signaling_network.weights.data.masked_fill_(mask=~keep_mask, value=0.0)
-            bias = mod.signaling_network.bias
-            mask = ~bias_keep_mask
-            if bias.dim() == 2 and bias.shape[1] == 1:
-                mask = mask.view(-1, 1)
-            mod.signaling_network.bias.masked_fill_(~mask, 0.0)
-        mod.eval()
+    mod.load_state_dict(torch.load(os.path.join(data_path, modelPattern + str(model_no+1)+'signal_state_dict_%s.pth'%(model_no+1))))
+    mod.eval()
+    mod.signaling_network.weights.data.masked_fill_(mask=mod.signaling_network.mask, value=0.0)
+    node_idx_map: dict[str, int] = mod.node_idx_map
+    num_nodes = len(node_idx_map)
+    keep_mask = torch.zeros_like(mod.signaling_network.weights, dtype=torch.bool)
+    for (u, v) in allowed_edges_uniprot:
+        if u in node_idx_map and v in node_idx_map:
+            s_idx = node_idx_map[u]
+            t_idx = node_idx_map[v]
+            # weights[t_idx, s_idx] corresponds to (u -> v)
+            keep_mask[t_idx, s_idx] = True
+    allowed_nodes_uniprot = {u for u in allowed_nodes_uniprot if u in node_idx_map}
+    bias_keep_mask = torch.zeros(num_nodes, dtype=torch.bool, device=mod.signaling_network.bias.device)
+    for u in allowed_nodes_uniprot:
+        if u in node_idx_map:
+            idx = node_idx_map[u]
+            bias_keep_mask[idx] = True
+    with torch.no_grad():
+        mod.signaling_network.weights.data.masked_fill_(mask=~keep_mask, value=0.0)
+        bias = mod.signaling_network.bias
+        mask = ~bias_keep_mask
+        if bias.dim() == 2 and bias.shape[1] == 1:
+            mask = mask.view(-1, 1)
+        mod.signaling_network.bias.masked_fill_(~mask, 0.0)
+    mod.eval()
 
-        # Prepare stimulation input
-        all_nodes = np.array(list(mod.node_idx_map.keys()))
-        # indices for the two selected nodes
-        subset_nodes = {key: mod.node_idx_map[key] for key in selected_signaling_nodes if key in mod.node_idx_map}
-        subset_nodes_inds = np.array(list(subset_nodes.values()))
-        if len(subset_nodes_inds) != 2:
-            raise ValueError("Could not find both P36897 and P17181 in mod.node_idx_map.")
+    # Prepare stimulation input
+    all_nodes = np.array(list(mod.node_idx_map.keys()))
+    # indices for the two selected nodes
+    subset_nodes = {key: mod.node_idx_map[key] for key in selected_signaling_nodes if key in mod.node_idx_map}
+    subset_nodes_inds = np.array(list(subset_nodes.values()))
+    if len(subset_nodes_inds) != 2:
+        raise ValueError("Could not find both P36897 and P17181 in mod.node_idx_map.")
 
-        # one-hot basis vectors for each receptor (same approach as Xin_combined script)
-        with torch.no_grad():
-            Xin = torch.eye(len(all_nodes), dtype=torch.double).to(device)
-            Xin_1 = Xin[subset_nodes_inds[0], :].unsqueeze(0)
-            Xin_2 = Xin[subset_nodes_inds[1], :].unsqueeze(0)
-            # stimulation grid values
-            stim_range = torch.linspace(-stimulation_strength, stimulation_strength, int(num_steps))
-            grid_Xin1, grid_Xin2 = torch.meshgrid(stim_range, stim_range, indexing='ij')
-            # flatten to (num_steps^2, 1)
-            grid_Xin1 = grid_Xin1.flatten().view(-1, 1)
-            grid_Xin2 = grid_Xin2.flatten().view(-1, 1)
-            # expand to full node dimension
-            grid_Xin1 = grid_Xin1.repeat(1, Xin_1.shape[1])
-            grid_Xin2 = grid_Xin2.repeat(1, Xin_2.shape[1])
-            # scale the one-hot vectors and combine
-            Xin_1_grid = Xin_1 * grid_Xin1.to(device).double()
-            Xin_2_grid = Xin_2 * grid_Xin2.to(device).double()
-            x_stim = Xin_1_grid + Xin_2_grid
+    # one-hot basis vectors for each receptor (same approach as Xin_combined script)
+    with torch.no_grad():
+        Xin = torch.eye(len(all_nodes), dtype=torch.double).to(device)
+        Xin_1 = Xin[subset_nodes_inds[0], :].unsqueeze(0)
+        Xin_2 = Xin[subset_nodes_inds[1], :].unsqueeze(0)
+        # stimulation grid values
+        stim_range = torch.linspace(-stimulation_strength, stimulation_strength, int(num_steps))
+        grid_Xin1, grid_Xin2 = torch.meshgrid(stim_range, stim_range, indexing='ij')
+        # flatten to (num_steps^2, 1)
+        grid_Xin1 = grid_Xin1.flatten().view(-1, 1)
+        grid_Xin2 = grid_Xin2.flatten().view(-1, 1)
+        # expand to full node dimension
+        grid_Xin1 = grid_Xin1.repeat(1, Xin_1.shape[1])
+        grid_Xin2 = grid_Xin2.repeat(1, Xin_2.shape[1])
+        # scale the one-hot vectors and combine
+        Xin_1_grid = Xin_1 * grid_Xin1.to(device).double()
+        Xin_2_grid = Xin_2 * grid_Xin2.to(device).double()
+        x_stim = Xin_1_grid + Xin_2_grid
         
-        # Run simulation
-        with torch.no_grad():
-            Yfull = mod.signaling_network(x_stim)
-            YTF = mod.output_layer(Yfull)
-            x0 = torch.zeros(1, drugTargets.shape[1], dtype=torch.double).to(device)
-            TF0, _ = mod(x0) 
-        YTF = YTF.detach().cpu().numpy()
-        df = pd.DataFrame(YTF, columns=TFOutput_tmp.columns.values)
-        df['IFNAR1'] = x_stim[:,mod.node_idx_map['P17181']].detach().cpu().numpy()
-        df['TGFBR1'] = x_stim[:,mod.node_idx_map['P36897']].detach().cpu().numpy()
-        df['type'] = 'stimuli'
-        df['model_no'] = model_no
-        results_all = pd.concat([results_all, df], axis=0, ignore_index=True)
+    # Run simulation
+    with torch.no_grad():
+        Yfull = mod.signaling_network(x_stim)
+        YTF = mod.output_layer(Yfull)
+        x0 = torch.zeros(1, drugTargets.shape[1], dtype=torch.double).to(device)
+        TF0, _ = mod(x0) 
+    YTF = YTF.detach().cpu().numpy()
+    df = pd.DataFrame(YTF, columns=TFOutput_tmp.columns.values)
+    df['IFNAR1'] = x_stim[:,mod.node_idx_map['P17181']].detach().cpu().numpy()
+    df['TGFBR1'] = x_stim[:,mod.node_idx_map['P36897']].detach().cpu().numpy()
+    df['type'] = 'stimuli'
+    df['model_no'] = model_no
+    results_all = pd.concat([results_all, df], axis=0, ignore_index=True)
 
-        df_control = pd.DataFrame(TF0.detach().cpu().numpy(), columns=TFOutput_tmp.columns.values)
-        df_control['type'] = 'untreated'
-        df_control['model_no'] = model_no
-        results_control = pd.concat([results_control, df_control], axis=0, ignore_index=True)
+    df_control = pd.DataFrame(TF0.detach().cpu().numpy(), columns=TFOutput_tmp.columns.values)
+    df_control['type'] = 'untreated'
+    df_control['model_no'] = model_no
+    results_control = pd.concat([results_control, df_control], axis=0, ignore_index=True)
 
-    results_all.to_csv(os.path.join(out_dir ,'TrimmedSimulation_'+ timepoint+'.csv'))
-    results_control.to_csv(os.path.join(out_dir, 'TrimmedSimulation_control_' + timepoint + '.csv'))
-    print2log("\n" + "="*70)
-    print2log(f"Finished timepoint: {timepoint}")
-    print2log("="*70)
-
+results_all.to_csv(os.path.join(out_dir ,'TrimmedSimulation_'+ timepoint+'.csv'))
+results_control.to_csv(os.path.join(out_dir, 'TrimmedSimulation_control_' + timepoint + '.csv'))
 print2log("\n" + "="*70)
-print2log("ANALYSIS COMPLETE!")
+print2log(f"Finished timepoint: {timepoint}")
 print2log("="*70)
