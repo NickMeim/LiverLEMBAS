@@ -14,14 +14,14 @@ source('../postprocessing/functions_translation.R')
 options(future.globals.maxSize = 2 * 1024^3) # 2 GiB
 
 ## Load core nets to find later which TFs to keep
-core_net_fibrosis <- data.table::fread('results_24hr/aggregated_subgraph_edges.csv')
-core_net_mas <- data.table::fread('resultsMAS/results_24hr/aggregated_subgraph_edges.csv')
+core_net_fibrosis <- data.table::fread('results/aggregated_subgraph_edges.csv')
+core_net_mas <- data.table::fread('resultsMAS/results_8hr/aggregated_subgraph_edges.csv')
 core_net <- rbind(core_net_fibrosis,core_net_mas)
 
 ## Simulate combination of TGFBR1 and IFNAR1---------------
-results_ko <- data.table::fread('TrimmedSimulationResults/TrimmedSimulation_24 hour.csv') %>% 
+results_ko <- data.table::fread('TrimmedSimulationResults/TrimmedSimulation_8 hour.csv') %>% 
   column_to_rownames('V1')
-control_trimmed <- data.table::fread('TrimmedSimulationResults/TrimmedSimulation_control_24 hour.csv') %>% 
+control_trimmed <- data.table::fread('TrimmedSimulationResults/TrimmedSimulation_control_8 hour.csv') %>% 
   select(-V1)
 
 #Load annotation file to replace with gene names
@@ -153,7 +153,7 @@ mas_plot <- add_theme(mas_plot) +
         panel.border = element_blank(),
         panel.grid = element_blank())
 print(mas_plot)
-ggsave(filename = "../figures/trimmedNetSimulationGrid_ifna_tgfb_combo_mas_plot_24hr.pdf", plot = mas_plot, 
+ggsave(filename = "../figures/trimmedNetSimulationGrid_ifna_tgfb_combo_mas_plot_8hr.pdf", plot = mas_plot, 
        device = cairo_pdf,
        units = "cm", width = 16, height = 12)
 
@@ -171,13 +171,13 @@ fib_plot <- add_theme(fib_plot) +
         panel.border = element_blank(),
         panel.grid = element_blank())
 print(fib_plot)
-ggsave(filename = "../figures/trimmedNetSimulationGrid_ifna_tgfb_combo_fibrosis_plot_24hr.pdf", plot = fib_plot, 
+ggsave(filename = "../figures/trimmedNetSimulationGrid_ifna_tgfb_combo_fibrosis_plot_8hr.pdf", plot = fib_plot, 
        device = cairo_pdf,
        units = "cm", width = 16, height = 12)
 
 ### Compare DMAS and Dfibrosis from the mean with those from the whole network----------
 gc()
-Ycentered_full <- readRDS('../results/24 hour/allmodels/combo_simulation_expanded/Yinsilico_centered.rds')
+Ycentered_full <- readRDS('../results/allmodels/combo_simulation_expanded/Yinsilico_centered.rds')
 Ycentered_full <- Ycentered_full %>% gather('phenotype','score_full',-model_no,-IFNAR1,-TGFBR1) %>%
   group_by(phenotype,IFNAR1,TGFBR1) %>% mutate(mu_full = mean(score_full)) %>% mutate(se_full=sd(score_full)/sqrt(50))%>%
     ungroup()
@@ -226,13 +226,17 @@ ccc_by_task <- df_plot %>%
 #   labs(x = "prediction with full net",
 #        y = "prediction with trimmed net") +
 #   theme_bw()
-# ggsave('../figures/trimmed_vs_full_simulation_scatter_24hours.png',
+# ggsave('../figures/trimmed_vs_full_simulation_scatter_8hours.png',
 #        width = 12,
 #        height = 9,
 #        units = 'cm',
 #        dpi=600)
 
-Ybinary <- df_plot %>% mutate(mu=1*(mu>0)) %>%
+## Remove very low around zero, because they are basically fluctuations around the control
+Ybinary <- df_plot %>% 
+  filter(abs(mu)>=0.1) %>%
+  filter(abs(mu_full)>=0.1) %>%
+  mutate(mu=1*(mu>0)) %>%
   mutate(mu_full=1*(mu_full>0))
 conf_nas <- caret::confusionMatrix(data = factor(Ybinary$mu[Ybinary$phenotype=='NAS'],
                                              levels = c(0,1)),
@@ -277,7 +281,7 @@ plot_confusion_nas <- ggplot(df_cm, aes(x = Reference, y = Prediction, fill = Co
   scale_fill_viridis(trans = "log10", limits = c(1, NA), breaks = c(1,10,100,1000,10000)) +
   labs(fill = "Count") +
   labs(
-    title = "Induced MAS w.r.t. control in 24 hours",
+    title = "Induced MAS w.r.t. control in 8 hours",
     x = "using full net",
     y = "using trimmed net"
   ) +
@@ -335,7 +339,7 @@ plot_confusion_fibrosis <- ggplot(df_cm, aes(x = Reference, y = Prediction, fill
   scale_fill_viridis(trans = "log10", limits = c(1, NA), breaks = c(1,10,100,1000,10000)) +
   labs(fill = "Count") +
   labs(
-    title = "Induced fibrosis w.r.t. control in 24 hours",
+    title = "Induced fibrosis w.r.t. control in 8 hours",
     x = "using full net",
     y = "using trimmed net"
   ) +
@@ -365,7 +369,7 @@ plot_confusion <- (plot_confusion_nas2 + plot_confusion_fibrosis2) +
 
 print(plot_confusion)
 
-ggsave('../figures/trimmed_vs_full_simulation_24hours.png',
+ggsave('../figures/trimmed_vs_full_simulation_8hours.png',
        plot = plot_confusion,
        width = 18,
        height = 9,

@@ -70,7 +70,7 @@ parser.add_argument('--spectralFactor', action='store', default=1e-3)
 parser.add_argument('--drug_bn', action='store', default=0.2)
 parser.add_argument('--drug_drop', action='store', default=0.1)
 parser.add_argument('--stimulation_strength', action='store',type=float, default=3000)
-parser.add_argument('--num_steps', action='store',type = float, default=101)
+parser.add_argument('--num_steps', action='store',type = float, default=201)
 parser.add_argument('--selected_signaling_nodes', metavar='N', type=str, nargs='*', action='store', 
                     help='Selected signaling nodes to predict and save their activity',
                     default=['P36897','P17181'])
