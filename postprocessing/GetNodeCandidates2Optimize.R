@@ -272,6 +272,7 @@ Yinsilico_samesign <- Yinsilico_samesign %>% gather('phenotype','score',-model_n
 Yall <- rbind(Yinsilico %>% mutate(stimulation = 'IFNAR1*TGFBR1<0'),
               Yinsilico_samesign %>% mutate(stimulation = 'IFNAR1*TGFBR1>0'))%>%
   mutate(phenotype = ifelse(phenotype=='NAS','MAS','Fibrosis stage'))
+# saveRDS(Yall,'../results/allmodels/combo_simulation_expanded/Yall_same_stim.rds')
 mas_plot <- ggplot(Yall %>% filter(phenotype=='MAS') %>% select(IFNAR1,mu,se,stimulation,phenotype) %>% unique(),
        aes(x=IFNAR1,y=mu,color=stimulation,fill=stimulation))+
   xlab('stimulation strength') + ylab('score') + 
