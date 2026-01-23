@@ -117,9 +117,9 @@ all_tfs <- all_tfs %>%
   mutate(is_reachable = code %in% reachable_nodes)
 
 tf_data <- all_tfs %>%
-  left_join(W, by = "name") %>%
-  mutate(NAS=abs(NAS)) %>%
-  mutate(fibrosis = abs(fibrosis))
+  left_join(W, by = "name") #%>%
+  # mutate(NAS=abs(NAS)) %>%
+  # mutate(fibrosis = abs(fibrosis))
 tf_data <- tf_data %>%
   mutate(
     NAS_rank = rank(-NAS, na.last = "keep"),
@@ -155,7 +155,7 @@ p1 <- ggplot(tf_data, aes(x = NAS_rank, y = NAS)) +
   labs(title = "TF Ranking by MAS Importance",
        subtitle = "Reachable from IFNAR1 and/or TGFBR1",
        x = "Rank (1 = highest importance)",
-       y = "Absolute Importance (NAS)",
+       y = "PLSR weight (NAS)",
        color = "TF Status") +
   theme_bw() +
   theme(legend.position = "top",
@@ -188,7 +188,7 @@ p2 <- ggplot(tf_data, aes(x = fibrosis_rank, y = fibrosis)) +
   labs(title = "TF Ranking by Fibrosis Importance",
        subtitle = "Reachable from IFNAR1 and/or TGFBR1",
        x = "Rank (1 = highest importance)",
-       y = "Absolute Importance (Fibrosis)",
+       y = "PLSR weight (Fibrosis)",
        color = "TF Status") +
   theme_bw() +
   theme(legend.position = "top",

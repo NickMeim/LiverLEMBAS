@@ -1001,6 +1001,7 @@ def print_competition_results(competitive_paths, print_func, top_n=10):
 def extract_and_save_top_path_subgraph(combined_score_vector, A, out_dir, model_no, 
                                        edge_models, node_models, edge_weight_sum, 
                                        edge_weight_abs_sum, to_symbol, print_func, 
+                                       top_n=1,
                                        sources=['P36897', 'P17181']):
     """
     Extract top paths from IFNAR1 and TGFBR1 using the combined max stimulation score, 
@@ -1016,9 +1017,14 @@ def extract_and_save_top_path_subgraph(combined_score_vector, A, out_dir, model_
     # Find top paths from each receptor
     ifnar1_paths = {k: v for k, v in path_scores.items() if k[0][0] == 'P17181'} # IFNAR1 is P17181
     tgfbr1_paths = {k: v for k, v in path_scores.items() if k[0][0] == 'P36897'} # TGFBR1 is P36897
+
+    # sort paths by absolute score and take top_n
+    ifnar1_ranked = sorted(ifnar1_paths.items(), key=lambda item: abs(item[1]), reverse=True)[:top_n]
+    tgfbr1_ranked = sorted(tgfbr1_paths.items(), key=lambda item: abs(item[1]), reverse=True)[:top_n]
     
-    top_ifnar1_path = max(ifnar1_paths.items(), key=lambda item: abs(item[1])) if ifnar1_paths else (None, 0.0)
-    top_tgfbr1_path = max(tgfbr1_paths.items(), key=lambda item: abs(item[1])) if tgfbr1_paths else (None, 0.0)
+    # Keep these for backward compatibility (still return “the top-1”)
+    top_ifnar1_path = ifnar1_ranked[0] if ifnar1_ranked else (None, 0.0)
+    top_tgfbr1_path = tgfbr1_ranked[0] if tgfbr1_ranked else (None, 0.0)
     
     # Print Results 
     print_func(f"\n✓ Top IFNAR1 (P17181) Path Score (Combined Stim): {top_ifnar1_path[1]:+.6f}")
@@ -1032,12 +1038,19 @@ def extract_and_save_top_path_subgraph(combined_score_vector, A, out_dir, model_
     # Collect edges from top paths
     result_edges_set = set()
     
-    if top_ifnar1_path[0]:
-        for u, v in top_ifnar1_path[0]:
-            result_edges_set.add((u, v))
+    # if top_ifnar1_path[0]:
+    #     for u, v in top_ifnar1_path[0]:
+    #         result_edges_set.add((u, v))
     
-    if top_tgfbr1_path[0]:
-        for u, v in top_tgfbr1_path[0]:
+    # if top_tgfbr1_path[0]:
+    #     for u, v in top_tgfbr1_path[0]:
+    #         result_edges_set.add((u, v))
+    for path_edges, _ in ifnar1_ranked:
+        for u, v in path_edges:
+            result_edges_set.add((u, v))
+
+    for path_edges, _ in tgfbr1_ranked:
+        for u, v in path_edges:
             result_edges_set.add((u, v))
     
     if not result_edges_set:
@@ -1807,7 +1820,7 @@ parser.add_argument('--PKN', action='store',type = str, default='../preprocessin
 parser.add_argument('--PknAnnotation', action='store',type = str, default='../preprocessing/preprocessed_data/PKN/Hepatocytes-PKN-Annotation.tsv')
 parser.add_argument('--infoPath', action='store',type = str, default='../preprocessing/preprocessed_data/TrainingValidationData/Hepatocytes_inputdataInfo.tsv')
 parser.add_argument('--res_dir', action='store',type = str, default='../results/') #_'+timepoint
-parser.add_argument('--out_dir', action='store',type = str, default='resultsMAS/results_8hr/') # 'results_2hr/' for 2 hour and 'results_24hr/' for 24 hour
+parser.add_argument('--out_dir', action='store',type = str, default='resultsMAS/results_24hr/') # 'results_2hr/' for 2 hour and 'results_24hr/' for 24 hour
 parser.add_argument('--number_DTLEMBAS_models', action='store',type = int, default=50)
 parser.add_argument('--modelPattern', action='store',type = str, default='hepatocytes_dtlembas')
 parser.add_argument('--ConvertToEmpProb', action='store',type = bool, default=False)
@@ -1828,8 +1841,10 @@ parser.add_argument('--num_steps_ig', action='store',type = float, default=100) 
 parser.add_argument('--GRADIENT_THRESHOLD', action='store',type = float, default=8e-3) # NEW ARGUMENT
 parser.add_argument('--EDGE_FREQ_MIN', action='store',type = float, default=0.5)
 parser.add_argument('--NODE_FREQ_MIN', action='store',type = float, default=0.5)
+parser.add_argument('--top_n_paths', action='store',type = int, default=1)
 
 args = parser.parse_args()
+top_n_paths = args.top_n_paths
 DrugsIn = args.DrugsIn
 TargetsIn = args.TargetsIn
 TFsOut = args.TFsOut
@@ -1910,7 +1925,7 @@ all_drugTargets_list = []
 nodeNames_list = []
 all_nodes_list = []
 all_tfs_list = []
-for timepoint in ['8 hour']:  # or ['2 hour','8 hour','24 hour']
+for timepoint in ['24 hour']:  # or ['2 hour','8 hour','24 hour']
     print2log(f'Processing timepoint {timepoint}')
     
     if timepoint == '8 hour':
@@ -2374,6 +2389,7 @@ for timepoint in ['8 hour']:  # or ['2 hour','8 hour','24 hour']
             edge_weight_abs_sum=edge_weight_abs_sum,
             to_symbol=to_symbol,
             print_func=print2log,
+            top_n=top_n_paths,
             sources=sources
         )
 
