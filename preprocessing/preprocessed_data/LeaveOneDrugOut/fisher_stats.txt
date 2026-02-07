@@ -1,0 +1,15 @@
+
+--- 2 hour vs 8 hour ---
+Table (Active):
+[[6313, 1622], [1000, 875]]
+P-value: 6.8213e-111
+
+--- 2 hour vs 24 hour ---
+Table (Active):
+[[6504, 1431], [1139, 736]]
+P-value: 5.8272e-80
+
+--- 8 hour vs 24 hour ---
+Table (Active):
+[[6628, 685], [1015, 1482]]
+P-value: 0.0000e+00

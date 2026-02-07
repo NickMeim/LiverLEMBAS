@@ -1,0 +1,21 @@
+STAT3 inhibitor:
+1) 5,15-diphenyl-porphine (DPP): https://pubchem.ncbi.nlm.nih.gov/compound/10895852
+2) Diosmetin: from drugBank (less ideal): https://go.drugbank.com/drugs/DB11259
+3) CAFFEIC ACID PHENETHYL ESTER: from chembl
+
+STAT2 inhibitors:
+1) Deucravacitinib (BMS-986165): Strong inhibition of upstream TYK2
+2) Experimental TYK2 inhibitors such as BMS-986322 and BMS-986202
+3) We can try JAK1 but it may affect STAT3 as well...
+
+SMAD3 inhibitors:
+1) SIS3: Selective SMAD3 inhibitor. It inhibits TGFβ-induced SMAD3 phosphorylation. : https://www.medchemexpress.com/sis3.html#:~:text=SIS3%20is%20a%20potent%20and,%CE%B21%5B1
+2) Perhaps Verteporfin  but very uncertain....
+
+TP63 inhibitors: I need help with this.....
+1) Indirectly: NSC194598 blocks DNA binding of p63 and its paralogs p53 and p73 with high specificity. It's not specific to TP63 and also binds TP53.
+2) Indirectly: using Phorbol 12-myristate 13-acetate (PMA): https://www.thermofisher.com/order/catalog/product/J63916.MCR
+3) The NEDD4-family ligase ITCH ubiquitinates ΔNp63 and TAp63. 
+4) designed ankyrin repeat proteins (DARPins) such as C14 or G4: very nieche perhaps.
+
+

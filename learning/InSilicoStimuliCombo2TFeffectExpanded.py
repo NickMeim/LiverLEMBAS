@@ -11,8 +11,6 @@ import logging
 from pathlib import Path
 from utility import *
 import time
-from matplotlib import pyplot as plt
-import plotnine as p9
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger()
 print2log = logger.info
