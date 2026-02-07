@@ -9,7 +9,7 @@
 #SBATCH --gres=gpu:l40s:1
 #SBATCH --time=06:00:00
 #SBATCH -J LODO_training
-#SBATCH --array=0-49%2
+#SBATCH --array=0-59%4
 
 # Configuration
 module load miniforge/24.3.0-0

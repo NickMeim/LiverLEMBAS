@@ -480,6 +480,8 @@ def validate_with_artificial_stimulation(args, data, mod,drugLayer, drug_held_ou
 
     # Get samples containing the held-out drug
     samples_with_drug = drugInput[drug_held_out] > 0
+    print2log(f"Validation samples with held-out drug: {samples_with_drug.sum()}")
+    print2log(f"drugInput cols={drugInput.shape[1]}, drugLayer.size_in={drugLayer.size_in}")
 
     results = []
     mod.eval()
@@ -494,7 +496,7 @@ def validate_with_artificial_stimulation(args, data, mod,drugLayer, drug_held_ou
             true_tf = TFOutput.loc[idx, :].values
 
             # Predict with artificial stimulation
-            Baseline = drugLayer(torch.zeros(1, drugInput.shape[1], device=device))
+            Baseline = drugLayer(torch.zeros(1, drugLayer.size_in, dtype=torch.double, device=device))
             Baseline_full = mod.input_layer(Baseline)
             YhatFull = mod.signaling_network(stimulation + Baseline_full)
             Yhat = mod.output_layer(YhatFull)
@@ -534,6 +536,16 @@ def main():
     drug_held_out = safe_drugs[args.drug_index]
     print2log(f'Holding out drug {args.drug_index}: {drug_held_out[:50]}...')
 
+    # Skip if drug not present at this timepoint, based on inputInfo
+    inputInfo = data["inputInfo"]
+    n_tp = int((inputInfo["canonical_smiles"] == drug_held_out).sum())
+    if n_tp == 0:
+        print2log(f"Skipping drug {args.drug_index} at timepoint {args.timepoint}: not present in inputInfo.canonical_smiles")
+        return
+    if (drug_held_out not in data["drugInput"].columns) or (data["drugInput"][drug_held_out].fillna(0) > 0).sum() == 0:
+        print2log(f"Skipping drug {args.drug_index} at timepoint {args.timepoint}: no samples with dose > 0")
+        return
+
     # Remove drug from training data
     filtered_data = remove_drug_from_data(data, drug_held_out, device)
     print2log(f'Training samples: {len(filtered_data["TFOutput"])}')
@@ -549,7 +561,7 @@ def main():
     print2log(f'Model saved to {model_path}')
 
     # Validate
-    results_df = validate_with_artificial_stimulation(args, data, mod, filtered_data, drug_held_out, device)
+    results_df = validate_with_artificial_stimulation(args, data, mod, drugLayer, drug_held_out, device)
 
     # Save results
     output_file = os.path.join(args.res_dir,args.timepoint, f'drug{args.drug_index}_lodo_prediction.csv')
