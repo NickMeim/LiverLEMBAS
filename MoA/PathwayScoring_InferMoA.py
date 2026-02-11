@@ -1925,7 +1925,7 @@ all_drugTargets_list = []
 nodeNames_list = []
 all_nodes_list = []
 all_tfs_list = []
-for timepoint in ['24 hour']:  # or ['2 hour','8 hour','24 hour']
+for timepoint in ['8 hour']:  # or ['2 hour','8 hour','24 hour']
     print2log(f'Processing timepoint {timepoint}')
     
     if timepoint == '8 hour':

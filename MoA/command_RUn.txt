@@ -1,4 +1,4 @@
-python PathwayScoring_InferMoA.py --clear_checkpoints --checkpoint_interval 0 --enumerated_pathways_path results/enumerated_pathways --top_n_paths 3
+python PathwayScoring_InferMoA.py --clear_checkpoints --checkpoint_interval 0 --enumerated_pathways_path results/enumerated_pathways --out_dir "results_2hr_top3/" --top_n_paths 3
 python EnumerationOfPathwaysMAS.py --enumerated_pathways_path results/enumerated_pathways_MAS
 
-python PathwayScoring_InferMoA_MAS.py --clear_checkpoints --checkpoint_interval 0 --enumerated_pathways_path resultsMAS/enumerated_pathways_MAS --out_dir resultsMAS/results_24hr_top_3/ --top_n_paths 3
+python PathwayScoring_InferMoA_MAS.py --clear_checkpoints --checkpoint_interval 0 --enumerated_pathways_path resultsMAS/enumerated_pathways_MAS --out_dir resultsMAS/results_2hr_top_3/ --top_n_paths 3

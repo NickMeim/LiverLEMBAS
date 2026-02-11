@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Leave-One-Drug-Out (LODO) Summary Analysis Script
 
@@ -64,26 +63,103 @@ def load_all_predictions(results_dir, file_pattern):
     combined_df = pd.concat(all_data, ignore_index=True)
     print2log(f'Total predictions: {len(combined_df)}')
 
+    # clamp negative predicted TF activity to 0
+    combined_df['predicted_value'] = pd.to_numeric(combined_df['predicted_value'], errors='coerce')
+    n_neg = (combined_df['predicted_value'] < 0).sum()
+    if n_neg > 0:
+        combined_df.loc[combined_df['predicted_value'] < 0, 'predicted_value'] = 0.0
+    print2log(f'Clipped {n_neg} negative predicted_value values to 0')
+
     return combined_df
 
 
-def select_optimal_dose(df):
+def select_optimal_dose_per_drug_by_tf_correlation(df, dose_col=None, min_points=3):
     """
-    For each drug-TF pair, select the dose that minimizes the distance
-    between predicted and true activity.
+    For each drug, select ONE dose that maximizes Pearson correlation across TFs
+    between true_value and predicted_value at that dose.
+
+    Returns:
+      selected_df: all TF rows for each drug at the chosen dose
+      choice_df: per-drug chosen dose + metrics
     """
-    print2log('Selecting optimal dose per drug-TF pair...')
+    print2log('Selecting ONE optimal dose per drug (max correlation across TFs)...')
 
-    # Calculate absolute error
-    df['abs_error'] = np.abs(df['true_value'] - df['predicted_value'])
+    if dose_col is None:
+        dose_col = infer_dose_column(df)
+    print2log(f'Using dose column: {dose_col}')
 
-    # Group by drug and TF, select dose with minimum error
-    optimal_idx = df.groupby(['drug', 'TF'])['abs_error'].idxmin()
-    optimal_df = df.loc[optimal_idx].copy()
+    work = df.copy()
+    work[dose_col] = pd.to_numeric(work[dose_col], errors='coerce')
 
-    print2log(f'Selected {len(optimal_df)} optimal drug-TF pairs')
+    per_drug_choices = []
 
-    return optimal_df
+    for drug, g in work.groupby('drug', sort=False):
+        # Evaluate each available dose for this drug
+        dose_rows = []
+        for dose, gd in g.groupby(dose_col, sort=True):
+            gd = gd.dropna(subset=['true_value', 'predicted_value'])
+
+            n = len(gd)
+            if n == 0:
+                continue
+
+            true_vals = gd['true_value'].values
+            pred_vals = gd['predicted_value'].values
+            mae = float(np.mean(np.abs(true_vals - pred_vals)))
+
+            # Correlation across TFs at this dose
+            if n >= min_points and np.std(true_vals) > 1e-10 and np.std(pred_vals) > 1e-10:
+                r, p = pearsonr(true_vals, pred_vals)
+            else:
+                r, p = np.nan, np.nan
+
+            dose_rows.append({
+                'drug': drug,
+                'dose': dose,
+                'pearson_r_across_TFs': r,
+                'p_value': p,
+                'n_tfs': n,
+                'mae_across_TFs': mae
+            })
+
+        if not dose_rows:
+            continue
+
+        ddf = pd.DataFrame(dose_rows)
+
+        # Prefer the dose with highest correlation if available; otherwise fall back to lowest MAE
+        has_r = ddf['pearson_r_across_TFs'].notna().any()
+        if has_r:
+            # Tie-breakers: higher r, then lower MAE, then higher dose
+            ddf = ddf.sort_values(
+                by=['pearson_r_across_TFs', 'mae_across_TFs', 'dose'],
+                ascending=[False, True, False]
+            )
+        else:
+            # If correlation couldn't be computed (too few TFs / constant), use MAE and then higher dose
+            ddf = ddf.sort_values(
+                by=['mae_across_TFs', 'dose'],
+                ascending=[True, False]
+            )
+
+        best = ddf.iloc[0].to_dict()
+        per_drug_choices.append(best)
+
+    choice_df = pd.DataFrame(per_drug_choices)
+
+    # Subset original df to rows at the chosen drug-dose
+    # (merge on drug + dose)
+    selected_df = work.merge(
+        choice_df[['drug', 'dose']],
+        left_on=['drug', dose_col],
+        right_on=['drug', 'dose'],
+        how='inner'
+    ).drop(columns=['dose'])
+
+    print2log(f'Selected one dose for {choice_df["drug"].nunique()} drugs')
+    print2log(f'Retained {len(selected_df)} rows total (all TFs at the chosen dose per drug)')
+
+    return selected_df, choice_df
 
 
 def calculate_tf_correlations(df):
@@ -309,6 +385,275 @@ def plot_overall_scatter(df, output_dir):
                 dpi=300, bbox_inches='tight')
     plt.close()
 
+def infer_dose_column(df):
+    """Infer the dose column name from common candidates."""
+    candidates = [
+        'dose', 'Dose', 'DOSE',
+        'dose_uM', 'dose_um', 'dose_µM',
+        'concentration', 'Concentration',
+        'concentration_uM', 'concentration_um',
+        'conc', 'Conc',
+        'dose_level', 'dose_idx', 'dose_index'
+    ]
+    for c in candidates:
+        if c in df.columns:
+            return c
+    raise ValueError(
+        "Could not find a dose column. Expected one of: "
+        + ", ".join(candidates)
+        + ". Please rename your dose column or add it to candidates."
+    )
+
+def plot_selected_dose_level_bargraph_per_drug(choice_df, combined_df, output_dir, dose_col=None):
+    """
+    Bar graph counts DRUGS (excluding drugs with only 1 available dose):
+      - If drug has 1 dose: excluded
+      - If drug has 2 doses: only low/high
+      - If drug has >=3 doses: low/medium/high
+    """
+    print2log('Generating per-drug selected-dose level bar graph (low/medium/high)...')
+
+    if dose_col is None:
+        dose_col = infer_dose_column(combined_df)
+    print2log(f'Using dose column: {dose_col}')
+
+    tmp = combined_df.copy()
+    tmp[dose_col] = pd.to_numeric(tmp[dose_col], errors='coerce')
+
+    # Per-drug dose stats
+    drug_stats = (
+        tmp.groupby('drug')[dose_col]
+        .agg(dose_min='min', dose_max='max', n_unique='nunique')
+        .reset_index()
+    )
+
+    merged = choice_df.merge(drug_stats, on='drug', how='left')
+
+    # Exclude drugs with only 1 dose (or missing stats)
+    before = len(merged)
+    merged = merged[(merged['n_unique'] >= 2) & merged['dose'].notna() & merged['dose_min'].notna() & merged['dose_max'].notna()].copy()
+    excluded = before - len(merged)
+    if excluded > 0:
+        print2log(f'Excluded {excluded} drugs from bar graph (missing stats or only 1 available dose).')
+
+    def classify(row):
+        # n_unique == 2 -> only low/high
+        if int(row['n_unique']) == 2:
+            if np.isclose(row['dose'], row['dose_min']):
+                return 'low'
+            if np.isclose(row['dose'], row['dose_max']):
+                return 'high'
+            # shouldn't happen, but just in case
+            return 'unknown'
+
+        # n_unique >= 3 -> low/medium/high
+        if np.isclose(row['dose'], row['dose_min']):
+            return 'low'
+        if np.isclose(row['dose'], row['dose_max']):
+            return 'high'
+        return 'medium'
+
+    merged['dose_level_selected'] = merged.apply(classify, axis=1)
+
+    counts = merged['dose_level_selected'].value_counts()
+    n_unknown = int(counts.get('unknown', 0))
+    if n_unknown > 0:
+        print2log(f'Warning: {n_unknown} drugs had unknown classification (unexpected dose value).')
+
+    order = ['low', 'medium', 'high']
+    plot_counts = [int(counts.get(k, 0)) for k in order]
+
+    fig, ax = plt.subplots(figsize=(6, 4))
+    bars = ax.bar(order, plot_counts)
+
+    ax.set_xlabel('Chosen dose relative to available doses', fontsize=12)
+    ax.set_ylabel('Number of drugs', fontsize=12)
+    ax.set_title('Per-drug chosen dose: low / medium / high\n(excluding drugs with 1 dose)', fontsize=13)
+
+    for b, v in zip(bars, plot_counts):
+        ax.text(b.get_x() + b.get_width()/2, b.get_height(), str(v),
+                ha='center', va='bottom', fontsize=11)
+
+    plt.tight_layout()
+    outpath = os.path.join(output_dir, 'lodo_selected_dose_level_bargraph_per_drug.png')
+    plt.savefig(outpath, dpi=300, bbox_inches='tight')
+    plt.close()
+
+    # Save tables (helpful for debugging / reporting)
+    merged.to_csv(os.path.join(output_dir, 'lodo_selected_drug_doses_for_bargraph.csv'), index=False)
+    pd.DataFrame({'dose_level': order, 'count': plot_counts}).to_csv(
+        os.path.join(output_dir, 'lodo_selected_dose_level_counts_per_drug.csv'),
+        index=False
+    )
+
+    print2log(f'Saved per-drug dose-level bar graph to {outpath}')
+
+def _binary_labels_from_values(values, threshold=0.5):
+    """Convert continuous activities to binary labels: 1=active, 0=inactive."""
+    v = pd.to_numeric(values, errors='coerce')
+    return (v >= threshold).astype(int)
+
+
+def _confusion_and_metrics(y_true, y_pred):
+    """
+    y_true, y_pred: 1D arrays of 0/1
+    Returns confusion counts + precision/recall/accuracy (safe for zero denominators).
+    """
+    y_true = np.asarray(y_true).astype(int)
+    y_pred = np.asarray(y_pred).astype(int)
+
+    tp = int(np.sum((y_true == 1) & (y_pred == 1)))
+    tn = int(np.sum((y_true == 0) & (y_pred == 0)))
+    fp = int(np.sum((y_true == 0) & (y_pred == 1)))
+    fn = int(np.sum((y_true == 1) & (y_pred == 0)))
+    n = int(len(y_true))
+
+    precision = tp / (tp + fp) if (tp + fp) > 0 else np.nan
+    recall = tp / (tp + fn) if (tp + fn) > 0 else np.nan
+    accuracy = (tp + tn) / n if n > 0 else np.nan
+
+    return {'tp': tp, 'tn': tn, 'fp': fp, 'fn': fn, 'n': n,
+            'precision': precision, 'recall': recall, 'accuracy': accuracy}
+
+
+def plot_binary_confusion_matrix(df, output_dir, threshold=0.5, fname='lodo_binary_confusion_matrix.png'):
+    """Overall confusion matrix using thresholded true/pred values."""
+    print2log('Generating binary confusion matrix plot...')
+
+    y_true = _binary_labels_from_values(df['true_value'], threshold=threshold)
+    y_pred = _binary_labels_from_values(df['predicted_value'], threshold=threshold)
+
+    m = _confusion_and_metrics(y_true, y_pred)
+
+    # Confusion matrix layout:
+    # rows = true [0,1], cols = pred [0,1]
+    cm = np.array([[m['tn'], m['fp']],
+                   [m['fn'], m['tp']]])
+
+    fig, ax = plt.subplots(figsize=(5, 4))
+    im = ax.imshow(cm)
+
+    ax.set_xticks([0, 1])
+    ax.set_yticks([0, 1])
+    ax.set_xticklabels(['Pred 0\n(inactive)', 'Pred 1\n(active)'])
+    ax.set_yticklabels(['True 0\n(inactive)', 'True 1\n(active)'])
+    ax.set_title(
+        f'Binary Confusion Matrix (threshold={threshold})\n'
+        f'Precision={m["precision"]:.3f}  Recall={m["recall"]:.3f}  Accuracy={m["accuracy"]:.3f}  (n={m["n"]})'
+    )
+
+    # Annotate counts
+    for i in range(2):
+        for j in range(2):
+            ax.text(j, i, str(cm[i, j]), ha='center', va='center', fontsize=14)
+
+    plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    plt.tight_layout()
+    outpath = os.path.join(output_dir, fname)
+    plt.savefig(outpath, dpi=300, bbox_inches='tight')
+    plt.close()
+
+    # Save metrics
+    metrics_path = os.path.join(output_dir, 'lodo_binary_overall_metrics.csv')
+    pd.DataFrame([{
+        'threshold': threshold,
+        **m
+    }]).to_csv(metrics_path, index=False)
+
+    print2log(f'Saved confusion matrix to {outpath}')
+    print2log(f'Saved overall binary metrics to {metrics_path}')
+
+
+def plot_binary_scatter_with_threshold(df, output_dir, threshold=0.5, fname='lodo_binary_scatter.png'):
+    """Scatter plot with threshold lines and overall precision/recall/accuracy annotated."""
+    print2log('Generating binary scatter plot with threshold lines...')
+
+    y_true = _binary_labels_from_values(df['true_value'], threshold=threshold)
+    y_pred = _binary_labels_from_values(df['predicted_value'], threshold=threshold)
+    m = _confusion_and_metrics(y_true, y_pred)
+
+    # Color by correct/incorrect classification (optional but useful)
+    correct = (y_true.values == y_pred.values)
+
+    fig, ax = plt.subplots(figsize=(7, 7))
+    ax.scatter(df['true_value'], df['predicted_value'], alpha=0.35, s=20, c=correct)
+
+    # Threshold lines
+    ax.axvline(threshold, linestyle='--', linewidth=1)
+    ax.axhline(threshold, linestyle='--', linewidth=1)
+
+    # Diagonal
+    lims = [
+        min(ax.get_xlim()[0], ax.get_ylim()[0]),
+        max(ax.get_xlim()[1], ax.get_ylim()[1])
+    ]
+    ax.plot(lims, lims, 'k--', alpha=0.4, linewidth=1)
+
+    ax.set_xlabel('True Activity', fontsize=14)
+    ax.set_ylabel('Predicted Activity', fontsize=14)
+    ax.set_title(
+        f'Binary Evaluation Scatter (threshold={threshold})\n'
+        f'Precision={m["precision"]:.3f}  Recall={m["recall"]:.3f}  Accuracy={m["accuracy"]:.3f}  (n={m["n"]})',
+        fontsize=13
+    )
+    ax.set_aspect('equal', adjustable='box')
+
+    plt.tight_layout()
+    outpath = os.path.join(output_dir, fname)
+    plt.savefig(outpath, dpi=300, bbox_inches='tight')
+    plt.close()
+
+    print2log(f'Saved binary scatter plot to {outpath}')
+
+
+def calculate_tf_binary_metrics(df, threshold=0.5, min_points=3):
+    """Compute precision/recall/accuracy per TF using the thresholded labels."""
+    print2log('Calculating per-TF binary metrics...')
+
+    rows = []
+    for tf, g in df.groupby('TF'):
+        g = g.dropna(subset=['true_value', 'predicted_value'])
+        if len(g) < min_points:
+            continue
+
+        y_true = _binary_labels_from_values(g['true_value'], threshold=threshold)
+        y_pred = _binary_labels_from_values(g['predicted_value'], threshold=threshold)
+        m = _confusion_and_metrics(y_true, y_pred)
+
+        rows.append({
+            'TF': tf,
+            'threshold': threshold,
+            **m
+        })
+
+    out = pd.DataFrame(rows)
+    if len(out) > 0:
+        out = out.sort_values('accuracy', ascending=False).reset_index(drop=True)
+
+    print2log(f'Calculated per-TF binary metrics for {len(out)} TFs')
+    return out
+
+
+def plot_tf_binary_metric_histograms(tf_metrics_df, output_dir, fname='lodo_tf_binary_metrics_hist.png'):
+    """Histogram plots for per-TF precision, recall, accuracy."""
+    print2log('Generating histograms of per-TF precision/recall/accuracy...')
+
+    fig, axes = plt.subplots(1, 3, figsize=(14, 4))
+
+    metrics = ['precision', 'recall', 'accuracy']
+    for ax, metric in zip(axes, metrics):
+        vals = tf_metrics_df[metric].dropna().values
+        ax.hist(vals, bins=25)
+        ax.set_title(f'{metric.capitalize()} (per TF)')
+        ax.set_xlabel(metric)
+        ax.set_ylabel('Count')
+
+    plt.tight_layout()
+    outpath = os.path.join(output_dir, fname)
+    plt.savefig(outpath, dpi=300, bbox_inches='tight')
+    plt.close()
+
+    print2log(f'Saved per-TF metric histograms to {outpath}')
 
 def generate_summary_report(df, tf_corr_df, drug_corr_df, output_dir):
     """Generate a summary report of LODO validation results."""
@@ -318,8 +663,6 @@ def generate_summary_report(df, tf_corr_df, drug_corr_df, output_dir):
 
     report = f"""
 # Leave-One-Drug-Out (LODO) Validation Summary Report
-
-Generated using K-Dense Web ([k-dense.ai](https://k-dense.ai))
 
 ## Overview
 - **Total predictions**: {len(df):,}
@@ -354,9 +697,6 @@ Generated using K-Dense Web ([k-dense.ai](https://k-dense.ai))
 - `lodo_scatter_best_tfs.png`: Scatter plots for best TFs
 - `lodo_scatter_worst_tfs.png`: Scatter plots for worst TFs
 - `lodo_correlation_distribution.png`: Distribution of correlations
-
----
-Generated using K-Dense Web (k-dense.ai)
 """
 
     with open(os.path.join(output_dir, 'LODO_SUMMARY_REPORT.md'), 'w') as f:
@@ -378,8 +718,9 @@ def main():
     combined_df.to_csv(os.path.join(output_dir, 'lodo_combined_predictions.csv'), index=False)
 
     # Select optimal dose
-    optimal_df = select_optimal_dose(combined_df)
+    optimal_df, drug_dose_choice_df = select_optimal_dose_per_drug_by_tf_correlation(combined_df)
     optimal_df.to_csv(os.path.join(output_dir, 'lodo_optimal_predictions.csv'), index=False)
+    drug_dose_choice_df.to_csv(os.path.join(output_dir, 'lodo_selected_drug_doses.csv'), index=False)
 
     # Calculate correlations
     tf_corr_df = calculate_tf_correlations(optimal_df)
@@ -392,6 +733,13 @@ def main():
     plot_overall_scatter(optimal_df, output_dir)
     plot_scatter_best_worst(optimal_df, tf_corr_df, args.n_best, args.n_worst, output_dir)
     plot_correlation_distribution(tf_corr_df, output_dir)
+    plot_selected_dose_level_bargraph_per_drug(drug_dose_choice_df, combined_df, output_dir)
+    plot_binary_confusion_matrix(optimal_df, output_dir, threshold=0.5)
+    plot_binary_scatter_with_threshold(optimal_df, output_dir, threshold=0.5)
+    tf_bin_df = calculate_tf_binary_metrics(optimal_df, threshold=0.5, min_points=3)
+    tf_bin_df.to_csv(os.path.join(output_dir, 'lodo_tf_binary_metrics.csv'), index=False)
+    plot_tf_binary_metric_histograms(tf_bin_df, output_dir)
+
 
     # Generate summary report
     generate_summary_report(optimal_df, tf_corr_df, drug_corr_df, output_dir)
