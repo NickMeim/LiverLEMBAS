@@ -3,7 +3,7 @@
 
 ## Executive Summary
 
-**RECOMMENDED STIMULUS STRENGTH: 50.0**
+**RECOMMENDED STIMULUS STRENGTH: 25.0**
 
 This strength achieved the highest Pearson correlation and demonstrates the best overall predictive performance.
 
@@ -11,8 +11,8 @@ This strength achieved the highest Pearson correlation and demonstrates the best
 
 ## Comparison Overview
 
-Analyzed **8** different stimulus strengths:
-50.0, 100.0, 250.0, 500.0, 1000.0, 1500.0, 2000.0, 3000.0
+Analyzed **12** different stimulus strengths:
+5.0, 10.0, 20.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0, 1500.0, 2000.0, 3000.0
 
 ---
 
@@ -20,16 +20,16 @@ Analyzed **8** different stimulus strengths:
 
 | Criterion | Best Strength | Value |
 |-----------|--------------|-------|
-| Pearson Correlation | 50.0 | 0.5467 |
-| R-squared | 50.0 | 0.2989 |
-| MAE | 50.0 | 0.1757 |
-| RMSE | 50.0 | 0.2235 |
-| Binary Accuracy | 50.0 | 0.6892 |
-| Binary Precision | 50.0 | 0.6599 |
+| Pearson Correlation | 25.0 | 0.5639 |
+| R-squared | 25.0 | 0.3180 |
+| MAE | 25.0 | 0.1715 |
+| RMSE | 25.0 | 0.2191 |
+| Binary Accuracy | 25.0 | 0.6973 |
+| Binary Precision | 25.0 | 0.6826 |
 | Binary Recall | 100.0 | 0.6987 |
 
 
-**Strength 50.0** wins the most criteria (6 out of 7)
+**Strength 25.0** wins the most criteria (6 out of 7)
 
 ---
 
@@ -37,6 +37,10 @@ Analyzed **8** different stimulus strengths:
 
 | Strength | Pearson r | R² | MAE | RMSE | Binary Acc | Binary Prec | Binary Recall |
 |----------|-----------|-----|-----|------|-----------|-------------|---------------|
+| 5.0 | 0.5318 | 0.2828 | 0.1781 | 0.2240 | 0.6858 | 0.6794 | 0.5799 |
+| 10.0 | 0.5529 | 0.3057 | 0.1745 | 0.2206 | 0.6922 | 0.6766 | 0.6151 |
+| 20.0 | 0.5588 | 0.3122 | 0.1725 | 0.2199 | 0.6948 | 0.6768 | 0.6251 |
+| 25.0 | 0.5639 | 0.3180 | 0.1715 | 0.2191 | 0.6973 | 0.6826 | 0.6296 |
 | 50.0 | 0.5467 | 0.2989 | 0.1757 | 0.2235 | 0.6892 | 0.6599 | 0.6759 |
 | 100.0 | 0.3724 | 0.1387 | 0.2082 | 0.2635 | 0.6272 | 0.5919 | 0.6987 |
 | 250.0 | 0.2968 | 0.0881 | 0.2235 | 0.2847 | 0.6019 | 0.5701 | 0.6955 |
@@ -54,7 +58,7 @@ Analyzed **8** different stimulus strengths:
 ### Key Observations:
 
 1. **Pearson correlation** shows a decreasing trend as stimulus strength increases
-2. **Peak performance** at strength 50.0 (r = 0.5467)
+2. **Peak performance** at strength 25.0 (r = 0.5639)
 3. **MAE** is increasing with higher stimulus strengths
 
 
@@ -63,19 +67,19 @@ Analyzed **8** different stimulus strengths:
 ## Recommendations
 
 ### For General Use:
-- **Primary recommendation**: Use stimulus strength **50.0**
-  - Achieves best Pearson correlation: 0.5467
-  - R²: 0.2989
+- **Primary recommendation**: Use stimulus strength **25.0**
+  - Achieves best Pearson correlation: 0.5639
+  - R²: 0.3180
 
-- **Alternative option**: Stimulus strength **100.0**
-  - Pearson correlation: 0.3724
+- **Alternative option**: Stimulus strength **20.0**
+  - Pearson correlation: 0.5588
 
 
 ### For Specific Applications:
 
-- **Binary classification tasks**: Strength 50.0 (accuracy = 0.6892)
-- **Minimizing absolute error**: Strength 50.0 (MAE = 0.1757)
-- **High precision required**: Strength 50.0 (precision = 0.6599)
+- **Binary classification tasks**: Strength 25.0 (accuracy = 0.6973)
+- **Minimizing absolute error**: Strength 25.0 (MAE = 0.1715)
+- **High precision required**: Strength 25.0 (precision = 0.6826)
 - **High recall required**: Strength 100.0 (recall = 0.6987)
 
 
@@ -84,6 +88,22 @@ Analyzed **8** different stimulus strengths:
 ## Files Generated
 
 ### Individual Strength Results:
+
+#### Strength 5.0
+- Location: `strength_5.0/`
+- Files: predictions, correlations, plots, and summary report
+
+#### Strength 10.0
+- Location: `strength_10.0/`
+- Files: predictions, correlations, plots, and summary report
+
+#### Strength 20.0
+- Location: `strength_20.0/`
+- Files: predictions, correlations, plots, and summary report
+
+#### Strength 25.0
+- Location: `strength_25.0/`
+- Files: predictions, correlations, plots, and summary report
 
 #### Strength 50.0
 - Location: `strength_50.0/`

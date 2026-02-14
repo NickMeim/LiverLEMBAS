@@ -11,8 +11,8 @@ This strength achieved the highest Pearson correlation and demonstrates the best
 
 ## Comparison Overview
 
-Analyzed **8** different stimulus strengths:
-50.0, 100.0, 250.0, 500.0, 1000.0, 1500.0, 2000.0, 3000.0
+Analyzed **12** different stimulus strengths:
+5.0, 10.0, 20.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0, 1500.0, 2000.0, 3000.0
 
 ---
 
@@ -23,13 +23,13 @@ Analyzed **8** different stimulus strengths:
 | Pearson Correlation | 50.0 | 0.5268 |
 | R-squared | 50.0 | 0.2775 |
 | MAE | 50.0 | 0.1810 |
-| RMSE | 50.0 | 0.2284 |
+| RMSE | 25.0 | 0.2284 |
 | Binary Accuracy | 50.0 | 0.6831 |
 | Binary Precision | 50.0 | 0.6859 |
 | Binary Recall | 100.0 | 0.7594 |
 
 
-**Strength 50.0** wins the most criteria (6 out of 7)
+**Strength 50.0** wins the most criteria (5 out of 7)
 
 ---
 
@@ -37,6 +37,10 @@ Analyzed **8** different stimulus strengths:
 
 | Strength | Pearson r | R² | MAE | RMSE | Binary Acc | Binary Prec | Binary Recall |
 |----------|-----------|-----|-----|------|-----------|-------------|---------------|
+| 5.0 | 0.4551 | 0.2071 | 0.1937 | 0.2386 | 0.6555 | 0.6562 | 0.6798 |
+| 10.0 | 0.4991 | 0.2491 | 0.1859 | 0.2317 | 0.6749 | 0.6744 | 0.7101 |
+| 20.0 | 0.5116 | 0.2617 | 0.1838 | 0.2300 | 0.6789 | 0.6792 | 0.7128 |
+| 25.0 | 0.5205 | 0.2709 | 0.1825 | 0.2284 | 0.6816 | 0.6843 | 0.7160 |
 | 50.0 | 0.5268 | 0.2775 | 0.1810 | 0.2284 | 0.6831 | 0.6859 | 0.7384 |
 | 100.0 | 0.4310 | 0.1857 | 0.1950 | 0.2505 | 0.6526 | 0.6485 | 0.7594 |
 | 250.0 | 0.3726 | 0.1389 | 0.2043 | 0.2654 | 0.6349 | 0.6352 | 0.7533 |
@@ -67,8 +71,8 @@ Analyzed **8** different stimulus strengths:
   - Achieves best Pearson correlation: 0.5268
   - R²: 0.2775
 
-- **Alternative option**: Stimulus strength **100.0**
-  - Pearson correlation: 0.4310
+- **Alternative option**: Stimulus strength **25.0**
+  - Pearson correlation: 0.5205
 
 
 ### For Specific Applications:
@@ -84,6 +88,22 @@ Analyzed **8** different stimulus strengths:
 ## Files Generated
 
 ### Individual Strength Results:
+
+#### Strength 5.0
+- Location: `strength_5.0/`
+- Files: predictions, correlations, plots, and summary report
+
+#### Strength 10.0
+- Location: `strength_10.0/`
+- Files: predictions, correlations, plots, and summary report
+
+#### Strength 20.0
+- Location: `strength_20.0/`
+- Files: predictions, correlations, plots, and summary report
+
+#### Strength 25.0
+- Location: `strength_25.0/`
+- Files: predictions, correlations, plots, and summary report
 
 #### Strength 50.0
 - Location: `strength_50.0/`

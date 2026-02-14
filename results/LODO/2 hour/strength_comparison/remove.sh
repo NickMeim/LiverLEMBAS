@@ -1,3 +1,19 @@
+rm strength_5.0/*_correlations_*
+rm strength_5.0/*_summary_*
+rm strength_5.0/*.png
+
+rm strength_10.0/*_correlations_*
+rm strength_10.0/*_summary_*
+rm strength_10.0/*.png
+
+rm strength_20.0/*_correlations_*
+rm strength_20.0/*_summary_*
+rm strength_20.0/*.png
+
+rm strength_25.0/*_correlations_*
+rm strength_25.0/*_summary_*
+rm strength_25.0/*.png
+
 rm strength_50.0/*_correlations_*
 rm strength_50.0/*_summary_*
 rm strength_50.0/*.png
