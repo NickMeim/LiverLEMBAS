@@ -338,8 +338,12 @@ Ycontrol <- as.data.frame(Ycontrol) %>% mutate(model_no=seq(0,49,1))
 Yinsilico <- Yinsilico %>% gather('phenotype','score',-model_no,-IFNa,-TGFb,-type) %>%
   group_by(phenotype,IFNa,TGFb) %>% mutate(mu = mean(score)) %>% mutate(se=sd(score)/sqrt(50)) %>%
   ungroup()
+# saveRDS(Ycontrol,'../results/allmodels/combo_simulation_grid_multiKO/Ycontrol.rds')
+# saveRDS(Yinsilico,'../results/allmodels/combo_simulation_grid_multiKO/Yinsilico.rds')
 
-### Get all results
+### Get all results--------------------------
+Ycontrol <- readRDS('../results/allmodels/combo_simulation_grid_multiKO/Ycontrol.rds')
+Yinsilico <- readRDS('../results/allmodels/combo_simulation_grid_multiKO/Yinsilico.rds')
 Yall <- Yinsilico %>%
   mutate(phenotype = ifelse(phenotype=='NAS','MAS','Fibrosis stage'))
 Yall <- Yall %>% mutate(IFNa=as.numeric(IFNa)) %>% mutate(TGFb=as.numeric(TGFb))
@@ -393,10 +397,17 @@ compute_vol <- function(df, ...) {
     VOL_norm = total / x_range
   )
 }
+# grid_clean <- aggregated_grids %>%
+#   dplyr::filter(!is.na(IFNa), !is.na(TGFb), phenotype == 'MAS', type != 'no KO') %>%
+#   dplyr::select(model_no, IFNa, TGFb, score, type) %>%   # score not mu
+#   left_join(Ycontrol %>% select(model_no, baseline = NAS), by = 'model_no') %>%
+#   mutate(abs_diff = abs(score - baseline))                # score not mu
 grid_clean <- aggregated_grids %>%
   dplyr::filter(!is.na(IFNa), !is.na(TGFb), phenotype == 'MAS', type != 'no KO') %>%
   dplyr::select(model_no, IFNa, TGFb, score, type) %>%   # score not mu
-  left_join(Ycontrol %>% select(model_no, baseline = NAS), by = 'model_no') %>%
+  left_join(aggregated_grids %>%
+              dplyr::filter(!is.na(IFNa), !is.na(TGFb), phenotype == 'MAS', type == 'no KO') %>%
+              dplyr::select(model_no, IFNa, TGFb, baseline = score)) %>%
   mutate(abs_diff = abs(score - baseline))                # score not mu
 curves_3d <- grid_clean %>%
   group_by(model_no, type) %>%
@@ -406,7 +417,7 @@ curves_3d <- grid_clean %>%
 
 # Order by Cohen's d vs TP63 KO
 cohens_d_order_3d <- curves_3d %>%
-  rstatix::cohens_d(VOL_norm ~ type, ref.group = 'TP63 KO') %>%
+  rstatix::cohens_d(VOL ~ type, ref.group = 'TP63 KO') %>%
   arrange(desc(effsize)) %>%
   pull(group2)
 
@@ -414,17 +425,22 @@ curves_3d <- curves_3d %>%
   mutate(type = factor(type, levels = c('TP63 KO', cohens_d_order_3d)))
 
 stats_3d <- curves_3d %>%
-  rstatix::t_test(VOL_norm ~ type, ref.group = 'TP63 KO', paired = FALSE) %>%
+  rstatix::t_test(VOL ~ type, ref.group = 'TP63 KO', paired = FALSE) %>%
   rstatix::adjust_pvalue(method = 'BH') %>%
   rstatix::add_significance() %>%
-  mutate(y.position = max(curves_3d$VOL_norm) * 1.05)
+  mutate(y.position = max(curves_3d$VOL) * 1.05)
 
 ggboxplot(curves_3d %>% filter(type %in% c('TP63 KO', stats_3d$group2[stats_3d$p.adj < 0.05])),
-          x = 'type', y = 'VOL_norm', add = 'jitter') +
+          x = 'type', y = 'VOL', add = 'jitter') +
   stat_pvalue_manual(stats_3d[stats_3d$p.adj < 0.05,], label = 'p.adj.signif', remove.bracket = TRUE) +
-  geom_hline(yintercept = mean(curves_3d$VOL_norm[curves_3d$type == 'TP63 KO']),
+  geom_hline(yintercept = mean(curves_3d$VOL[curves_3d$type == 'TP63 KO']),
              lty = 'dashed', color = 'red', lwd = 2) +
   coord_flip()
+ggsave('../figures/volume_comparison_MAS_8hr.pdf',
+       width = 16,
+       height = 20,
+       units = 'cm',
+       dpi = 600)
 
 ### Statistical Comparison of the differences of curves------------
 ## INFa extreme inhibition, TGFB extreme activation
