@@ -42,7 +42,14 @@ parser.add_argument('--selected_signaling_nodes', metavar='N', type=str, nargs='
                     default=['P36897','P17181'])
 parser.add_argument('--knockout_nodes', metavar='N', type=str, nargs='*', action='store',
                     help='Nodes to knockout during simulation',
-                    default=['Q9H3D4', 'P52630', 'P40763', 'P84022', 'P04637'])
+                    default=['Q9H3D4', 'P52630', 'P40763', 'P84022', 'P04637', # TP63, STAT2, STAT3, SMAD3, TP53
+                             "P56693", "P15923", "Q99814", "Q13761", "Q9Y261", "Q14186", "P10070", # all below are TFs with higer PLSR weight that TP63
+                             "P15036", "Q04206", "P41235", "P10275", "P19544", "P01100", "P19838", 
+                             "P23769", "O00327", "P19793", "Q06710", "O75030", "P11831", "P19419",
+                             "P51692", "P98177", "P17947", "Q9UJU2", "P36956", "P48382", "Q04864",
+                             "Q08050", "Q01543", "Q12778", "P48431", "Q9NQB0", "P24468", "P58012", "P26367",
+                             "P05412", "P55317", "P18846", "P15407", "P20823", "P15976", "P14859", 
+                             "Q16665", "P08047", "Q15672", "P01106", "O43524"])
 parser.add_argument('--knockout_strength', action='store', type=float, default=-3000,
                     help='Strength of knockout (large negative value, default: -3000)')
 

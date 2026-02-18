@@ -63,6 +63,8 @@ def parse_arguments():
                        default='../preprocessing/preprocessed_data/LeaveOneDrugOut/safe_drugs_to_remove_LODO.csv')
     parser.add_argument('--signs_file', type=str,
                        default='../preprocessing/preprocessed_data/LeaveOneDrugOut/consensus_signs_majority_vote.csv')
+    parser.add_argument('--target_ranks_file', type=str, default='../preprocessing/preprocessed_data/LeaveOneDrugOut/consensus_DTI_ranks.csv',
+                       help='Optional CSV with target importance ranks (0-1 scale)')
     
     return parser.parse_args()
 
@@ -93,6 +95,10 @@ def run_validation_for_strength(args, strength):
         '--safe_drugs_file', args.safe_drugs_file,
         '--signs_file', args.signs_file
     ]
+    
+    # Add target ranks file if provided
+    if args.target_ranks_file is not None:
+        cmd.extend(['--target_ranks_file', args.target_ranks_file])
     
     # Run validation
     result = subprocess.run(cmd, capture_output=True, text=True)

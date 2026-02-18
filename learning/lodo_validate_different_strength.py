@@ -96,6 +96,10 @@ def parse_arguments():
                         default='../preprocessing/preprocessed_data/LeaveOneDrugOut/safe_drugs_to_remove_LODO.csv')
     parser.add_argument('--signs_file', type=str,
                         default='../preprocessing/preprocessed_data/LeaveOneDrugOut/consensus_signs_majority_vote.csv')
+    parser.add_argument('--target_ranks_file', type=str, default='../preprocessing/preprocessed_data/LeaveOneDrugOut/consensus_DTI_ranks.csv',
+                        help='Optional CSV with target importance ranks (0-1 scale). '
+                             'Format: drugs as rows, targets as columns, values 0-1. '
+                             'Stimulation will be scaled by these ranks.')
 
     # Model paths
     parser.add_argument('--model_dir', type=str, required=True,
@@ -221,6 +225,13 @@ def load_data(args):
 
     # Load signs
     signs_df = pd.read_csv(args.signs_file, index_col=0)
+    
+    # Load target ranks (optional)
+    target_ranks_df = None
+    if args.target_ranks_file is not None:
+        target_ranks_df = pd.read_csv(args.target_ranks_file, index_col=0)
+        print2log(f'Loaded target ranks file with shape: {target_ranks_df.shape}')
+        print2log(f'Target ranks will scale base stimulation strength')
 
     return {
         'net': net,
@@ -230,6 +241,7 @@ def load_data(args):
         'drugSim': drugSim,
         'safe_drugs': safe_drugs,
         'signs_df': signs_df,
+        'target_ranks_df': target_ranks_df,
         'inputInfo': inputInfo
     }
 
@@ -308,9 +320,10 @@ def load_trained_model(args, data, drug_held_out, device):
 
 def validate_with_artificial_stimulation(args, data, mod, drugLayer, drug_held_out, device):
     """Validate by artificially stimulating the held-out drug's targets."""
-    print2log(f'Validating with stimulation strength: {args.stimulation_strength}')
+    print2log(f'Validating with base stimulation strength: {args.stimulation_strength}')
 
     signs_df = data['signs_df']
+    target_ranks_df = data['target_ranks_df']
     drugTargets = data['drugTargets']
     TFOutput = data['TFOutput']
     drugInput = data['drugInput']
@@ -330,6 +343,18 @@ def validate_with_artificial_stimulation(args, data, mod, drugLayer, drug_held_o
         print2log(f"Warning: Drug not found in signs file")
         drug_signs = pd.Series()
 
+    # Get target ranks for this drug (if available)
+    if target_ranks_df is not None and drug_held_out in target_ranks_df.index:
+        drug_ranks = target_ranks_df.loc[drug_held_out]
+        print2log(f"Using target-specific ranks to scale stimulation")
+        # Print rank statistics
+        ranks_for_targets = drug_ranks[drug_targets]
+        print2log(f"  Rank range: {ranks_for_targets.min():.3f} - {ranks_for_targets.max():.3f}")
+        print2log(f"  Rank mean: {ranks_for_targets.mean():.3f}")
+    else:
+        drug_ranks = None
+        print2log(f"No target ranks available - using uniform stimulation")
+
     # Get node indices from model
     all_nodes = np.array(list(mod.node_idx_map.keys()))
     num_nodes = len(all_nodes)
@@ -337,6 +362,7 @@ def validate_with_artificial_stimulation(args, data, mod, drugLayer, drug_held_o
     # Create stimulation vector
     stimulation = torch.zeros(1, num_nodes, dtype=torch.double).to(device)
     targets_stimulated = 0
+    stimulation_details = []
 
     for target in drug_targets:
         if target in mod.node_idx_map:
@@ -347,10 +373,36 @@ def validate_with_artificial_stimulation(args, data, mod, drugLayer, drug_held_o
                 sign = drug_signs[target]
                 if sign == 0:
                     continue
-                stimulation[0, target_idx] = args.stimulation_strength * sign
+                
+                # Calculate target-specific stimulation strength
+                if drug_ranks is not None and target in drug_ranks.index:
+                    rank = drug_ranks[target]
+                    # Scale base stimulation by rank (0-1)
+                    target_strength = args.stimulation_strength * rank * sign
+                else:
+                    # No rank - use full base stimulation
+                    target_strength = args.stimulation_strength * sign
+                
+                stimulation[0, target_idx] = target_strength
                 targets_stimulated += 1
+                
+                # Store details for logging
+                if drug_ranks is not None and target in drug_ranks.index:
+                    stimulation_details.append({
+                        'target': target,
+                        'rank': drug_ranks[target],
+                        'sign': sign,
+                        'strength': float(target_strength)
+                    })
 
     print2log(f"Stimulating {targets_stimulated}/{len(drug_targets)} targets")
+    
+    # Log a few examples if using ranks
+    if len(stimulation_details) > 0:
+        print2log(f"Example target stimulations:")
+        for detail in sorted(stimulation_details, key=lambda x: abs(x['strength']), reverse=True)[:5]:
+            print2log(f"  {detail['target']}: rank={detail['rank']:.3f}, "
+                     f"sign={detail['sign']:+d}, strength={detail['strength']:+.1f}")
 
     # Get samples containing the held-out drug
     samples_with_drug = drugInput[drug_held_out] > 0

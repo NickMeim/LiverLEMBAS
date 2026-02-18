@@ -10,6 +10,8 @@ plan(multisession,workers = cores)
 source("../postprocessing/plotting_functions.R")
 source('../postprocessing/functions_translation.R')
 options(future.globals.maxSize = 2 * 1024^3) # 2 GiB
+library(rstatix)
+
 
 make_ifna_facet_plot <- function(
     phenotype_value = c("MAS", "Fibrosis stage"),
@@ -240,10 +242,10 @@ make_ifna_facet_plot <- function(
 
 
 ## Simulate grid combination of TGFBR1 and IFNAR1 plus inhibition of certain nodes---------------
-simulation <- data.table::fread('../results/24 hour/allmodels/combo_simulation_grid_multiKO/TFs_all_conditions_grid_multiKO.csv') %>% 
+simulation <- data.table::fread('../results/allmodels/combo_simulation_grid_multiKO/TFs_all_conditions_grid_multiKO.csv') %>% 
   select(-knockout_node,-knockout_strength)
 simulation <- simulation %>% filter(type!='untreated_with_KO') #%>% filter(type!="untreated_no_KO") 
-Ystim_no_ko <- readRDS('../results/24 hour/allmodels/combo_simulation_expanded/Yall_same_stim.rds')
+Ystim_no_ko <- readRDS('../results/allmodels/combo_simulation_expanded/Yall_same_stim.rds')
 
 #Load annotation file to replace with gene names
 annot <- read.delim('../../../Artificial-Signaling-Network/DrugsANNSignaling/data/uniprot-reviewed_yes+AND+organism__Homo+sapiens+(Human)+[9606]_.tab')
@@ -333,61 +335,481 @@ mean_control_fib <- mean(Ycontrol[,2])
 se_control_fib <- mean(Ycontrol[,2]) /sqrt(50)
 ## save a centered version
 Ycontrol <- as.data.frame(Ycontrol) %>% mutate(model_no=seq(0,49,1))
-# Yinsilico_centered <- left_join(Ycontrol,Yinsilico,by = 'model_no')
-# Yinsilico_centered <- Yinsilico_centered %>% mutate(NAS = NAS.y - NAS.x)
-# Yinsilico_centered <- Yinsilico_centered %>% mutate(fibrosis = fibrosis.y-fibrosis.x)
-# Yinsilico_centered <- Yinsilico_centered %>% 
-#   select(c("IFNAR1"="IFNa"),c("TGFBR1"="TGFb"),model_no,NAS,fibrosis)
 Yinsilico <- Yinsilico %>% gather('phenotype','score',-model_no,-IFNa,-TGFb,-type) %>%
-  group_by(phenotype,IFNa,TGFb) %>% mutate(mu = mean(score)) %>% mutate(se=sd(score)/sqrt(50))
+  group_by(phenotype,IFNa,TGFb) %>% mutate(mu = mean(score)) %>% mutate(se=sd(score)/sqrt(50)) %>%
+  ungroup()
 
-### Visualize simulation
+### Get all results
 Yall <- Yinsilico %>%
   mutate(phenotype = ifelse(phenotype=='NAS','MAS','Fibrosis stage'))
 Yall <- Yall %>% mutate(IFNa=as.numeric(IFNa)) %>% mutate(TGFb=as.numeric(TGFb))
 
-
-
-mas_plot <- ggplot(Yall %>% filter(phenotype=='MAS') %>% select(IFNa,TGFb,mu,se,phenotype,type) %>% unique(),
-                   aes(x=IFNa,y=TGFb,fill=mu))+
-  geom_tile()+
-  scale_fill_gradient2(midpoint = mean_control_mas)+
-  labs(fill='MAS',x = 'stimulation of IFNAR1',y='stimulation of TGFBR1')+
-  scale_x_continuous(n.breaks = 10)+
-  scale_y_continuous(n.breaks = 10)+
-  geom_hline(yintercept = 0,lwd=1,color='black')+
-  geom_vline(xintercept = 0,lwd=1,color='black')+
-  facet_wrap(~type)
-mas_plot <- add_theme(mas_plot) + 
-  theme(legend.position = 'top',text = element_text(size=20),
-        panel.border = element_blank(),
-        panel.grid = element_blank())
-print(mas_plot)
-ggsave(filename = "../figures/expanded_ifna_tgfb_combo_mas_plot_multiKOs_24hr.pdf", plot = mas_plot, 
-       device = cairo_pdf,
-       units = "cm", width = 28, height = 24)
-
-fib_plot <- ggplot(Yall %>% filter(phenotype!='MAS') %>% select(IFNa,TGFb,mu,se,phenotype,type) %>% unique(),
-                   aes(x=IFNa,y=TGFb,fill=mu))+
-  geom_tile()+
-  scale_fill_gradient2(midpoint = mean_control_fib)+
-  labs(fill='Fibrosis stage',x = 'stimulation of IFNAR1',y='stimulation of TGFBR1')+
-  scale_x_continuous(n.breaks = 10)+
-  scale_y_continuous(n.breaks = 10)+
-  geom_hline(yintercept = 0,lwd=1,color='black')+
-  geom_vline(xintercept = 0,lwd=1,color='black')+
-  facet_wrap(~type)
-fib_plot <- add_theme(fib_plot) +
-  theme(legend.position = 'top',text = element_text(size=20),
-        panel.border = element_blank(),
-        panel.grid = element_blank())
-print(fib_plot)
-ggsave(filename = "../figures/expanded_ifna_tgfb_combo_fibrosis_plot_multiKOs_24hr.pdf", plot = fib_plot, 
-       device = cairo_pdf,
-       units = "cm", width = 16, height = 12)
-
 Ysame <- Yall %>% filter(IFNa==TGFb) %>% mutate(stimulation='IFNAR1*TGFBR1>0')
 Yopp <- Yall %>% filter(IFNa==(-TGFb))  %>% mutate(stimulation='IFNAR1*TGFBR1<0')
+
+### Statistical Comparison of the whole grid against the no KO case------------
+# aggregated_grids <- distinct(rbind(Yall %>% select(-score,-model_no),
+#                              Ystim_no_ko %>% mutate(type='no KO') %>%
+#                                rename(IFNa = IFNAR1,
+#                                       TGFb = TGFRB1) %>%
+#                                select(all_of(colnames(Yall))) %>%
+#                                select(-score,-model_no)))
+aggregated_grids <- distinct(rbind(
+  Yall %>% select("model_no", "IFNa", "TGFb", "type", "phenotype", "score", "mu", "se"),
+  Ystim_no_ko %>%
+    mutate(type = 'no KO') %>%
+    rename(IFNa = IFNAR1, TGFb = TGFRB1) %>%
+    group_by(model_no, IFNa, TGFb, type, phenotype) %>%
+    mutate(mu = mean(score), se = sd(score)) %>% ungroup() %>%
+    select("model_no", "IFNa", "TGFb", "type", "phenotype", "score", "mu", "se")
+))
+aggregated_grids <- aggregated_grids  %>% filter(phenotype=='MAS')
+compute_vol <- function(df, ...) {
+  ifna_vals <- sort(unique(df$IFNa))
+  tgfb_vals <- sort(unique(df$TGFb))
+  
+  # Guard against degenerate grids
+  if (length(ifna_vals) < 2 || length(tgfb_vals) < 2) {
+    message("Skipping group with insufficient grid points: ", 
+            paste(unique(df$type), unique(df$model_no)))
+    return(tibble(VOL = NA_real_, x_range = NA_real_, VOL_norm = NA_real_))
+  }
+  
+  total <- 0
+  for (i in seq_along(ifna_vals)[-length(ifna_vals)]) {
+    for (j in seq_along(tgfb_vals)[-length(tgfb_vals)]) {
+      dI <- ifna_vals[i+1] - ifna_vals[i]
+      dT <- tgfb_vals[j+1] - tgfb_vals[j]
+      corners <- df$abs_diff[df$IFNa == ifna_vals[i]   & df$TGFb == tgfb_vals[j]  ] +
+        df$abs_diff[df$IFNa == ifna_vals[i+1] & df$TGFb == tgfb_vals[j]  ] +
+        df$abs_diff[df$IFNa == ifna_vals[i]   & df$TGFb == tgfb_vals[j+1]] +
+        df$abs_diff[df$IFNa == ifna_vals[i+1] & df$TGFb == tgfb_vals[j+1]]
+      total <- total + (dI * dT * corners / 4)
+    }
+  }
+  tibble(
+    VOL      = total,
+    x_range  = (max(df$IFNa) - min(df$IFNa)) * (max(df$TGFb) - min(df$TGFb)),
+    VOL_norm = total / x_range
+  )
+}
+grid_clean <- aggregated_grids %>%
+  dplyr::filter(!is.na(IFNa), !is.na(TGFb), phenotype == 'MAS', type != 'no KO') %>%
+  dplyr::select(model_no, IFNa, TGFb, score, type) %>%   # score not mu
+  left_join(Ycontrol %>% select(model_no, baseline = NAS), by = 'model_no') %>%
+  mutate(abs_diff = abs(score - baseline))                # score not mu
+curves_3d <- grid_clean %>%
+  group_by(model_no, type) %>%
+  arrange(IFNa, TGFb) %>%
+  group_modify(compute_vol) %>%
+  ungroup()
+
+# Order by Cohen's d vs TP63 KO
+cohens_d_order_3d <- curves_3d %>%
+  rstatix::cohens_d(VOL_norm ~ type, ref.group = 'TP63 KO') %>%
+  arrange(desc(effsize)) %>%
+  pull(group2)
+
+curves_3d <- curves_3d %>%
+  mutate(type = factor(type, levels = c('TP63 KO', cohens_d_order_3d)))
+
+stats_3d <- curves_3d %>%
+  rstatix::t_test(VOL_norm ~ type, ref.group = 'TP63 KO', paired = FALSE) %>%
+  rstatix::adjust_pvalue(method = 'BH') %>%
+  rstatix::add_significance() %>%
+  mutate(y.position = max(curves_3d$VOL_norm) * 1.05)
+
+ggboxplot(curves_3d %>% filter(type %in% c('TP63 KO', stats_3d$group2[stats_3d$p.adj < 0.05])),
+          x = 'type', y = 'VOL_norm', add = 'jitter') +
+  stat_pvalue_manual(stats_3d[stats_3d$p.adj < 0.05,], label = 'p.adj.signif', remove.bracket = TRUE) +
+  geom_hline(yintercept = mean(curves_3d$VOL_norm[curves_3d$type == 'TP63 KO']),
+             lty = 'dashed', color = 'red', lwd = 2) +
+  coord_flip()
+
+### Statistical Comparison of the differences of curves------------
+## INFa extreme inhibition, TGFB extreme activation
+curves_point <- rbind(
+  rbind(Ysame, Yopp) %>%
+    dplyr::ungroup() %>%
+    add_type() %>%
+    dplyr::filter(!is.na(IFNa), !is.na(TGFb), phenotype == 'MAS') %>%
+    dplyr::select(model_no, IFNa, score, stimulation, type) %>%
+    unique(),
+  Ystim_no_ko %>%
+    dplyr::ungroup() %>%
+    add_type(default_label = 'no KO') %>%
+    dplyr::filter(!is.na(IFNAR1), !is.na(TGFRB1), phenotype == 'MAS') %>%
+    dplyr::select(model_no, IFNa = IFNAR1, score, stimulation, type) %>%
+    unique()) %>%
+  select(model_no, c('x' = 'IFNa'), score, stimulation, type) %>%
+  spread('stimulation', 'score') %>%
+  filter(x == -3000) %>%
+  group_by(model_no, type) %>%
+  summarise(diff_point = `IFNAR1*TGFBR1<0` - `IFNAR1*TGFBR1>0`) %>%
+  ungroup()
+
+cohens_d_order_pt <- curves_point %>%
+  rstatix::cohens_d(diff_point ~ type, ref.group = 'no KO') %>%
+  arrange(desc(effsize)) %>%
+  pull(group2)
+
+curves_point <- curves_point %>%
+  mutate(type = factor(type, levels = c('no KO', cohens_d_order_pt)))
+
+stats_pt <- curves_point %>%
+  rstatix::t_test(diff_point ~ type, ref.group = 'no KO', paired = TRUE) %>%
+  rstatix::adjust_pvalue(method = 'BH') %>%
+  rstatix::add_significance() %>%
+  mutate(y.position = max(curves_point$diff_point) * 1.05)
+
+ggboxplot(curves_point %>% filter(type %in% c('no KO', stats_pt$group2[stats_pt$p.adj < 0.05])),
+          x = 'type', y = 'diff_point', add = 'jitter') +
+  stat_pvalue_manual(stats_pt[stats_pt$p.adj < 0.05,], label = 'p.adj.signif', remove.bracket = TRUE) +
+  geom_hline(yintercept = mean(curves_point$diff_point[curves_point$type == 'no KO']),
+             lty = 'dashed', color = 'red', lwd = 2) +
+  coord_flip()
+sig_types_pt <- c('TP63 KO', stats_pt$group2[stats_pt$p.adj < 0.05])
+
+curves_point_sub <- curves_point %>%
+  filter(type %in% sig_types_pt) %>%
+  mutate(type = droplevels(type))
+
+cohens_d_order_pt2 <- curves_point_sub %>%
+  rstatix::cohens_d(diff_point ~ type, ref.group = 'TP63 KO') %>%
+  arrange(desc(effsize)) %>%
+  pull(group2)
+
+curves_point_sub <- curves_point_sub %>%
+  mutate(type = factor(type, levels = c('TP63 KO', cohens_d_order_pt2)))
+
+stats_pt2 <- curves_point_sub %>%
+  rstatix::t_test(diff_point ~ type, ref.group = 'TP63 KO', paired = TRUE) %>%
+  rstatix::adjust_pvalue(method = 'BH') %>%
+  rstatix::add_significance() %>%
+  mutate(y.position = max(curves_point_sub$diff_point) * 1.05)
+
+ggboxplot(curves_point_sub,
+          x = 'type', y = 'diff_point', add = 'jitter') +
+  stat_pvalue_manual(stats_pt2, label = 'p.adj.signif', remove.bracket = TRUE) +
+  geom_hline(yintercept = mean(curves_point_sub$diff_point[curves_point_sub$type == 'TP63 KO']),
+             lty = 'dashed', color = 'red', lwd = 2) +
+  coord_flip()
+
+### Comparison of AUCs of the curves---------
+add_type <- function(.data, default_label = no_ko_type_label) {
+  if ('type' %in% names(.data)) dplyr::mutate(.data, type = .data[['type']])
+  else dplyr::mutate(.data, type = default_label)
+}
+curves <- rbind(
+  rbind(Ysame, Yopp) %>%
+    dplyr::ungroup() %>%
+    add_type() %>%
+    dplyr::filter(!is.na(IFNa), !is.na(TGFb), phenotype == 'MAS') %>%
+    dplyr::select(model_no, IFNa, score, stimulation, type) %>%
+    unique(),
+  Ystim_no_ko %>%
+    dplyr::ungroup() %>%
+    add_type(default_label = 'no KO') %>%
+    dplyr::filter(!is.na(IFNAR1), !is.na(TGFRB1), phenotype == 'MAS') %>%
+    dplyr::select(model_no, IFNa = IFNAR1, score, stimulation, type) %>%
+    unique()) %>%
+  select(model_no,c('x'='IFNa'),score,stimulation,type) %>% 
+  spread('stimulation','score') %>%
+  group_by(model_no,type) %>%
+  summarise(AUC = MESS::auc(x,abs(`IFNAR1*TGFBR1<0`-`IFNAR1*TGFBR1>0`)),
+            x_range = max(x) - min(x),
+            AUC_norm = AUC / x_range) %>%
+  ungroup() 
+# curves$type <- relevel(factor(curves$type), ref = "no KO")
+
+
+no_ko_values <- curves %>% filter(type == 'no KO') %>% pull(AUC)
+cohens_d_order <- curves %>%
+  rstatix::cohens_d(AUC ~ type, ref.group = 'no KO') %>%
+  arrange(desc(effsize)) %>%
+  pull(group2)
+curves <- curves %>%
+  mutate(type = factor(type, levels = c('no KO', cohens_d_order)))
+
+stats <- curves %>%
+  rstatix::t_test(AUC ~ type, ref.group = 'no KO', paired = TRUE) %>%
+  rstatix::adjust_pvalue(method = 'BH') %>%
+  rstatix::add_significance() %>%
+  mutate(y.position = max(curves$AUC) * 1.05)
+
+ggboxplot(curves %>% filter(type %in% c('no KO', stats$group2[stats$p.adj < 0.05])), 
+          x = 'type', y = 'AUC', add = 'jitter') +
+  stat_pvalue_manual(stats[stats$p.adj < 0.05,], label = 'p.adj.signif', remove.bracket = TRUE) +
+  geom_hline(yintercept = mean(curves$AUC[curves$type == 'no KO']),
+             lty = 'dashed', color = 'red', lwd = 2) +
+  coord_flip()
+
+## Now compare with TP63 curve
+sig_types <- c('TP63 KO', stats$group2[stats$p.adj < 0.05])
+
+curves_sub <- curves %>%
+  filter(type %in% sig_types) %>%
+  mutate(type = droplevels(type))
+
+cohens_d_order2 <- curves_sub %>%
+  rstatix::cohens_d(AUC ~ type, ref.group = 'TP63 KO') %>%
+  arrange(desc(effsize)) %>%
+  pull(group2)
+
+curves_sub <- curves_sub %>%
+  mutate(type = factor(type, levels = c('TP63 KO', cohens_d_order2)))
+
+stats2 <- curves_sub %>%
+  rstatix::t_test(AUC ~ type, ref.group = 'TP63 KO', paired = TRUE) %>%
+  rstatix::adjust_pvalue(method = 'BH') %>%
+  rstatix::add_significance() %>%
+  mutate(y.position = max(curves_sub$AUC) * 1.05)
+
+ggboxplot(curves_sub,
+          x = 'type', y = 'AUC', add = 'jitter') +
+  stat_pvalue_manual(stats2, label = 'p.adj.signif', remove.bracket = TRUE) +
+  geom_hline(yintercept = mean(curves_sub$AUC[curves_sub$type == 'TP63 KO']),
+             lty = 'dashed', color = 'red', lwd = 2) +
+  coord_flip()
+
+### Statstical comparison of 2D curves AUC and control line----
+curves_ctrl <- rbind(Ysame, Yopp) %>%
+  dplyr::ungroup() %>%
+  add_type() %>%
+  dplyr::filter(!is.na(IFNa), !is.na(TGFb), phenotype == 'MAS') %>%
+  dplyr::select(model_no, c('x' = 'IFNa'), score, type) %>%
+  unique() %>%
+  left_join(Ycontrol %>% select(model_no, baseline = NAS), by = 'model_no') %>%
+  mutate(abs_diff = abs(score - baseline)) %>%
+  group_by(model_no, type) %>%
+  summarise(
+    AUC      = MESS::auc(x, abs_diff),
+    x_range  = max(x) - min(x),
+    AUC_norm = AUC / x_range
+  ) %>%
+  ungroup()
+
+# Order by Cohen's d vs TP63 KO and compare
+cohens_d_order_ctrl <- curves_ctrl %>%
+  rstatix::cohens_d(AUC_norm ~ type, ref.group = 'TP63 KO') %>%
+  arrange(desc(effsize)) %>%
+  pull(group2)
+
+curves_ctrl <- curves_ctrl %>%
+  mutate(type = factor(type, levels = c('TP63 KO', cohens_d_order_ctrl)))
+
+stats_ctrl <- curves_ctrl %>%
+  rstatix::t_test(AUC_norm ~ type, ref.group = 'TP63 KO', paired = TRUE) %>%
+  rstatix::adjust_pvalue(method = 'BH') %>%
+  rstatix::add_significance() %>%
+  mutate(y.position = max(curves_ctrl$AUC_norm) * 1.05)
+
+ggboxplot(curves_ctrl %>% filter(type %in% c('TP63 KO', stats_ctrl$group2[stats_ctrl$p.adj < 0.05])),
+          x = 'type', y = 'AUC_norm', add = 'jitter') +
+  stat_pvalue_manual(stats_ctrl[stats_ctrl$p.adj < 0.05,], label = 'p.adj.signif', remove.bracket = TRUE) +
+  geom_hline(yintercept = mean(curves_ctrl$AUC_norm[curves_ctrl$type == 'TP63 KO']),
+             lty = 'dashed', color = 'red', lwd = 2) +
+  coord_flip()
+
+
+### Compare with IFNA=0 and TGFB=0 baseline when there is no KO-------------
+library(igraph)
+# ---- Step 1: Build network and classify each node by upstream receptor
+network <- read.table("../preprocessing/preprocessed_data/PKN/Hepatocytes-PKN-Model.tsv",
+                      header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+annotations <- read.table("../preprocessing/preprocessed_data/PKN/Hepatocytes-PKN-Annotation.tsv",
+                          header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+
+g <- graph_from_data_frame(network[, c("source", "target")], directed = TRUE)
+
+IFNAR1_id <- "P17181"
+TGFBR1_id <- "P36897"
+
+downstream_IFNAR1 <- V(g)$name[subcomponent(g, IFNAR1_id, mode = "out")]
+downstream_TGFBR1 <- V(g)$name[subcomponent(g, TGFBR1_id, mode = "out")]
+both               <- intersect(downstream_IFNAR1, downstream_TGFBR1)
+
+# For nodes downstream of both, assign to receptor with shortest path
+dist_IFNAR1 <- as.vector(distances(g, v = IFNAR1_id, to = both, mode = "out"))
+dist_TGFBR1 <- as.vector(distances(g, v = TGFBR1_id, to = both, mode = "out"))
+
+node_receptor <- bind_rows(
+  tibble(code = setdiff(downstream_IFNAR1, both), receptor = 'IFNAR1'),
+  tibble(code = setdiff(downstream_TGFBR1, both), receptor = 'TGFBR1'),
+  tibble(code = both,
+         receptor = ifelse(dist_IFNAR1 <= dist_TGFBR1, 'IFNAR1', 'TGFBR1'))
+) %>%
+  left_join(annotations %>% select(code, name), by = 'code')
+
+# ---- Step 2: Map each KO type to its receptor (both = appears in both plots
+type_receptor <- rbind(Ysame, Yopp) %>%
+  distinct(type) %>%
+  filter(!is.na(type)) %>%
+  mutate(gene = gsub(' KO$', '', type)) %>%
+  left_join(
+    bind_rows(
+      tibble(code = setdiff(downstream_IFNAR1, both), receptor = 'IFNAR1'),
+      tibble(code = setdiff(downstream_TGFBR1, both), receptor = 'TGFBR1'),
+      tibble(code = both, receptor = 'IFNAR1'),  # duplicate for both
+      tibble(code = both, receptor = 'TGFBR1')   # duplicate for both
+    ) %>%
+      left_join(annotations %>% select(code, name), by = 'code') %>%
+      select(name, receptor),
+    by = c('gene' = 'name')
+  ) %>%
+  mutate(receptor = ifelse(is.na(receptor), 'IFNAR1', receptor))
+
+# Check how many types appear in both plots
+type_receptor %>% group_by(type) %>% filter(n() > 1)
+
+# ---- Step 3: Compute baselines from Ystim_no_ko
+baseline_IFNAR1 <- Ystim_no_ko %>%
+  dplyr::filter(!is.na(IFNAR1), !is.na(TGFRB1), phenotype == 'MAS', IFNAR1 == 0) %>%
+  group_by(model_no) %>%
+  summarise(baseline = mean(score), .groups = 'drop')
+
+baseline_TGFBR1 <- Ystim_no_ko %>%
+  dplyr::filter(!is.na(IFNAR1), !is.na(TGFRB1), phenotype == 'MAS', TGFRB1 == 0) %>%
+  group_by(model_no) %>%
+  summarise(baseline = mean(score), .groups = 'drop')
+
+# type_receptor: one row per type, but with a list of receptors
+type_receptor <- rbind(Ysame, Yopp) %>%
+  distinct(type) %>%
+  filter(!is.na(type)) %>%
+  mutate(gene = gsub(' KO$', '', type)) %>%
+  left_join(
+    bind_rows(
+      tibble(code = setdiff(downstream_IFNAR1, both), receptor = 'IFNAR1'),
+      tibble(code = setdiff(downstream_TGFBR1, both), receptor = 'TGFBR1'),
+      tibble(code = both, receptor = 'BOTH')
+    ) %>%
+      left_join(annotations %>% select(code, name), by = 'code') %>%
+      select(name, receptor),
+    by = c('gene' = 'name')
+  ) %>%
+  mutate(receptor = ifelse(is.na(receptor), 'IFNAR1', receptor))
+
+# curves_ctrl2d: one row per model_no + type, with correct baseline
+# For BOTH types, use IFNAR1 baseline (arbitrary but consistent)
+curves_ctrl2d <- bind_rows(
+  raw_curves %>%
+    filter(receptor %in% c('IFNAR1', 'BOTH')) %>%
+    left_join(baseline_IFNAR1, by = 'model_no') %>%
+    mutate(receptor_used = 'IFNAR1'),
+  raw_curves %>%
+    filter(receptor %in% c('TGFBR1', 'BOTH')) %>%
+    left_join(baseline_TGFBR1, by = 'model_no') %>%
+    mutate(receptor_used = 'TGFBR1')
+) %>%
+  mutate(abs_diff = abs(score - baseline)) %>%
+  group_by(model_no, type, receptor, receptor_used) %>%
+  summarise(
+    AUC      = MESS::auc(x, abs_diff),
+    x_range  = max(x) - min(x),
+    AUC_norm = AUC / x_range,
+    .groups  = 'drop'
+  )
+
+# Now each type appears once per receptor_used
+# BOTH types appear twice (once for IFNAR1, once for TGFBR1)
+# Single-receptor types appear once
+
+plot_by_receptor <- function(receptor_label, ref = 'TP63 KO') {
+  
+  cat("\n--- Receptor:", receptor_label, "---\n")
+  
+  # Get data for this receptor (includes BOTH types and the ref if it belongs here)
+  data <- curves_ctrl2d %>%
+    filter(receptor_used == receptor_label | type == ref) %>%
+    distinct(model_no, type, .keep_all = TRUE) %>%
+    mutate(type = as.character(type)) %>%
+    filter(!is.na(AUC_norm)) %>%
+    arrange(type, model_no)  # ensure consistent ordering for paired test
+  
+  cat("N types:", n_distinct(data$type), "| N per type:\n")
+  print(data %>% count(type) %>% filter(n != 50))  # show any imbalanced groups
+  
+  ref_vals <- data %>% filter(type == ref) %>% arrange(model_no) %>% pull(AUC_norm)
+  
+  cohens_d_ord <- data %>%
+    filter(type != ref) %>%
+    group_by(type) %>%
+    summarise(
+      d = (mean(AUC_norm) - mean(ref_vals)) /
+        sqrt((var(AUC_norm) + var(ref_vals)) / 2),
+      .groups = 'drop'
+    ) %>%
+    arrange(desc(d)) %>%
+    pull(type)
+  
+  data <- data %>%
+    mutate(type = factor(type, levels = c(ref, cohens_d_ord)))
+  
+  stats <- data %>%
+    rstatix::t_test(AUC_norm ~ type, ref.group = ref, paired = TRUE) %>%
+    rstatix::adjust_pvalue(method = 'BH') %>%
+    rstatix::add_significance() %>%
+    mutate(y.position = max(data$AUC_norm) * 1.05)
+  
+  sig_types <- c(ref, stats$group2[stats$p.adj < 0.05])
+  tp63_mean <- mean(curves_ctrl2d$AUC_norm[curves_ctrl2d$type == 'TP63 KO' & 
+                                             curves_ctrl2d$receptor_used == receptor_label])
+  
+  ggboxplot(data %>% filter(type %in% sig_types),
+            x = 'type', y = 'AUC_norm', add = 'jitter',
+            title = paste('Baseline: stimulation = 0 |', receptor_label, 'downstream')) +
+    stat_pvalue_manual(stats[stats$p.adj < 0.05,], label = 'p.adj.signif', remove.bracket = TRUE) +
+    geom_hline(yintercept = mean(data$AUC_norm[data$type == ref]),
+               lty = 'dashed', color = 'red', lwd = 2) +
+    geom_hline(yintercept = tp63_mean,
+               lty = 'dashed', color = 'blue', lwd = 2) +
+    coord_flip()
+}
+
+plot_by_receptor('IFNAR1', ref = 'STAT2 KO')
+plot_by_receptor('TGFBR1', ref = 'TP63 KO')
+
+### Visualize curves-----------------
+
+# mas_plot <- ggplot(Yall %>% filter(phenotype=='MAS') %>% select(IFNa,TGFb,mu,se,phenotype,type) %>% unique(),
+#                    aes(x=IFNa,y=TGFb,fill=mu))+
+#   geom_tile()+
+#   scale_fill_gradient2(midpoint = mean_control_mas)+
+#   labs(fill='MAS',x = 'stimulation of IFNAR1',y='stimulation of TGFBR1')+
+#   scale_x_continuous(n.breaks = 10)+
+#   scale_y_continuous(n.breaks = 10)+
+#   geom_hline(yintercept = 0,lwd=1,color='black')+
+#   geom_vline(xintercept = 0,lwd=1,color='black')+
+#   facet_wrap(~type)
+# mas_plot <- add_theme(mas_plot) + 
+#   theme(legend.position = 'top',text = element_text(size=20),
+#         panel.border = element_blank(),
+#         panel.grid = element_blank())
+# print(mas_plot)
+# ggsave(filename = "../figures/expanded_ifna_tgfb_combo_mas_plot_multiKOs.pdf", plot = mas_plot, 
+#        device = cairo_pdf,
+#        units = "cm", width = 28, height = 24)
+# 
+# fib_plot <- ggplot(Yall %>% filter(phenotype!='MAS') %>% select(IFNa,TGFb,mu,se,phenotype,type) %>% unique(),
+#                    aes(x=IFNa,y=TGFb,fill=mu))+
+#   geom_tile()+
+#   scale_fill_gradient2(midpoint = mean_control_fib)+
+#   labs(fill='Fibrosis stage',x = 'stimulation of IFNAR1',y='stimulation of TGFBR1')+
+#   scale_x_continuous(n.breaks = 10)+
+#   scale_y_continuous(n.breaks = 10)+
+#   geom_hline(yintercept = 0,lwd=1,color='black')+
+#   geom_vline(xintercept = 0,lwd=1,color='black')+
+#   facet_wrap(~type)
+# fib_plot <- add_theme(fib_plot) +
+#   theme(legend.position = 'top',text = element_text(size=20),
+#         panel.border = element_blank(),
+#         panel.grid = element_blank())
+# print(fib_plot)
+# ggsave(filename = "../figures/expanded_ifna_tgfb_combo_fibrosis_plot_multiKOs.pdf", plot = fib_plot, 
+#        device = cairo_pdf,
+#        units = "cm", width = 16, height = 12)
+
 res_mas <- make_ifna_facet_plot(
   phenotype_value = "MAS",
   Ysame = Ysame, Yopp = Yopp, Ystim_no_ko = Ystim_no_ko,
@@ -395,13 +817,13 @@ res_mas <- make_ifna_facet_plot(
   se_control = se_control_mas,
   type_labels = c("TP63 KO" = "TP63 KO", "no KO" = "no KO"),
   p_adjust_method = "bonferroni",
-  y_upper = 8,
-  y_lower = 0,
+  y_upper = 11,
+  y_lower = -2,
   legend_text_size = 14,
   legend_title_size =14
 )
 res_mas$plot
-ggsave(filename = "../figures/ifna_tgfb_withKOs_combo_mas_line_plot_24hr.pdf", plot = res_mas$plot, 
+ggsave(filename = "../figures/ifna_tgfb_withKOs_combo_mas_line_plot.pdf", plot = res_mas$plot, 
        device = cairo_pdf,
        units = "cm", width = 16, height = 16)
 
@@ -411,12 +833,12 @@ res_fib <- make_ifna_facet_plot(
   Ysame = Ysame, Yopp = Yopp, Ystim_no_ko = Ystim_no_ko,
   mean_control = mean_control_fib,
   se_control = se_control_fib,
-  y_upper = 4,
-  y_lower = -0.6,
+  y_upper = 6,
+  y_lower = -2,
   legend_text_size = 14,
   legend_title_size =14
 )
 res_fib$plot
-ggsave(filename = "../figures/ifna_tgfb_withKOs_combo_fibrosis_line_plot_24hr.pdf", plot = res_fib$plot, 
+ggsave(filename = "../figures/ifna_tgfb_withKOs_combo_fibrosis_line_plot.pdf", plot = res_fib$plot, 
        device = cairo_pdf,
        units = "cm", width = 16, height = 16)

@@ -198,3 +198,38 @@ p2 <- ggplot(tf_data, aes(x = fibrosis_rank, y = fibrosis)) +
 print(p2)
 ggsave("../figures/Fibrosis_TF_ranking.png", p2, width = 10, height = 8, dpi = 600)
 
+## --- TFs reachable from IFNAR1/TGFBR1 with |weight| > |TP63| (NAS or fibrosis) ---
+# sanity: TP63 must be in the model weights table
+tp63_row <- tf_data %>% filter(name == "TP63") %>% slice(1)
+if (nrow(tp63_row) == 0) stop("TP63 not found in tf_data (not in TF_human / not in model weights).")
+
+tp63_thr_nas <- abs(tp63_row$NAS)
+tp63_thr_fib <- abs(tp63_row$fibrosis)
+higher_abs_than_tp63 <- tf_data %>%
+  filter(is_reachable) %>%                       # reachable from IFNAR1 and/or TGFBR1
+  mutate(
+    abs_NAS = abs(NAS),
+    abs_fibrosis = abs(fibrosis),
+    beats_NAS = !is.na(abs_NAS) & abs_NAS > tp63_thr_nas,
+    beats_fibrosis = !is.na(abs_fibrosis) & abs_fibrosis > tp63_thr_fib
+  ) %>%
+  filter(beats_NAS | beats_fibrosis) %>%         # union (NAS OR fibrosis)
+  filter(name != "TP63") %>%
+  filter(is_reachable) %>%
+  arrange(desc(pmax(abs_NAS, abs_fibrosis, na.rm = TRUE)), name) %>%
+  select(name, code, NAS, fibrosis, abs_NAS, abs_fibrosis, beats_NAS, beats_fibrosis)
+
+cat("\n--- TP63 thresholds ---\n")
+cat("TP63 |NAS| =", tp63_thr_nas, "\n")
+cat("TP63 |fibrosis| =", tp63_thr_fib, "\n")
+
+cat("\n--- Reachable TFs with |weight| > TP63 (NAS or fibrosis) ---\n")
+cat(
+  paste0(
+    "[",
+    paste0('"', unique(higher_abs_than_tp63$code), '"', collapse = ", "),
+    "]"
+  )
+)
+
+
