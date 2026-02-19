@@ -1145,6 +1145,151 @@ run_and_save_baseline0_plots <- function(phen) {
 res_mas0 <- run_and_save_baseline0_plots("MAS")
 res_fib0 <- run_and_save_baseline0_plots("Fibrosis stage")
 
+
+# --- Baseline0 3D volume: IFNAR1=0 or TGFRB1=0 (no-KO), receptor-restricted -----------
+# Build 2D grid with abs_diff to the appropriate baseline (per receptor_used)
+compute_grid_absdiff_baseline0_3d <- function(phen, receptor_label, Yall, Ystim_no_ko, type_receptor) {
+  
+  base <- Yall %>%
+    filter(phenotype == phen, !is.na(IFNa), !is.na(TGFb), !is.na(type)) %>%
+    mutate(IFNa = as.numeric(IFNa), TGFb = as.numeric(TGFb)) %>%
+    left_join(type_receptor, by = "type") %>%
+    mutate(receptor = ifelse(is.na(receptor), "IFNAR1", receptor))
+  
+  # model-wise baselines from the no-KO grid:
+  baseline_IFNAR1 <- Ystim_no_ko %>%
+    filter(phenotype == phen, !is.na(IFNAR1), IFNAR1 == 0) %>%
+    group_by(model_no) %>%
+    summarise(baseline = mean(score, na.rm = TRUE), .groups = "drop")
+  
+  baseline_TGFBR1 <- Ystim_no_ko %>%
+    filter(phenotype == phen, !is.na(TGFRB1), TGFRB1 == 0) %>%
+    group_by(model_no) %>%
+    summarise(baseline = mean(score, na.rm = TRUE), .groups = "drop")
+  
+  if (receptor_label == "IFNAR1") {
+    base %>%
+      filter(receptor %in% c("IFNAR1", "BOTH")) %>%
+      mutate(receptor_used = "IFNAR1") %>%
+      left_join(baseline_IFNAR1, by = "model_no") %>%
+      filter(!is.na(baseline)) %>%
+      mutate(abs_diff = abs(score - baseline))
+  } else if (receptor_label == "TGFBR1") {
+    base %>%
+      filter(receptor %in% c("TGFBR1", "BOTH")) %>%
+      mutate(receptor_used = "TGFBR1") %>%
+      left_join(baseline_TGFBR1, by = "model_no") %>%
+      filter(!is.na(baseline)) %>%
+      mutate(abs_diff = abs(score - baseline))
+  } else {
+    stop("receptor_label must be 'IFNAR1' or 'TGFBR1'")
+  }
+}
+
+# Make one plot (one receptor_used) for one phenotype
+make_volume_plot_baseline0 <- function(phen, receptor_label, ref_type, outpath,
+                                       width_cm = 16, height_cm = 20, dpi = 600,
+                                       value_col = c("VOL_norm","VOL")) {
+  
+  value_col <- match.arg(value_col)
+  
+  grid_clean <- compute_grid_absdiff_baseline0_3d(
+    phen = phen,
+    receptor_label = receptor_label,
+    Yall = Yall,
+    Ystim_no_ko = Ystim_no_ko,
+    type_receptor = type_receptor
+  )
+  
+  curves_3d <- grid_clean %>%
+    group_by(model_no, type, receptor_used) %>%
+    arrange(IFNa, TGFb) %>%
+    group_modify(compute_vol) %>%
+    ungroup() %>%
+    filter(!is.na(.data[[value_col]]))
+  
+  if (!(ref_type %in% curves_3d$type)) {
+    stop("Reference type '", ref_type, "' not found for receptor_used='",
+         receptor_label, "' and phenotype='", phen, "'.")
+  }
+  
+  # order by Cohen's d vs reference
+  cohens_order <- curves_3d %>%
+    rstatix::cohens_d(reformulate("type", response = value_col), ref.group = ref_type) %>%
+    arrange(desc(effsize)) %>%
+    pull(group2)
+  
+  curves_3d <- curves_3d %>%
+    mutate(type = factor(as.character(type), levels = c(ref_type, cohens_order)))
+  
+  stats_3d <- curves_3d %>%
+    rstatix::t_test(reformulate("type", response = value_col), ref.group = ref_type, paired = FALSE) %>%
+    rstatix::adjust_pvalue(method = "BH") %>%
+    rstatix::add_significance()
+  
+  # label height
+  y_max <- max(curves_3d[[value_col]], na.rm = TRUE)
+  stats_3d <- stats_3d %>% mutate(y.position = y_max * 1.05)
+  
+  keep_types <- c(ref_type, stats_3d$group2[stats_3d$p.adj < 0.05])
+  
+  ref_mean <- mean(curves_3d[[value_col]][as.character(curves_3d$type) == ref_type], na.rm = TRUE)
+  
+  p <- ggpubr::ggboxplot(
+    curves_3d %>% filter(type %in% keep_types),
+    x = "type", y = value_col, add = "jitter"
+  ) +
+    ggpubr::stat_pvalue_manual(
+      stats_3d %>% filter(p.adj < 0.05),
+      label = "p.adj.signif",
+      remove.bracket = TRUE
+    ) +
+    geom_hline(yintercept = ref_mean, lty = "dashed", color = "red", lwd = 2) +
+    coord_flip() +
+    labs(
+      title = paste0("Baseline: ", receptor_label, "=0 (no KO) | ", receptor_label,
+                     " downstream | ", phen),
+      subtitle = paste0("Reference = ", ref_type, " (red dashed = mean)")
+    ) +
+    theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+          axis.text.y = element_text(size = 7))
+  
+  ggsave(outpath, plot = p, width = width_cm, height = height_cm, units = "cm", dpi = dpi)
+  p
+}
+
+# Run + save both receptor plots per phenotype
+run_and_save_baseline0_volume_plots <- function(phen, outdir = "../figures",
+                                                width_cm = 16, height_cm = 20, dpi = 600,
+                                                value_col = "VOL_norm") {
+  
+  phen_tag <- gsub("[^A-Za-z0-9]+", "", phen)
+  
+  p_ifn <- make_volume_plot_baseline0(
+    phen = phen,
+    receptor_label = "IFNAR1",
+    ref_type = "STAT2 KO",
+    outpath = file.path(outdir, paste0("baseline0_VOLnorm_IFNAR1_", phen_tag, "_24hr.pdf")),
+    width_cm = width_cm, height_cm = height_cm, dpi = dpi,
+    value_col = value_col
+  )
+  
+  p_tgf <- make_volume_plot_baseline0(
+    phen = phen,
+    receptor_label = "TGFBR1",
+    ref_type = "TP63 KO",
+    outpath = file.path(outdir, paste0("baseline0_VOLnorm_TGFBR1_", phen_tag, "_24hr.pdf")),
+    width_cm = width_cm, height_cm = height_cm, dpi = dpi,
+    value_col = value_col
+  )
+  
+  list(p_ifnar = p_ifn, p_tgfbr1 = p_tgf)
+}
+
+# ---- run
+res_mas_vol0 <- run_and_save_baseline0_volume_plots("MAS")
+res_fib_vol0 <- run_and_save_baseline0_volume_plots("Fibrosis stage")
+
 ### Visualize curves-----------------
 # mas_plot <- ggplot(Yall %>% filter(phenotype=='MAS') %>% select(IFNa,TGFb,mu,se,phenotype,type) %>% unique(),
 #                    aes(x=IFNa,y=TGFb,fill=mu))+

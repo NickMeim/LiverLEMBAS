@@ -1,0 +1,2 @@
+drug_index,drug_smiles,timepoint,stimulation_strength,overall_correlation,mean_per_tf_correlation,median_per_tf_correlation,n_samples,n_tfs,n_tfs_total
+97,O=c1ccc2ccccc2o1,24 hour,6000.0,0.05228337221061971,,,312,0,104

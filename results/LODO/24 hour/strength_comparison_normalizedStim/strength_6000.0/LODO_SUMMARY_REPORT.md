@@ -2,55 +2,55 @@
 # LODO Validation Summary - Stimulus Strength 6000.0
 
 ## Overview
-- **Total predictions**: 9,256
-- **Number of drugs**: 89
+- **Total predictions**: 11,752
+- **Number of drugs**: 113
 - **Number of TFs**: 104
 
 ## Overall Performance
-- **Pearson correlation**: 0.3316
-- **R-squared**: 0.1099
-- **MAE**: 0.2175
-- **RMSE**: 0.2821
+- **Pearson correlation**: 0.2684
+- **R-squared**: 0.0720
+- **MAE**: 0.2310
+- **RMSE**: 0.2963
 
 ## Binary Classification (threshold=0.5)
-- **Precision**: 0.5855
-- **Recall**: 0.6625
-- **Accuracy**: 0.6205
+- **Precision**: 0.5749
+- **Recall**: 0.6631
+- **Accuracy**: 0.6007
 
 ## Per-TF Performance
-- **Mean TF correlation**: 0.3349
-- **Median TF correlation**: 0.3254
-- **Best TF**: O00327 (r = 0.6858)
-- **Worst TF**: P51692 (r = -0.0645)
+- **Mean TF correlation**: 0.2156
+- **Median TF correlation**: 0.2307
+- **Best TF**: P19544 (r = 0.5078)
+- **Worst TF**: P08651 (r = -0.8371)
 
 ## Per-Drug Performance
-- **Mean drug correlation**: 0.3497
-- **Median drug correlation**: 0.4197
+- **Mean drug correlation**: 0.2881
+- **Median drug correlation**: 0.3252
 
 ## Top 10 TFs by Correlation
 | TF     |   pearson_r |   n_drugs |
 |:-------|------------:|----------:|
-| O00327 |    0.685806 |        89 |
-| Q9Y261 |    0.671864 |        89 |
-| Q14186 |    0.670369 |        89 |
-| P08651 |    0.660412 |        89 |
-| P37275 |    0.651821 |        89 |
-| Q99814 |    0.641763 |        89 |
-| P11473 |    0.630033 |        89 |
-| P18846 |    0.603648 |        89 |
-| Q07869 |    0.586423 |        89 |
-| P04637 |    0.568932 |        89 |
+| P19544 |    0.507778 |       113 |
+| Q01094 |    0.474649 |       113 |
+| Q14186 |    0.456195 |       113 |
+| P10275 |    0.450332 |       113 |
+| P17676 |    0.446336 |       113 |
+| Q13469 |    0.444771 |       113 |
+| Q9Y261 |    0.420197 |       113 |
+| Q14209 |    0.418494 |       113 |
+| P10914 |    0.416369 |       113 |
+| P37275 |    0.413534 |       113 |
 
 ## Bottom 10 TFs by Correlation
 | TF     |   pearson_r |   n_drugs |
 |:-------|------------:|----------:|
-| P16220 |  0.116598   |        89 |
-| P48431 |  0.0993458  |        89 |
-| Q99626 |  0.0878777  |        89 |
-| P55317 |  0.0724452  |        89 |
-| P42224 |  0.0696417  |        89 |
-| Q00613 |  0.0661387  |        89 |
-| P42229 |  0.027808   |        89 |
-| O14593 | -0.00363172 |        89 |
-| Q14765 | -0.0161031  |        89 |
-| P51692 | -0.0644574  |        89 |
+| P06401 |   0.0128868 |       113 |
+| P49715 |   0.0109601 |       113 |
+| Q00613 |  -0.0102521 |       113 |
+| P51692 |  -0.0176595 |       113 |
+| O00327 |  -0.0264822 |       113 |
+| P56693 |  -0.0364633 |       113 |
+| P23511 |  -0.0375429 |       113 |
+| P18850 |  -0.0932491 |       113 |
+| Q00653 |  -0.156778  |       113 |
+| P08651 |  -0.837081  |       113 |

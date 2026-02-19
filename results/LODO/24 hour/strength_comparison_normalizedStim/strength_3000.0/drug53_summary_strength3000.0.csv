@@ -1,0 +1,2 @@
+drug_index,drug_smiles,timepoint,stimulation_strength,overall_correlation,mean_per_tf_correlation,median_per_tf_correlation,n_samples,n_tfs,n_tfs_total
+53,Clc1c(Cl)c(Cl)c(Cl)c(Cl)c1Cl,24 hour,3000.0,0.4345919177405544,,,312,0,104

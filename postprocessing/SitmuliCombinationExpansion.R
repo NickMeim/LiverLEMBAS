@@ -90,7 +90,6 @@ annot <- annot %>% mutate(condition = ifelse(condition=='',node,condition))
 options(future.globals.maxSize = 2 * 1024^3) # 2 GiB
 Yinsilico <- foreach(i = seq(0,49)) %dopar% {
   stimuli <- simulation %>% filter(model_no==i) %>% filter(type!='untreated') %>% select(IFNa,TGFb)
-  as.numeric(simulation$condition[simulation$model_no==i & simulation$type!='untreated'])
   expreriment <- as.matrix(simulation %>% filter(model_no==i) %>% filter(type!='untreated') %>%
                              select(-type,-model_no,-IFNa,-TGFb))
   expreriment[expreriment>1] <-1
