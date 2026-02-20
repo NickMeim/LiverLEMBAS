@@ -1,8 +1,0 @@
-category,rank,drug_smiles,drug_name,best_dose,best_condition,score,source
-1a_STAT2_activator,1,CCc1oc2ccccc2c1C(=O)c1cc(Br)c(O)c(Br)c1,CCc1oc2ccccc2c1C(=O)c1cc(Br)c(O)c(Br)c1,2.00432137378264,benzbromarone+High+8 hour,0.6267721778880521,predicted
-1b_TP63_inhibitor,1,O=C(O)Cc1ccccc1Nc1c(Cl)cccc1Cl,O=C(O)Cc1ccccc1Nc1c(Cl)cccc1Cl,2.60314437262018,diclofenac+High+8 hour,-0.190372344330596,actual
-1b_TP63_inhibitor,2,O=c1ccc2ccccc2o1,O=c1ccc2ccccc2o1,1.11394335230684,coumarin+Low+8 hour,-0.195291139334636,actual
-1b_TP63_inhibitor,3,CN1C(=O)CN=C(c2ccccc2)c2cc(Cl)ccc21,CN1C(=O)CN=C(c2ccccc2)c2cc(Cl)ccc21,1.04139268515823,diazepam+Low+8 hour,-0.231826701278027,actual
-1c_dual_inhibitor,1,O=C(O)Cc1ccccc1Nc1c(Cl)cccc1Cl,O=C(O)Cc1ccccc1Nc1c(Cl)cccc1Cl,2.60314437262018,diclofenac+High+8 hour,-0.2900040678546909,actual
-1c_dual_inhibitor,2,OCCN1CCN(CCCN2c3ccccc3Sc3ccc(C(F)(F)F)cc32)CC1,OCCN1CCN(CCCN2c3ccccc3Sc3ccc(C(F)(F)F)cc,0.255272505103306,fluphenazine+Low+8 hour,-0.3039212288349611,actual
-1c_dual_inhibitor,3,CN1C(=O)CN=C(c2ccccc2)c2cc(Cl)ccc21,CN1C(=O)CN=C(c2ccccc2)c2cc(Cl)ccc21,1.04139268515823,diazepam+Low+8 hour,-0.3206546416173562,actual

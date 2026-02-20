@@ -6,9 +6,12 @@ chemical_screening
 chemical_screening/*
 postprocessing/__pycache__
 postprocessing/ValidateCarryOnOperation_forDrugs.py
+postprocessing/DrugsScreeningAndSimulations.py
 results/chained_async/plots
 results/async_experiments_tidy/async_stimulation_results_no_carry_on.csv
 results/validation_results/grid_201_points
+results/drug_screening_insilio
+results/drug_screening_insilio/*
 relevent_papers
 relevent_papers/*
 learning/__pycache__
