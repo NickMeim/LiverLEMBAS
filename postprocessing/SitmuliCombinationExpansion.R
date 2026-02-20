@@ -12,10 +12,10 @@ source('functions_translation.R')
 options(future.globals.maxSize = 2 * 1024^3) # 2 GiB
 
 ## Simulate combination of TGFBR1 and IFNAR1---------------
-results_ko <- data.table::fread('../results/allmodels/InSilicoKOs/TFs_all_conditions.csv') %>% 
+results_ko <- data.table::fread('../results/2 hour/allmodels/InSilicoKOs/TFs_all_conditions.csv') %>% 
   column_to_rownames('V1')
 results_ko <- results_ko %>% filter(type!="KO+control") %>% filter(type!='control')
-simulation <- data.table::fread('../results/allmodels/combo_simulation_expanded/TFs_all_conditions_expanded.csv') %>% 
+simulation <- data.table::fread('../results/2 hour/allmodels/combo_simulation_expanded/TFs_all_conditions_expanded.csv') %>% 
   select(-V1)
 
 #Load annotation file to replace with gene names
@@ -120,7 +120,7 @@ Yinsilico_centered <- Yinsilico_centered %>% mutate(NAS = NAS.y - NAS.x)
 Yinsilico_centered <- Yinsilico_centered %>% mutate(fibrosis = fibrosis.y-fibrosis.x)
 Yinsilico_centered <- Yinsilico_centered %>% 
   select(c("IFNAR1"="IFNa"),c("TGFBR1"="TGFb"),model_no,NAS,fibrosis)
-saveRDS(Yinsilico_centered,'../results/allmodels/combo_simulation_expanded/Yinsilico_centered.rds')
+# saveRDS(Yinsilico_centered,'../results/allmodels/combo_simulation_expanded/Yinsilico_centered.rds')
 
 # Yinsilico_centered2 <- Yinsilico_centered%>% gather('phenotype','score',-model_no,-IFNAR1,-TGFBR1) %>%
 #   group_by(phenotype,IFNAR1,TGFBR1) %>% mutate(mu = mean(score)) %>% mutate(se=sd(score)/sqrt(50))
@@ -146,7 +146,7 @@ mas_plot <- add_theme(mas_plot) +
         panel.border = element_blank(),
         panel.grid = element_blank())
 print(mas_plot)
-ggsave(filename = "../figures/expanded_ifna_tgfb_combo_mas_plot.pdf", plot = mas_plot, 
+ggsave(filename = "../figures/expanded_ifna_tgfb_combo_mas_plot_2hr.pdf", plot = mas_plot, 
        device = cairo_pdf,
        units = "cm", width = 16, height = 12)
 
@@ -164,6 +164,6 @@ fib_plot <- add_theme(fib_plot) +
         panel.border = element_blank(),
         panel.grid = element_blank())
 print(fib_plot)
-ggsave(filename = "../figures/expanded_ifna_tgfb_combo_fibrosis_plot.pdf", plot = fib_plot, 
+ggsave(filename = "../figures/expanded_ifna_tgfb_combo_fibrosis_plot_2hr.pdf", plot = fib_plot, 
        device = cairo_pdf,
        units = "cm", width = 16, height = 12)

@@ -352,6 +352,26 @@ Yinsilico <- Yinsilico %>% gather('phenotype','score',-model_no,-IFNa,-TGFb,-typ
 
 ### Get all results--------------------------
 Ystim_no_ko <- readRDS('../results/24 hour/allmodels/combo_simulation_expanded/Yall_same_stim.rds')
+Ystim_no_ko_grid <- readRDS('../results/24 hour/allmodels/combo_simulation_expanded/Yinsilico.rds')
+# Standardize column names if needed
+if (!"IFNa" %in% colnames(Ystim_no_ko_grid) && "IFNAR1" %in% colnames(Ystim_no_ko_grid)) {
+  Ystim_no_ko_grid <- Ystim_no_ko_grid %>% rename(IFNa = IFNAR1)
+}
+if (!"TGFb" %in% colnames(Ystim_no_ko_grid) && "TGFRB1" %in% colnames(Ystim_no_ko_grid)) {
+  Ystim_no_ko_grid <- Ystim_no_ko_grid %>% rename(TGFb = TGFRB1)
+}
+
+required_cols_noko <- c("model_no", "IFNa", "TGFb", "phenotype", "score")
+missing_noko <- setdiff(required_cols_noko, colnames(Ystim_no_ko_grid))
+if (length(missing_noko) > 0) {
+  stop("Ystim_no_ko_grid is missing columns: ", paste(missing_noko, collapse = ", "))
+}
+
+required_cols_yall <- c("model_no", "IFNa", "TGFb", "type", "phenotype", "score")
+missing_yall <- setdiff(required_cols_yall, colnames(Yall))
+if (length(missing_yall) > 0) {
+  stop("Yall is missing columns: ", paste(missing_yall, collapse = ", "))
+}
 Ycontrol <- readRDS('../results/24 hour/allmodels/combo_simulation_grid_multiKO/Ycontrol.rds')
 mean_control_mas <- mean(Ycontrol[,1]) 
 se_control_mas <- sd(Ycontrol[,1])/sqrt(50)
@@ -372,265 +392,255 @@ Yopp <- Yall %>% filter(IFNa==(-TGFb))  %>% mutate(stimulation='IFNAR1*TGFBR1<0'
 #                                       TGFb = TGFRB1) %>%
 #                                select(all_of(colnames(Yall))) %>%
 #                                select(-score,-model_no)))
-aggregated_grids <- distinct(rbind(
-  Yall %>% select("model_no", "IFNa", "TGFb", "type", "phenotype", "score", "mu", "se"),
-  Ystim_no_ko %>%
-    mutate(type = 'no KO') %>%
-    rename(IFNa = IFNAR1, TGFb = TGFRB1) %>%
-    group_by(model_no, IFNa, TGFb, type, phenotype) %>%
-    mutate(mu = mean(score), se = sd(score)) %>% ungroup() %>%
-    select("model_no", "IFNa", "TGFb", "type", "phenotype", "score", "mu", "se")
-))
+noKO_grid_clean <- Ystim_no_ko_grid %>%
+  filter(!is.na(model_no), !is.na(IFNa), !is.na(TGFb), !is.na(phenotype)) %>%
+  mutate(
+    IFNa = round(as.numeric(IFNa), 8),
+    TGFb = round(as.numeric(TGFb), 8)
+  ) %>%
+  group_by(model_no, IFNa, TGFb, phenotype) %>%
+  summarise(score_noKO = mean(score, na.rm = TRUE), .groups = "drop")
 
+# 2) Volume integration helper
+#    (trapezoid on each grid cell)
 compute_vol <- function(df, ...) {
+  # Expect unique (IFNa, TGFb) rows per group
+  df <- df %>%
+    distinct(IFNa, TGFb, .keep_all = TRUE) %>%
+    arrange(IFNa, TGFb)
+  
   ifna_vals <- sort(unique(df$IFNa))
   tgfb_vals <- sort(unique(df$TGFb))
   
+  # Need at least a 2x2 grid
   if (length(ifna_vals) < 2 || length(tgfb_vals) < 2) {
     message("Skipping group with insufficient grid points: ",
             paste(unique(df$type), unique(df$model_no)))
     return(tibble(VOL = NA_real_, x_range = NA_real_, VOL_norm = NA_real_))
   }
   
+  # Require complete grid (one point for every IFNa/TGFb combination)
+  expected_n <- length(ifna_vals) * length(tgfb_vals)
+  actual_n <- nrow(df)
+  if (actual_n < expected_n) {
+    message("Skipping group with incomplete grid: ",
+            paste(unique(df$type), unique(df$model_no)),
+            " (", actual_n, "/", expected_n, " points)")
+    return(tibble(VOL = NA_real_, x_range = NA_real_, VOL_norm = NA_real_))
+  }
+  
   total <- 0
   for (i in seq_along(ifna_vals)[-length(ifna_vals)]) {
     for (j in seq_along(tgfb_vals)[-length(tgfb_vals)]) {
-      dI <- ifna_vals[i+1] - ifna_vals[i]
-      dT <- tgfb_vals[j+1] - tgfb_vals[j]
-      corners <- df$abs_diff[df$IFNa == ifna_vals[i]   & df$TGFb == tgfb_vals[j]  ] +
-        df$abs_diff[df$IFNa == ifna_vals[i+1] & df$TGFb == tgfb_vals[j]  ] +
-        df$abs_diff[df$IFNa == ifna_vals[i]   & df$TGFb == tgfb_vals[j+1]] +
-        df$abs_diff[df$IFNa == ifna_vals[i+1] & df$TGFb == tgfb_vals[j+1]]
+      dI <- ifna_vals[i + 1] - ifna_vals[i]
+      dT <- tgfb_vals[j + 1] - tgfb_vals[j]
+      
+      c1 <- df$abs_diff[df$IFNa == ifna_vals[i]   & df$TGFb == tgfb_vals[j]]
+      c2 <- df$abs_diff[df$IFNa == ifna_vals[i+1] & df$TGFb == tgfb_vals[j]]
+      c3 <- df$abs_diff[df$IFNa == ifna_vals[i]   & df$TGFb == tgfb_vals[j+1]]
+      c4 <- df$abs_diff[df$IFNa == ifna_vals[i+1] & df$TGFb == tgfb_vals[j+1]]
+      
+      if (length(c1) != 1 || length(c2) != 1 || length(c3) != 1 || length(c4) != 1) {
+        message("Skipping group due to duplicate/missing corner values: ",
+                paste(unique(df$type), unique(df$model_no)))
+        return(tibble(VOL = NA_real_, x_range = NA_real_, VOL_norm = NA_real_))
+      }
+      
+      corners <- c1 + c2 + c3 + c4
       total <- total + (dI * dT * corners / 4)
     }
   }
+  
+  x_range <- (max(df$IFNa) - min(df$IFNa)) * (max(df$TGFb) - min(df$TGFb))
   tibble(
     VOL      = total,
-    x_range  = (max(df$IFNa) - min(df$IFNa)) * (max(df$TGFb) - min(df$TGFb)),
-    VOL_norm = total / x_range
+    x_range  = x_range,
+    VOL_norm = ifelse(is.finite(x_range) && x_range > 0, total / x_range, NA_real_)
   )
 }
 
-make_volume_plot <- function(phen, baseline_col, outpath,
-                             width_cm = 16, height_cm = 20, dpi = 600) {
+# 3) Boxplot: volume(KO surface vs no-KO surface)
+# Map KO phenotype names (Yall) -> no-KO phenotype names (Ystim_no_ko_grid)
+map_phen_to_noko <- function(phen) {
+  dplyr::case_when(
+    phen == "MAS" ~ "NAS",
+    phen == "Fibrosis stage" ~ "fibrosis",
+    TRUE ~ phen
+  )
+}
+
+compute_vol <- function(df, key = NULL) {
+  # df should contain IFNa, TGFb, abs_diff
+  df <- df %>%
+    distinct(IFNa, TGFb, .keep_all = TRUE) %>%
+    arrange(IFNa, TGFb)
   
-  grid_clean <- aggregated_grids %>%
-    filter(!is.na(IFNa), !is.na(TGFb),
-           phenotype == phen,
-           type != "no KO") %>%
-    select(model_no, IFNa, TGFb, score, type) %>%
-    left_join(
-      Ycontrol %>% transmute(model_no, baseline = .data[[baseline_col]]),
-      by = "model_no"
+  ifna_vals <- sort(unique(df$IFNa))
+  tgfb_vals <- sort(unique(df$TGFb))
+  
+  grp_label <- ""
+  if (!is.null(key) && nrow(key) > 0) {
+    grp_label <- paste0("type=", key$type[[1]], ", model_no=", key$model_no[[1]])
+  }
+  
+  if (length(ifna_vals) < 2 || length(tgfb_vals) < 2) {
+    message("Skipping group with insufficient grid points: ", grp_label)
+    return(tibble(VOL = NA_real_, x_range = NA_real_, VOL_norm = NA_real_))
+  }
+  
+  # Require complete grid
+  expected_n <- length(ifna_vals) * length(tgfb_vals)
+  if (nrow(df) < expected_n) {
+    message("Skipping incomplete grid: ", grp_label, " (", nrow(df), "/", expected_n, " points)")
+    return(tibble(VOL = NA_real_, x_range = NA_real_, VOL_norm = NA_real_))
+  }
+  
+  total <- 0
+  for (i in seq_along(ifna_vals)[-length(ifna_vals)]) {
+    for (j in seq_along(tgfb_vals)[-length(tgfb_vals)]) {
+      dI <- ifna_vals[i + 1] - ifna_vals[i]
+      dT <- tgfb_vals[j + 1] - tgfb_vals[j]
+      
+      c1 <- df$abs_diff[df$IFNa == ifna_vals[i]   & df$TGFb == tgfb_vals[j]]
+      c2 <- df$abs_diff[df$IFNa == ifna_vals[i+1] & df$TGFb == tgfb_vals[j]]
+      c3 <- df$abs_diff[df$IFNa == ifna_vals[i]   & df$TGFb == tgfb_vals[j+1]]
+      c4 <- df$abs_diff[df$IFNa == ifna_vals[i+1] & df$TGFb == tgfb_vals[j+1]]
+      
+      if (length(c1) != 1 || length(c2) != 1 || length(c3) != 1 || length(c4) != 1) {
+        message("Skipping group due to duplicate/missing corner values: ", grp_label)
+        return(tibble(VOL = NA_real_, x_range = NA_real_, VOL_norm = NA_real_))
+      }
+      
+      total <- total + (dI * dT * (c1 + c2 + c3 + c4) / 4)
+    }
+  }
+  
+  x_range <- (max(df$IFNa) - min(df$IFNa)) * (max(df$TGFb) - min(df$TGFb))
+  tibble(
+    VOL      = total,
+    x_range  = x_range,
+    VOL_norm = ifelse(is.finite(x_range) && x_range > 0, total / x_range, NA_real_)
+  )
+}
+
+make_volume_plot_vs_noKO <- function(
+    phen,
+    outpath,
+    width_cm = 16,
+    height_cm = 20,
+    dpi = 600,
+    yvar = c("VOL", "VOL_norm"),
+    ref_type = "TP63 KO"
+) {
+  yvar <- match.arg(yvar)
+  phen_noko <- map_phen_to_noko(phen)
+  
+  # KO grid (Yall)
+  ko_grid <- Yall %>%
+    filter(
+      !is.na(model_no), !is.na(type), !is.na(IFNa), !is.na(TGFb), !is.na(phenotype),
+      phenotype == phen, type != "no KO"
     ) %>%
-    mutate(abs_diff = abs(score - baseline))
+    mutate(
+      IFNa = round(as.numeric(IFNa), 8),
+      TGFb = round(as.numeric(TGFb), 8)
+    ) %>%
+    group_by(model_no, type, IFNa, TGFb) %>%
+    summarise(score_ko = mean(score, na.rm = TRUE), .groups = "drop")
+  
+  # no-KO grid (Ystim_no_ko_grid), with mapped phenotype name
+  noko_grid <- noKO_grid_clean %>%
+    filter(phenotype == phen_noko) %>%
+    select(model_no, IFNa, TGFb, score_noKO)
+  
+  # Join by model + exact grid coordinates (phenotype already filtered separately)
+  grid_clean <- ko_grid %>%
+    inner_join(noko_grid, by = c("model_no", "IFNa", "TGFb")) %>%
+    mutate(abs_diff = abs(score_ko - score_noKO)) %>%
+    group_by(model_no, type, IFNa, TGFb) %>%
+    summarise(abs_diff = mean(abs_diff, na.rm = TRUE), .groups = "drop")
+  
+  if (nrow(grid_clean) == 0) {
+    stop("Join produced 0 rows for phenotype='", phen, "' (mapped no-KO phenotype='", phen_noko, "'). ",
+         "Check phenotype labels in Yall vs Ystim_no_ko_grid.")
+  }
   
   curves_3d <- grid_clean %>%
     group_by(model_no, type) %>%
     arrange(IFNa, TGFb) %>%
-    group_modify(compute_vol) %>%
+    group_modify(~ compute_vol(.x, key = .y)) %>%
     ungroup() %>%
-    filter(!is.na(VOL))
+    filter(!is.na(.data[[yvar]]))
   
-  # order types by Cohen's d vs TP63 KO
+  if (nrow(curves_3d) == 0) {
+    stop("No valid curves_3d rows produced for phenotype: ", phen)
+  }
+  
+  if (!(ref_type %in% curves_3d$type)) {
+    stop("Reference type '", ref_type, "' not found for phenotype='", phen, "'.")
+  }
+  
+  fml <- as.formula(paste(yvar, "~ type"))
+  
   cohens_d_order_3d <- curves_3d %>%
-    rstatix::cohens_d(VOL ~ type, ref.group = "TP63 KO") %>%
+    rstatix::cohens_d(fml, ref.group = ref_type) %>%
     arrange(desc(effsize)) %>%
     pull(group2)
   
   curves_3d <- curves_3d %>%
-    mutate(type = factor(type, levels = c("TP63 KO", cohens_d_order_3d)))
+    mutate(type = factor(as.character(type), levels = c(ref_type, cohens_d_order_3d)))
   
   stats_3d <- curves_3d %>%
-    rstatix::t_test(VOL ~ type, ref.group = "TP63 KO", paired = FALSE) %>%
+    rstatix::t_test(fml, ref.group = ref_type, paired = FALSE) %>%
     rstatix::adjust_pvalue(method = "BH") %>%
     rstatix::add_significance() %>%
-    mutate(y.position = max(curves_3d$VOL, na.rm = TRUE) * 1.05)
+    mutate(y.position = max(curves_3d[[yvar]], na.rm = TRUE) * 1.05)
   
-  keep_types <- c("TP63 KO", stats_3d$group2[stats_3d$p.adj < 0.05])
+  keep_types <- c(ref_type, stats_3d$group2[stats_3d$p.adj < 0.05])
+  ref_mean <- mean(curves_3d[[yvar]][as.character(curves_3d$type) == ref_type], na.rm = TRUE)
   
-  p <- ggboxplot(
+  p <- ggpubr::ggboxplot(
     curves_3d %>% filter(type %in% keep_types),
-    x = "type", y = "VOL", add = "jitter"
+    x = "type", y = yvar, add = "jitter"
   ) +
-    stat_pvalue_manual(
+    ggpubr::stat_pvalue_manual(
       stats_3d %>% filter(p.adj < 0.05),
       label = "p.adj.signif",
       remove.bracket = TRUE
     ) +
-    geom_hline(
-      yintercept = mean(curves_3d$VOL[curves_3d$type == "TP63 KO"], na.rm = TRUE),
-      lty = "dashed", color = "red", lwd = 2
-    ) +
+    geom_hline(yintercept = ref_mean, lty = "dashed", color = "red", lwd = 2) +
     coord_flip() +
-    labs(title = phen)+
-    theme(plot.title = element_text(hjust=0.5))
+    labs(
+      title = paste0(phen, " | KO surface vs no-KO surface"),
+      subtitle = paste0("no-KO phenotype used: ", phen_noko, " | Metric = ", yvar)
+    ) +
+    theme(
+      plot.title = element_text(hjust = 0.5, face = "bold"),
+      axis.text.y = element_text(size = 7)
+    )
   
   ggsave(outpath, plot = p, width = width_cm, height = height_cm, units = "cm", dpi = dpi)
-  return(p)
+  list(plot = p, curves_3d = curves_3d, stats_3d = stats_3d, grid_clean = grid_clean)
 }
-p_mas <- make_volume_plot(
+
+# 4) Run boxplots for MAS + Fibrosis
+res_mas_vol <- make_volume_plot_vs_noKO(
   phen = "MAS",
-  baseline_col = "NAS",
-  outpath = "../figures/volume_comparison_MAS_24hr.pdf"
+  outpath = file.path('../figures/', "volume_vs_noKO_surface_MAS_24hr.pdf"),
+  yvar = "VOL",
+  ref_type = "TP63 KO"
 )
-p_fib <- make_volume_plot(
+
+res_fib_vol <- make_volume_plot_vs_noKO(
   phen = "Fibrosis stage",
-  baseline_col = "fibrosis",
-  outpath = "../figures/volume_comparison_Fibrosis_24hr.pdf"
+  outpath = file.path('../figures/', "volume_vs_noKO_surface_Fibrosis_24hr.pdf"),
+  yvar = "VOL",
+  ref_type = "TP63 KO"
 )
 
-## 3D surface plot
-phen <- "Fibrosis stage"
-baseline_col <- "fibrosis"
-
-ko_genes <- c("STAT2","STAT3","SMAD3","TP63","TP53","JUN","MYC")
-ko_types <- paste0(ko_genes, " KO")
-ko_cols <- c(
-  STAT2 = "#0072B2",
-  STAT3 = "#E69F00",
-  SMAD3 = "#009E73",
-  TP63  = "#D55E00",
-  TP53  = "#CC79A7",
-  JUN   = "#56B4E9",
-  MYC   = "#F0E442"
-)
-
-# Average grids across all 50 models (strict)
-# make sure these are numeric (in case they came in as character/factor)
-surf_df <- aggregated_grids %>%
-  filter(phenotype == phen,
-         type %in% ko_types,
-         !is.na(IFNa), !is.na(TGFb)) %>%
-  mutate(
-    IFNa = as.numeric(IFNa),
-    TGFb = as.numeric(TGFb)
-  ) %>%
-  group_by(type, IFNa, TGFb) %>%
-  summarise(
-    z = mean(score, na.rm = TRUE),
-    n_models = n_distinct(model_no),
-    .groups = "drop"
-  )
-
-ifna_vals <- sort(unique(surf_df$IFNa))
-tgfb_vals <- sort(unique(surf_df$TGFb))
-
-zmat_for_type <- function(tt) {
-  tmp <- surf_df %>%
-    filter(type == tt) %>%
-    select(IFNa, TGFb, z) %>%   # IMPORTANT: drop n_models (and type) before pivot
-    complete(IFNa = ifna_vals, TGFb = tgfb_vals) %>%
-    arrange(IFNa, TGFb) %>%
-    pivot_wider(id_cols = IFNa, names_from = TGFb, values_from = z)
-  
-  zmat <- as.matrix(tmp[, -1, drop = FALSE])
-  storage.mode(zmat) <- "numeric"  # force numeric matrix
-  zmat
-}
-
-# baseline plane (numeric matrix)
-baseline_mean <- Ycontrol %>%
-  summarise(b = mean(.data[[baseline_col]], na.rm = TRUE)) %>%
-  pull(b)
-baseline_z <- matrix(as.numeric(baseline_mean),
-                     nrow = length(ifna_vals),
-                     ncol = length(tgfb_vals))
-# very light transparent grey (baseline)
-baseline_col <- "rgba(0,0,0,1)" 
-
-p <- plot_ly() %>%
-  add_surface(
-    x = ifna_vals, y = tgfb_vals, z = baseline_z,
-    name = "Control baseline",
-    opacity = 1,
-    showscale = FALSE,
-    colorscale = list(list(0, baseline_col), list(1, baseline_col))
-  )
-
-
-# Add each KO surface (uniform color per KO)
-
-for (g in ko_genes) {
-  tt <- paste0(g, " KO")
-  if (!tt %in% unique(surf_df$type)) next
-  
-  zmat <- zmat_for_type(tt)
-  col <- ko_cols[[g]]
-  
-  p <- p %>%
-    add_surface(
-      x = ifna_vals, y = tgfb_vals, z = zmat,
-      name = tt,
-      opacity = 0.70,
-      showscale = FALSE,
-      colorscale = list(list(0, col), list(1, col))
-    )
-}
-
-p <- p %>%
-  layout(
-    scene = list(
-      xaxis = list(title = "IFNa"),
-      yaxis = list(title = "TGFb"),
-      zaxis = list(title = paste0("Score (", phen, ")"))
-    ),
-    legend = list(
-      orientation = "h",   # horizontal legend
-      x = 0.5, xanchor = "center",
-      y = 1.08, yanchor = "bottom"
-    ),
-    margin = list(t = 90)
-  )
-
-# Force a legend by adding dummy scatter3d traces (surfaces don't reliably appear in legend)
-legend_x <- ifna_vals[1]
-legend_y <- tgfb_vals[1]
-legend_z <- baseline_mean
-
-# Baseline legend item
-p <- p %>%
-  add_trace(
-    type = "scatter3d", mode = "markers",
-    x = legend_x, y = legend_y, z = legend_z,
-    name = "Control baseline",
-    marker = list(color = "rgba(0,0,0,1)", size = 6),
-    showlegend = TRUE,
-    visible = "legendonly"
-  )
-
-# KO legend items
-for (g in ko_genes) {
-  tt  <- paste0(g, " KO")
-  col <- ko_cols[[g]]
-  
-  p <- p %>%
-    add_trace(
-      type = "scatter3d", mode = "markers",
-      x = legend_x, y = legend_y, z = legend_z,
-      name = tt,
-      marker = list(color = col, size = 6),
-      showlegend = TRUE,
-      visible = "legendonly"
-    )
-}
-
-# Put legend at top
-p <- p %>%
-  layout(
-    showlegend = TRUE,
-    legend = list(
-      orientation = "h",
-      x = 0.5, xanchor = "center",
-      y = 1.12, yanchor = "top"
-    ),
-    margin = list(t = 120)
-  )
-
-p
-# Save interactive
-htmlwidgets::saveWidget(p, file = paste0("../figures/avg50_24hour_3D_surfaces_", gsub(" ", "_", phen), ".html"),
-                        selfcontained = TRUE)
+# Print static plots in RStudio viewer
+res_mas_vol$plot
+res_fib_vol$plot
 
 
 ### Statistical Comparison of the differences of curves------------
@@ -743,14 +753,14 @@ make_point_plots <- function(phen,
 # ---- run for both phenotypes and save
 res_mas <- make_point_plots(
   phen = "MAS",
-  out1 = "../figures/pointdiff_noKO_MAS_24hr.pdf",
-  out2 = "../figures/pointdiff_TP63_MAS_24hr.pdf"
+  out1 = "../figures/pointdiff_noKO_MAS_2hr.pdf",
+  out2 = "../figures/pointdiff_TP63_MAS_2hr.pdf"
 )
 
 res_fib <- make_point_plots(
   phen = "Fibrosis stage",  # change string if your label differs
-  out1 = "../figures/pointdiff_noKO_FibrosisStage_24hr.pdf",
-  out2 = "../figures/pointdiff_TP63_FibrosisStage_24hr.pdf"
+  out1 = "../figures/pointdiff_noKO_FibrosisStage_2hr.pdf",
+  out2 = "../figures/pointdiff_TP63_FibrosisStage_2hr.pdf"
 )
 
 ### Comparison of AUCs of the curves---------
@@ -868,14 +878,14 @@ make_auc_plots <- function(phen,
 }
 res_auc_mas <- make_auc_plots(
   phen = "MAS",
-  out1 = "../figures/auc_noKO_MAS_24hr.pdf",
-  out2 = "../figures/auc_TP63_MAS_24hr.pdf"
+  out1 = "../figures/auc_noKO_MAS_2hr.pdf",
+  out2 = "../figures/auc_TP63_MAS_2hr.pdf"
 )
 
 res_auc_fib <- make_auc_plots(
   phen = "Fibrosis stage",
-  out1 = "../figures/auc_noKO_FibrosisStage_24hr.pdf",
-  out2 = "../figures/auc_TP63_FibrosisStage_24hr.pdf"
+  out1 = "../figures/auc_noKO_FibrosisStage_2hr.pdf",
+  out2 = "../figures/auc_TP63_FibrosisStage_2hr.pdf"
 )
 
 ### Statstical comparison of 2D curves AUC and control line----
@@ -944,13 +954,13 @@ make_auc_ctrl_plot <- function(phen, baseline_col, out = NULL,
 res_ctrl_mas <- make_auc_ctrl_plot(
   phen = "MAS",
   baseline_col = "NAS",
-  out = "../figures/auc_norm_control_TP63_MAS_24hr.pdf"
+  out = "../figures/auc_norm_control_TP63_MAS_2hr.pdf"
 )
 
 res_ctrl_fib <- make_auc_ctrl_plot(
   phen = "Fibrosis stage",
   baseline_col = "fibrosis",  # <-- change to your real Ycontrol column
-  out = "../figures/auc_norm_control_TP63_FibrosisStage_24hr.pdf"
+  out = "../figures/auc_norm_control_TP63_FibrosisStage_2hr.pdf"
 )
 
 
@@ -1133,10 +1143,10 @@ run_and_save_baseline0_plots <- function(phen) {
   
   phen_tag <- gsub("[^A-Za-z0-9]+", "", phen)
   
-  ggsave(file.path(outdir, paste0("baseline0_AUCnorm_IFNAR1_", phen_tag, "_24hr.pdf")),
+  ggsave(file.path(outdir, paste0("baseline0_AUCnorm_IFNAR1_", phen_tag, "_2hr.pdf")),
          plot = p_ifn, width = 16, height = 20, units = "cm", dpi = 600)
   
-  ggsave(file.path(outdir, paste0("baseline0_AUCnorm_TGFBR1_", phen_tag, "_24hr.pdf")),
+  ggsave(file.path(outdir, paste0("baseline0_AUCnorm_TGFBR1_", phen_tag, "_2hr.pdf")),
          plot = p_tgf, width = 16, height = 20, units = "cm", dpi = 600)
   
   list(curves_ctrl2d = curves_ctrl2d, p_ifnar = p_ifn, p_tgfbr1 = p_tgf)
@@ -1269,7 +1279,7 @@ run_and_save_baseline0_volume_plots <- function(phen, outdir = "../figures",
     phen = phen,
     receptor_label = "IFNAR1",
     ref_type = "STAT2 KO",
-    outpath = file.path(outdir, paste0("baseline0_VOLnorm_IFNAR1_", phen_tag, "_24hr.pdf")),
+    outpath = file.path(outdir, paste0("baseline0_VOLnorm_IFNAR1_", phen_tag, "_2hr.pdf")),
     width_cm = width_cm, height_cm = height_cm, dpi = dpi,
     value_col = value_col
   )
@@ -1278,7 +1288,7 @@ run_and_save_baseline0_volume_plots <- function(phen, outdir = "../figures",
     phen = phen,
     receptor_label = "TGFBR1",
     ref_type = "TP63 KO",
-    outpath = file.path(outdir, paste0("baseline0_VOLnorm_TGFBR1_", phen_tag, "_24hr.pdf")),
+    outpath = file.path(outdir, paste0("baseline0_VOLnorm_TGFBR1_", phen_tag, "_2hr.pdf")),
     width_cm = width_cm, height_cm = height_cm, dpi = dpi,
     value_col = value_col
   )
@@ -1358,7 +1368,7 @@ res_mas <- make_ifna_facet_plot(
   legend_title_size =14
 )
 res_mas$plot
-ggsave(filename = "../figures/ifna_tgfb_withKOs_combo_mas_line_plot_24h.pdf", plot = res_mas$plot,
+ggsave(filename = "../figures/ifna_tgfb_withKOs_combo_mas_line_plot_2h.pdf", plot = res_mas$plot,
        device = cairo_pdf,
        units = "cm", width = 16, height = 16)
 
@@ -1390,7 +1400,7 @@ res_fib <- make_ifna_facet_plot(
   legend_title_size =14
 )
 res_fib$plot
-ggsave(filename = "../figures/ifna_tgfb_withKOs_combo_fibrosis_line_plot_24h.pdf", plot = res_fib$plot, 
+ggsave(filename = "../figures/ifna_tgfb_withKOs_combo_fibrosis_line_plot_2h.pdf", plot = res_fib$plot, 
        device = cairo_pdf,
        units = "cm", width = 16, height = 16)
 
@@ -1510,7 +1520,7 @@ p <- ggplot(plot_df, aes(x = IFNa, y = mu, color = type, group = type)) +
 p
 
 ggsave(
-  "../figures/opposing_only_types_MAS_vs_Fibrosis_with_curve_ribbons_noKO_black_24h.pdf",
+  "../figures/opposing_only_types_MAS_vs_Fibrosis_with_curve_ribbons_noKO_black_2h.pdf",
   plot = p, device = cairo_pdf,
   units = "cm", width = 24, height = 14, dpi = 600
 )
