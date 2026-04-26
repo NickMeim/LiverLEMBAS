@@ -53,9 +53,9 @@ parser.add_argument('--PKN', action='store',type = str, default='../preprocessin
 parser.add_argument('--PknAnnotation', action='store',type = str, default='../preprocessing/preprocessed_data/PKN/Hepatocytes-PKN-Annotation.tsv')
 parser.add_argument('--infoPath', action='store',type = str, default='../preprocessing/preprocessed_data/TrainingValidationData/Hepatocytes_inputdataInfo.tsv')
 parser.add_argument('--res_dir', action='store',type = str, default='../results/')
-parser.add_argument('--out_dir', action='store',type = str, default='TrimmedSimulationResults/')
-parser.add_argument('--saved_fibrosis_MoA_dir', action='store',type = str, default='results/') # 'results_2hr/' for 2 hour and 'results_24hr/' for 24 hour
-parser.add_argument('--saved_MAS_MoA_dir', action='store',type = str, default='resultsMAS/results_8hr/')
+parser.add_argument('--out_dir', action='store',type = str, default='TrimmedSimulationResults_top3/')
+parser.add_argument('--saved_fibrosis_MoA_dir', action='store',type = str, default='results_8hr_top3/') # 'results_2hr/' for 2 hour and 'results_24hr/' for 24 hour
+parser.add_argument('--saved_MAS_MoA_dir', action='store',type = str, default='resultsMAS/results_8hr_top_3/')
 parser.add_argument('--timepoint', type=str, action='store', help='Timepoint to simulate',default='8 hour')
 parser.add_argument('--number_DTLEMBAS_models', action='store',type = int, default=50)
 parser.add_argument('--modelPattern', action='store',type = str, default='hepatocytes_dtlembas')
