@@ -62,6 +62,8 @@ results/LOOCV_2hr_with_random_long.csv
 results/async_experiments_tidy/async_stimulation_results_no_carry_on.csv
 MoA/TrimmedSimulationResults/*
 MoA/TrimmedSimulationResults
+MoA/TrimmedSimulationResults_top3/*
+MoA/TrimmedSimulationResults_top3
 results/insilico_grid_combinations_ko/insilico_grid_multi_ko_results.csv
 results/2 hour/insilico_grid_combinations_ko/insilico_grid_multi_ko_results.csv
 results/24 hour/insilico_grid_combinations_ko/insilico_grid_multi_ko_results.csv

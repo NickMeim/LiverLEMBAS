@@ -14,14 +14,14 @@ source('../postprocessing/functions_translation.R')
 options(future.globals.maxSize = 2 * 1024^3) # 2 GiB
 
 ## Load core nets to find later which TFs to keep
-core_net_fibrosis <- data.table::fread('results/aggregated_subgraph_edges.csv')
-core_net_mas <- data.table::fread('resultsMAS/results_8hr/aggregated_subgraph_edges.csv')
+core_net_fibrosis <- data.table::fread('results_24hr_top3/aggregated_subgraph_edges.csv')
+core_net_mas <- data.table::fread('resultsMAS/results_24hr_top_3/aggregated_subgraph_edges.csv')
 core_net <- rbind(core_net_fibrosis,core_net_mas)
 
 ## Simulate combination of TGFBR1 and IFNAR1---------------
-results_ko <- data.table::fread('TrimmedSimulationResults/TrimmedSimulation_8 hour.csv') %>% 
+results_ko <- data.table::fread('TrimmedSimulationResults_top3/TrimmedSimulation_24 hour.csv') %>% 
   column_to_rownames('V1')
-control_trimmed <- data.table::fread('TrimmedSimulationResults/TrimmedSimulation_control_8 hour.csv') %>% 
+control_trimmed <- data.table::fread('TrimmedSimulationResults_top3/TrimmedSimulation_control_24 hour.csv') %>% 
   select(-V1)
 
 #Load annotation file to replace with gene names
@@ -134,26 +134,30 @@ Yinsilico <- Yinsilico %>% select(IFNAR1,TGFBR1,model_no,NAS,fibrosis)
 # Yinsilico$fibrosis <- Yinsilico$fibrosis - mean_control_fib
 Yinsilico <- Yinsilico %>% gather('phenotype','score',-model_no,-IFNAR1,-TGFBR1) %>%
   group_by(phenotype,IFNAR1,TGFBR1) %>% mutate(mu = mean(score)) %>% mutate(se=sd(score)/sqrt(50))
-
 ### Visualize simulation
 Yall <- Yinsilico %>%
   mutate(phenotype = ifelse(phenotype=='NAS','MAS','Fibrosis stage'))
 Yall <- Yall %>% mutate(IFNAR1=as.numeric(IFNAR1)) %>% mutate(TGFBR1=as.numeric(TGFBR1))
+
 mas_plot <- ggplot(Yall %>% filter(phenotype=='MAS') %>% select(IFNAR1,TGFBR1,mu,se,phenotype) %>% unique(),
                    aes(x=IFNAR1,y=TGFBR1,fill=mu))+
   geom_tile()+
   scale_fill_gradient2(midpoint = 0)+
-  labs(fill='MAS',x = 'stimulation of IFNAR1',y='stimulation of TGFBR1')+
+  labs(fill=expression(Delta*'MAS'),x = 'stimulation of IFNAR1',y='stimulation of TGFBR1')+
   scale_x_continuous(n.breaks = 10)+
   scale_y_continuous(n.breaks = 10)+
   geom_hline(yintercept = 0,lwd=1,color='black')+
   geom_vline(xintercept = 0,lwd=1,color='black')
 mas_plot <- add_theme(mas_plot) + 
   theme(legend.position = 'top',text = element_text(size=20),
+        legend.text = element_text(size=14),
         panel.border = element_blank(),
-        panel.grid = element_blank())
+        panel.grid = element_blank())+
+  guides(fill = guide_colorbar(
+    barwidth = unit(3, "cm"),
+    barheight = unit(0.5, "cm")))
 print(mas_plot)
-ggsave(filename = "../figures/trimmedNetSimulationGrid_ifna_tgfb_combo_mas_plot_8hr.pdf", plot = mas_plot, 
+ggsave(filename = "../figures/trimmedNet_top3_SimulationGrid_ifna_tgfb_combo_mas_plot_24hr.pdf", plot = mas_plot, 
        device = cairo_pdf,
        units = "cm", width = 16, height = 12)
 
@@ -161,17 +165,21 @@ fib_plot <- ggplot(Yall %>% filter(phenotype!='MAS') %>% select(IFNAR1,TGFBR1,mu
                    aes(x=IFNAR1,y=TGFBR1,fill=mu))+
   geom_tile()+
   scale_fill_gradient2(midpoint = 0)+
-  labs(fill='Fibrosis stage',x = 'stimulation of IFNAR1',y='stimulation of TGFBR1')+
+  labs(fill=expression(Delta*'Fibrosis stage'),x = 'stimulation of IFNAR1',y='stimulation of TGFBR1')+
   scale_x_continuous(n.breaks = 10)+
   scale_y_continuous(n.breaks = 10)+
   geom_hline(yintercept = 0,lwd=1,color='black')+
   geom_vline(xintercept = 0,lwd=1,color='black')
 fib_plot <- add_theme(fib_plot) +
   theme(legend.position = 'top',text = element_text(size=20),
+        legend.text = element_text(size=10),
         panel.border = element_blank(),
-        panel.grid = element_blank())
+        panel.grid = element_blank())+
+  guides(fill = guide_colorbar(
+      barwidth = unit(3, "cm"),
+      barheight = unit(0.5, "cm")))
 print(fib_plot)
-ggsave(filename = "../figures/trimmedNetSimulationGrid_ifna_tgfb_combo_fibrosis_plot_8hr.pdf", plot = fib_plot, 
+ggsave(filename = "../figures/trimmedNet_top3_SimulationGrid_ifna_tgfb_combo_fibrosis_plot_24hr.pdf", plot = fib_plot, 
        device = cairo_pdf,
        units = "cm", width = 16, height = 12)
 
@@ -226,7 +234,7 @@ ccc_by_task <- df_plot %>%
 #   labs(x = "prediction with full net",
 #        y = "prediction with trimmed net") +
 #   theme_bw()
-# ggsave('../figures/trimmed_vs_full_simulation_scatter_8hours.png',
+# ggsave('../figures/trimmed_vs_full_simulation_scatter_24hours.png',
 #        width = 12,
 #        height = 9,
 #        units = 'cm',
@@ -369,7 +377,7 @@ plot_confusion <- (plot_confusion_nas2 + plot_confusion_fibrosis2) +
 
 print(plot_confusion)
 
-ggsave('../figures/trimmed_vs_full_simulation_8hours.png',
+ggsave('../figures/trimmed_top3_vs_full_simulation_24hours.png',
        plot = plot_confusion,
        width = 18,
        height = 9,
