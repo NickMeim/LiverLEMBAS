@@ -1,4 +1,5 @@
 LODO_Technical_Report.pdf
+To extract the subnetwork explaining.docx
 TranscriptomicAnalysis/ARCHS4_RESULTS/expression_transposed.rds
 archive
 archive/*
@@ -68,3 +69,5 @@ results/insilico_grid_combinations_ko/insilico_grid_multi_ko_results.csv
 results/2 hour/insilico_grid_combinations_ko/insilico_grid_multi_ko_results.csv
 results/24 hour/insilico_grid_combinations_ko/insilico_grid_multi_ko_results.csv
 results/insilico_grid_combinations_ko/insilico_grid_multi_ko_results.csv
+data/RNAseq/*
+data/RNAseq
