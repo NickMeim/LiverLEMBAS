@@ -243,7 +243,8 @@ signaling_nodes <- data.table::fread('../results/allmodels/predictions/Signaling
   # filter(condition=='untreated' | drug %in% selected_drugs$drug)
 signaling_nodes <- signaling_nodes %>%
   separate(condition,into = c('drug','dose','time'),sep = '\\+',remove = FALSE) %>%
-  filter(condition=='untreated' | drug %in% c('phenylbutazone','erythromycin ethylsuccinate','benzbromarone'))
+  filter(condition=='untreated' | drug %in% c('phenylbutazone','erythromycin ethylsuccinate','benzbromarone',
+                                              'hydroxyzine','chlorpheniramine'))
 signaling_nodes <- left_join(signaling_nodes,annot,by=c('node'='uniprot')) %>%
   select(-node) %>% select(condition,model_no,c('node'='name'),activity)
 signaling_nodes <- signaling_nodes %>%
